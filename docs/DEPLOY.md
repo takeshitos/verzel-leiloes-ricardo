@@ -365,3 +365,7 @@ Push de `4423568` às 17:45:26 UTC. Novo frontend no ar às 17:46:37 UTC (bundle
 | `/api/health` | 200, `database: ok` |
 
 Ainda não verificado em produção: comprovante real e auditoria de lote com lances (não há venda em produção ainda).
+
+## Deploy da etapa 17 (testes)
+
+Push de `d26efe7` às 18:01:21 UTC: só testes, `docs/TESTES.md` e `@playwright/test` como dependência de desenvolvimento (o pacote não baixa navegador). O serviço reiniciou às 18:02:33 UTC (`uptimeSeconds` 13). Verificado: `/api/health` 200 com `database: ok`, `/` 200, `/socket.io` respondendo o handshake.

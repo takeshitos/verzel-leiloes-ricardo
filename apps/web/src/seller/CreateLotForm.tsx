@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { ApiError, apiPost } from '../api/client';
+import { isUncertain } from '../api/intent';
 import { ArtworkImage } from '../components/ArtworkImage';
 import { Field, Notice } from '../components/ui';
 import { browserTimeZone, formatBrl, formatDateTime } from '../format';
@@ -31,13 +32,15 @@ type Props = {
   item: CatalogItem;
   onCreated: (lot: PublicLot) => void;
   onCancel: () => void;
+  /** Sem resposta do servidor: o painel relê a lista de lotes. */
+  onUncertain: () => void;
 };
 
 /**
  * Dados do lote. A validação aqui só ajuda quem digita: a API valida tudo de novo
  * (valores, datas pelo relógio do banco, obra com imagem) e é ela que decide.
  */
-export function CreateLotForm({ item, onCreated, onCancel }: Props) {
+export function CreateLotForm({ item, onCreated, onCancel, onUncertain }: Props) {
   const [startingBid, setStartingBid] = useState('');
   const [minIncrement, setMinIncrement] = useState('');
   const [startMode, setStartMode] = useState<'now' | 'scheduled'>('now');
@@ -46,6 +49,7 @@ export function CreateLotForm({ item, onCreated, onCancel }: Props) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<ApiError | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
 
   const zone = `${browserTimeZone()}, ${utcOffsetLabel(new Date())}`;
   const endIso = localInputToIso(endsAt);
@@ -75,6 +79,7 @@ export function CreateLotForm({ item, onCreated, onCancel }: Props) {
     else if (startValue && Date.parse(endIso) <= Date.parse(startValue)) nextErrors.endsAt = 'O fim precisa ser depois do início.';
     setErrors(nextErrors);
     setApiError(null);
+    setUncertain(false);
     if (Object.keys(nextErrors).length > 0 || !starting.ok || !increment.ok) return;
 
     setSubmitting(true);
@@ -89,6 +94,16 @@ export function CreateLotForm({ item, onCreated, onCancel }: Props) {
       onCreated(lot);
     } catch (error) {
       const caught = error instanceof ApiError ? error : new ApiError(0, 'UNKNOWN', 'Erro inesperado ao criar o lote.');
+      // Museu fora do ar (503) é recusa definitiva: a obra é buscada antes de gravar qualquer coisa.
+      if (isUncertain(caught) && caught.code !== 'CATALOG_UNAVAILABLE') {
+        // Sem resposta: o lote PODE ter sido criado. A lista é relida para a pessoa conferir
+        // antes de tentar de novo (criar lote não tem chave de idempotência).
+        setErrors({});
+        setApiError(null);
+        setUncertain(true);
+        onUncertain();
+        return;
+      }
       const fromApi: FieldErrors = {};
       for (const [name, message] of Object.entries(caught.details.fields ?? {})) {
         const field = API_FIELD[name];
@@ -133,6 +148,12 @@ export function CreateLotForm({ item, onCreated, onCancel }: Props) {
 
       {/* Mensagem da API (ex.: obra sem imagem, museu fora do ar); erros por campo ficam em cada campo. */}
       {apiError && <Notice tone="error">{apiError.message}</Notice>}
+      {uncertain && (
+        <Notice tone="warning" title="Sem resposta do servidor">
+          O lote pode ter sido criado. A lista "Seus lotes" foi relida: confira antes de tentar de novo, para não criar o
+          mesmo lote duas vezes.
+        </Notice>
+      )}
 
       <div className="form-row">
         <Field

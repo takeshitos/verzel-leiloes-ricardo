@@ -9,7 +9,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { runSeed } from '../src/db/seed-data.js';
 import { bidderRef, bidHash, genesisHash } from '../src/modules/audit/chain.js';
 import { onBidAccepted, type BidAcceptedEvent } from '../src/modules/realtime/events.js';
-import { createTestApp, createTestPool, resetDatabase, sessionCookie } from './helpers.js';
+import { createTestApp, createTestAudit, createTestPool, resetDatabase, sessionCookie } from './helpers.js';
 
 const pool = createTestPool(12);
 let app: ReturnType<typeof createTestApp>;
@@ -587,5 +587,46 @@ describe('eventos depois do commit', () => {
     expect(seen[0].visibleInDatabase).toBe(true);
     // Com a âncora de teste no ar, o checkpoint é confirmado depois do commit e antes do evento.
     expect(seen[0].event).toMatchObject({ lotId, seq: 1, amountCents: 10_000, extended: true, auditStatus: 'confirmed' });
+  });
+
+  it('falha inesperada ao confirmar na âncora DEPOIS do commit: 201 com auditoria pendente, nunca 500 nem ÍNTEGRO', async () => {
+    // Regressão (etapa 18): antes, o erro subia e a API respondia 500 para um lance já gravado.
+    const audit = createTestAudit(pool);
+    const broken = {
+      ...audit,
+      recorder: {
+        ...audit.recorder,
+        afterCommit: async () => {
+          throw new Error('falha simulada depois do COMMIT');
+        },
+      },
+    };
+    const brokenApp = createTestApp(pool, { audit: broken });
+    const lotId = await createLiveLot();
+    const events: BidAcceptedEvent[] = [];
+    const stop = onBidAccepted((event) => events.push(event));
+
+    let response: request.Response;
+    try {
+      response = await request(brokenApp)
+        .post(`/api/lots/${lotId}/bids`)
+        .set('Cookie', c1)
+        .set('Idempotency-Key', randomUUID())
+        .send({ amountCents: 10_000 });
+    } finally {
+      stop();
+    }
+
+    expect(response.status).toBe(201);
+    expect(response.body.audit.status).toBe('pending');
+    expect((await lotState(lotId)).bids).toHaveLength(1); // o lance entrou
+    expect(events).toHaveLength(1); // e o evento saiu, marcado como pendente
+    expect(events[0].auditStatus).toBe('pending');
+
+    // Enquanto não confirma: PENDENTE (nunca ÍNTEGRO).
+    expect((await audit.verifyLot(lotId))!.status).toBe('pending');
+    // O reconciliador termina sem assinar de novo (a assinatura é a gravada no lance).
+    await audit.reconcilePending();
+    expect((await audit.verifyLot(lotId))!.status).toBe('intact');
   });
 });

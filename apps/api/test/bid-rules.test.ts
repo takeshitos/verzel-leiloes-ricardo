@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { bidCanonicalContent, bidHash, genesisHash } from '../src/modules/audit/chain.js';
 import { ANTI_SNIPING_WINDOW_MS, extendedEnd, minimumNextBid, validateBid, type LotForBid } from '../src/modules/bids/rules.js';
 import { AppError } from '../src/shared/errors.js';
+import { centsSchema, MAX_LOT_VALUE_CENTS, MAX_WALLET_TOTAL_CENTS } from '../src/shared/money.js';
 
 const T = (iso: string) => new Date(iso);
 
@@ -131,5 +132,27 @@ describe('cadeia de hashes (formato v1)', () => {
       '{"v":1,"lotId":"11111111-1111-4111-8111-111111111111","seq":1,"bidId":"44444444-4444-4444-8444-444444444444",' +
         `"bidderRef":"${'c'.repeat(64)}","alias":"LIC-ABC123","amountCents":"10000","acceptedAt":"2026-10-29T15:30:00.123Z"}`,
     );
+  });
+});
+
+describe('limites de centavos (etapa 18)', () => {
+  it('lance atual + incremento nos maiores valores aceitos pela API continua inteiro seguro', () => {
+    // Maior lance possível = maior saldo (MAX_WALLET_TOTAL_CENTS); maior incremento = MAX_LOT_VALUE_CENTS.
+    const next = minimumNextBid({
+      currentBidCents: MAX_WALLET_TOTAL_CENTS,
+      startingBidCents: MAX_LOT_VALUE_CENTS,
+      minIncrementCents: MAX_LOT_VALUE_CENTS,
+    });
+    expect(next).toBe(11_000_000_000);
+    expect(Number.isSafeInteger(next)).toBe(true);
+    // E fica muito abaixo do limite do JavaScript e do BIGINT do PostgreSQL.
+    expect(next).toBeLessThan(Number.MAX_SAFE_INTEGER / 1000);
+  });
+
+  it('lance acima do saldo máximo é recusado pelo esquema da rota (sem chegar à regra)', () => {
+    const schema = centsSchema('O valor do lance', MAX_WALLET_TOTAL_CENTS);
+    expect(schema.safeParse(MAX_WALLET_TOTAL_CENTS).success).toBe(true);
+    expect(schema.safeParse(MAX_WALLET_TOTAL_CENTS + 1).success).toBe(false);
+    expect(schema.safeParse(Number.MAX_SAFE_INTEGER + 1).success).toBe(false);
   });
 });

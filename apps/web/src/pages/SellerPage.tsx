@@ -134,7 +134,13 @@ export function SellerPage() {
         )}
         <div ref={formRef}>
           {selected && (
-            <CreateLotForm key={selected.externalId} item={selected} onCreated={handleCreated} onCancel={() => setSelected(null)} />
+            <CreateLotForm
+              key={selected.externalId}
+              item={selected}
+              onCreated={handleCreated}
+              onCancel={() => setSelected(null)}
+              onUncertain={refresh}
+            />
           )}
         </div>
         {/* Escondida (não desmontada) enquanto há obra escolhida: "Trocar obra" volta aos mesmos resultados. */}

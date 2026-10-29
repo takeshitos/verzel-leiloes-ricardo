@@ -34,9 +34,11 @@ Etapa 15 concluída localmente (29/10/2026): depósito simulado e lance pela tel
 
 Etapa 16 concluída localmente (29/10/2026): páginas públicas de auditoria (histórico completo, estado com explicação fiel, detalhes técnicos, chave pública e limites) e de comprovante (snapshot da liquidação, identificador da transação, copiar link, imprimir), ambas sem login; 404 sem detalhes. Conferidas com lote íntegro, sem lances, adulterado e âncora fora do ar nos bancos de teste. 252 testes passam. Commit `4423568` no ar desde 17:46 UTC.
 
-Etapa 17 concluída localmente (29/10/2026): mapa dos testes por requisito em `docs/TESTES.md`, teste de privacidade de todas as respostas públicas e E2E com Playwright (leiloeiro, dois licitantes e visitante). 235 testes da API, 28 do web e 1 E2E passam. Ainda sem commit.
+Etapa 17 concluída localmente (29/10/2026): mapa dos testes por requisito em `docs/TESTES.md`, teste de privacidade de todas as respostas públicas e E2E com Playwright (leiloeiro, dois licitantes e visitante). 235 testes da API, 28 do web e 1 E2E passam. Commit `d26efe7` no ar desde 18:02 UTC.
 
-Próxima ação: commit e push da etapa 17 (a pedido do candidato); depois, etapa 18 (falhas e recuperação).
+Etapa 18 concluída localmente (29/10/2026): rodada de falhas em ambiente isolado registrada em `docs/TESTES_DE_FALHA.md`. Dois defeitos corrigidos com regressão (500 para lance já gravado quando a confirmação pós-commit falhava; mensagens de "sem resposta" no cancelamento e na criação de lote). 238 testes da API, 28 do web e 4 E2E passam. Ainda sem commit.
+
+Próxima ação: commit e push da etapa 18 (a pedido do candidato); depois, etapa 19 (extras com limite).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1162,8 +1164,45 @@ Revisão dos testes existentes contra a lista do prompt e os requisitos. A maior
 
 Cobertura de linhas **não foi medida**.
 
+### Deploy da etapa 17
+
+Commit `d26efe7` enviado às 18:01:21 UTC (só testes, docs e dependências de desenvolvimento). O serviço reiniciou com a nova versão às 18:02:33 UTC (`uptimeSeconds` voltou a 13). Health ok, página inicial 200 e Socket.IO respondendo. Nenhuma variável nova; o Playwright não baixa navegador no build.
+
 ### Limites
 
 - O E2E espera o lote terminar de verdade (~4 min no total). Não há relógio falso nem rota para fechar lote, por decisão: nada que possa ficar aberto em produção.
 - O E2E usa o Chrome instalado; sem Chrome, troque `channel` para `msedge` ou instale o navegador do Playwright.
 - `npm test` e `npm run test:e2e` usam o mesmo banco de teste: não rode os dois ao mesmo tempo.
+
+## Etapa 18 — Falhas e recuperação (29/10/2026, concluída localmente)
+
+Rodada focada em falhas, só nos bancos `_test`, em servidores locais e no navegador do Playwright. Nada contra produção. Relatório completo (estado inicial, passos, esperado, observado e evidência de cada cenário) em `docs/TESTES_DE_FALHA.md`.
+
+### Defeitos corrigidos
+
+1. **Lance já gravado respondia 500** quando a confirmação na âncora depois do COMMIT lançava um erro inesperado; o evento também não saía. Agora: 201 com `audit.status: "pending"`, evento publicado como pendente e o reconciliador termina (`apps/api/src/modules/bids/service.ts`). Regressão em `bids.test.ts`; sem a correção o teste falha com "expected 500 to be 201".
+2. **"Sem resposta" tratada como recusa** no cancelamento e na criação de lote. Agora a tela diz que não dá para saber, relê a lista e, na criação, pede para conferir antes de tentar de novo (`SellerLotList.tsx`, `CreateLotForm.tsx`, `SellerPage.tsx`).
+
+### Testes novos
+
+- `e2e/falhas.spec.ts` (3 cenários no navegador): resposta cortada depois do commit (a tela confere o histórico e a mesma chave repetida não duplica); Socket.IO derrubado com um lance perdido e recuperação pelo HTTP ao voltar o foco, depois reconexão automática; imagem do museu bloqueada mostrando a substituta.
+- `bids.test.ts`: regressão do defeito 1.
+- `bid-rules.test.ts`: limites de centavos (maior lance + maior incremento é inteiro seguro; esquema recusa acima do teto).
+
+### Revisões
+
+- Nenhum `pool.query` dentro de transação; nenhum SQL com entrada do usuário fora de parâmetro.
+- Sem a chave de auditoria (vazia ou inválida), o servidor não sobe e não cria chave sozinho (código de saída 1).
+- Mensagens: lance e depósito já separavam recusa, sem resposta e pendente; cancelamento e criação de lote corrigidos.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm test` | API **238 de 238** (14 arquivos); web **28 de 28** |
+| `npm run test:e2e` | **4 de 4** em 4,1 min (3 de falhas + o fluxo completo) |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+
+### Limites que permanecem
+
+Listados em `docs/TESTES_DE_FALHA.md`: janela antes da âncora, criação de lote sem chave de idempotência, tempo real de uma instância e serviço que dorme no Render gratuito.

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ApiError, apiPost } from '../api/client';
+import { isUncertain } from '../api/intent';
 import { ArtworkImage } from '../components/ArtworkImage';
 import { LotStatusPill } from '../components/LotStatusPill';
 import { EmptyState, Notice } from '../components/ui';
@@ -38,7 +39,9 @@ type Props = { lots: SellerLot[]; onChanged: () => void };
 export function SellerLotList({ lots, onChanged }: Props) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ lotId: string; tone: 'success' | 'error'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ lotId: string; tone: 'success' | 'error' | 'warning'; message: string } | null>(
+    null,
+  );
 
   async function cancel(lot: SellerLot) {
     setCancelling(lot.id);
@@ -47,9 +50,17 @@ export function SellerLotList({ lots, onChanged }: Props) {
       await apiPost<{ lot: PublicLot }>(`/lots/${lot.id}/cancel`);
       setFeedback({ lotId: lot.id, tone: 'success', message: 'Lote cancelado. Ele saiu da vitrine.' });
     } catch (error) {
-      const message =
-        error instanceof ApiError ? (CANCEL_REFUSAL[error.code] ?? error.message) : 'Erro inesperado ao cancelar.';
-      setFeedback({ lotId: lot.id, tone: 'error', message });
+      if (isUncertain(error)) {
+        // Sem resposta: o cancelamento pode ou não ter acontecido. A lista relida mostra a verdade.
+        setFeedback({
+          lotId: lot.id,
+          tone: 'warning',
+          message: 'Sem resposta do servidor: não dá para saber se o cancelamento foi feito. A lista foi relida; confira o estado do lote.',
+        });
+      } else {
+        const apiError = error as ApiError;
+        setFeedback({ lotId: lot.id, tone: 'error', message: CANCEL_REFUSAL[apiError.code] ?? apiError.message });
+      }
     } finally {
       setCancelling(null);
       setConfirming(null);

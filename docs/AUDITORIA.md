@@ -117,6 +117,7 @@ Testes em `apps/api/test/audit.test.ts` (27), contra o banco `verzel_test` e a �
 | `UPDATE`/`DELETE` na âncora | Recusados pelo gatilho |
 | Lote apagado por inteiro | 404 na rota do lote; a verificação global aponta o lote ausente |
 | Âncora fora do ar no lance | Lance aceito com `audit.status: "pending"`; verificação INDISPONÍVEL sem a âncora e PENDENTE com ela; o reconciliador confirma (reinício simulado) |
+| Confirmação pós-commit falha com erro inesperado (etapa 18) | Antes: API respondia 500 para o lance já gravado. Corrigido: 201 com auditoria pendente; o reconciliador confirma |
 | Âncora gravou, resposta perdida | O reconciliador repete sem duplicar e confirma |
 | Gravação fora de ordem (2 antes de 1) | Aceita; ÍNTEGRO |
 | Pendente com histórico adulterado | O reconciliador **recusa** ancorar; não assina de novo; ADULTERADO |

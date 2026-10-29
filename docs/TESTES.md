@@ -29,7 +29,7 @@ As migrações dos bancos de teste rodam sozinhas no início do `npm test` (glob
 
 ## Suítes
 
-### API (`apps/api/test`, 235 testes em 14 arquivos)
+### API (`apps/api/test`, 238 testes em 14 arquivos)
 
 | Arquivo | Testes | O que prova |
 | --- | --- | --- |
@@ -40,8 +40,8 @@ As migrações dos bancos de teste rodam sozinhas no início do `npm test` (glob
 | `lot-offline.test.ts` | 3 | Museu fora do ar: detalhe do lote vem do banco, também depois de reiniciar o processo |
 | `lots.test.ts` | 17 | Criação com dados do museu e dono da sessão, validação de valores e datas, vitrine sem cancelados, cancelamento (inclusive esperando o bloqueio de um lance), painel e total recebido |
 | `wallet.test.ts` | 14 | Total, comprometido e disponível; depósito idempotente (8 pedidos simultâneos com a mesma chave = 1 depósito); 8 depósitos diferentes simultâneos sem perder atualização |
-| `bid-rules.test.ts` | 16 | Bordas: início inclusivo, fim exclusivo, mínimo exato, líder, saldo igual ao disponível, prorrogação a 120 s, 119,999 s e 120,001 s, formato da cadeia de hashes |
-| `bids.test.ts` | 20 | Lance pela rota real: exemplo do guia A/B, cada recusa sem mudar nada (snapshot de 6 tabelas), idempotência, ofertas simultâneas, cliente em dois lotes sem saldo para os dois, lances cruzados sem deadlock, lance que chega antes do fim mas só bloqueia depois, cancelamento contra primeiro lance, eventos só depois do COMMIT |
+| `bid-rules.test.ts` | 18 | Bordas: início inclusivo, fim exclusivo, mínimo exato, líder, saldo igual ao disponível, prorrogação a 120 s, 119,999 s e 120,001 s, formato da cadeia de hashes |
+| `bids.test.ts` | 21 | Lance pela rota real: exemplo do guia A/B, cada recusa sem mudar nada (snapshot de 6 tabelas), idempotência, ofertas simultâneas, cliente em dois lotes sem saldo para os dois, lances cruzados sem deadlock, lance que chega antes do fim mas só bloqueia depois, cancelamento contra primeiro lance, eventos só depois do COMMIT |
 | `audit.test.ts` | 21 | Alterar valor, horário, pseudônimo e participante; recalcular a cadeia; apagar checkpoints; remover no meio, no fim e tudo; inserir; reordenar; rollback (checkpoint antigo); checkpoint forjado; âncora só de inserção; lote apagado; âncora fora do ar, resposta perdida, gravação fora de ordem, conflito; pendente nunca é ÍNTEGRO |
 | `settlement.test.ts` | 18 | Exemplo do guia na liquidação, lote sem lances, fim exclusivo, cancelado, repetição, dois executores ao mesmo tempo, último lance antes e depois da liquidação, falha no meio da transação, recuperação no startup, auditoria antes de pagar, comprovante e participações |
 | `realtime.test.ts` | 14 | Dois clientes Socket.IO reais, sala privada só do dono, tentativa de entrar na sala alheia, origem de outro site, logout e expiração, evento perdido recuperado por HTTP |
@@ -55,7 +55,11 @@ As migrações dos bancos de teste rodam sozinhas no início do `npm test` (glob
 | `format.test.ts` | 3 | BRL exato até R$ 1.000.000.000,99, duração |
 | `input-parsing.test.ts` | 7 | "1.234,56" → centavos só com texto e inteiros (inclusive 1,15 e 4,35, que erram com ponto flutuante), recusas, data local ↔ UTC |
 
-### E2E (`e2e/leilao.spec.ts`, 1 cenário, Playwright no Chrome)
+### E2E (Playwright no Chrome, 4 cenários)
+
+`e2e/falhas.spec.ts` (3, etapa 18): resposta cortada depois do commit, evento perdido com volta de suspensão, imagem do museu bloqueada. Detalhes em `docs/TESTES_DE_FALHA.md`.
+
+`e2e/leilao.spec.ts` (1):
 
 `e2e/server.ts` sobe a aplicação real (API, build do web, Socket.IO e job de liquidação a cada 1 s) nos bancos `_test`, limpa e semeia esses bancos e usa o imitador local da API do museu. Não há relógio falso nem rota extra: o lote termina de verdade alguns minutos depois.
 
@@ -100,3 +104,11 @@ Cenário, cada pessoa no próprio contexto do navegador (cookies separados):
 - O E2E usa o Chrome instalado na máquina (`channel: 'chrome'`); em outra máquina sem Chrome, troque para `msedge` ou instale o navegador do Playwright.
 - Testes da API do museu real (`test:live`) dependem de internet e não entram no `npm test`.
 - Janelas não cobertas pela auditoria (lance removido antes de chegar à âncora) estão descritas em `docs/AUDITORIA.md` §8; os testes não as escondem.
+
+## Resultados de 29/10/2026 (etapa 18)
+
+| Comando | Resultado |
+| --- | --- |
+| `npm test` | API: **238 de 238**. Web: **28 de 28** |
+| `npm run test:e2e` | **4 de 4** em 4,1 min |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |

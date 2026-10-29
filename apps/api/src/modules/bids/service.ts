@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { TransactionClient } from '../../db/transaction.js';
+import { describeError } from '../../shared/describe-error.js';
 import { AppError } from '../../shared/errors.js';
 import { withIdempotency } from '../../shared/idempotency.js';
 import type { AnchorStatus, IntegrityRecorder } from '../audit/recorder.js';
@@ -231,7 +232,15 @@ export async function placeBid(
 
   // 7. Depois do COMMIT: auditoria pós-commit (etapa 10) e evento. Repetição idempotente não republica.
   if (!result.replayed && event) {
-    event.auditStatus = await integrity.afterCommit(event.lotId, event.seq);
+    try {
+      event.auditStatus = await integrity.afterCommit(event.lotId, event.seq);
+    } catch (error) {
+      // O lance JÁ foi gravado (COMMIT). Uma falha aqui não pode virar "erro" para o cliente,
+      // senão ele acharia que o lance não entrou. O checkpoint fica pendente e o reconciliador
+      // termina a confirmação; a verificação pública mostra PENDENTE até lá (nunca ÍNTEGRO).
+      console.error(`[auditoria] Falha ao confirmar o lance ${event.seq} do lote ${event.lotId} na âncora: ${describeError(error)}`);
+      event.auditStatus = 'pending';
+    }
     publishBidAccepted(event);
   }
   return result;

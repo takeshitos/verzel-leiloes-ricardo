@@ -199,3 +199,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** suíte completa, E2E (passou na primeira execução), typecheck, lint, build e duas mutações de propósito para provar que os testes falham com o erro.
 - **Erros encontrados e corrigidos:** o `tsconfig` do E2E não incluía a extensão de tipos do Express da API.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 18 — Falhas e recuperação (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 18.
+- **Arquivos gerados pela IA:** correção pós-commit do lance, mensagens de "sem resposta" no painel, 3 testes E2E de falha, regressões na API e `docs/TESTES_DE_FALHA.md`.
+- **Verificações executadas:** revisão de código (transações, SQL), servidor sem chave, E2E completo, suíte completa, typecheck, lint e build; a regressão foi rodada sem a correção para provar que pega o defeito.
+- **Erros encontrados e corrigidos:** os dois defeitos acima; no teste de evento perdido, fechar só o lado da página do WebSocket não derrubava a conexão (o Socket.IO estava em long-polling), então o teste espera a queda real, como um navegador sem rede.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
