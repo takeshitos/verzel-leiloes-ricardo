@@ -377,3 +377,7 @@ Push de `080b692` às 21:32:47 UTC. Novo frontend no ar às 21:33:43 UTC (bundle
 ## Deploy da etapa 19 (extras)
 
 Push de `bc49166` às 21:49:14 UTC. No ar às 21:50:07 UTC (`/api/lots?status=invalido` passou a responder 400). Verificado: `?q=rocky` traz o lote do seed; `?q=zzz` devolve os grupos vazios; o `index.html` tem o script do tema.
+
+## Deploy da etapa 20 (README)
+
+Push de `c2d3c02` às 22:28:07 UTC; o serviço reiniciou às 22:29:01 UTC. Health ok, `/` 200, `README.md` público no GitHub. A correção de `config.ts` (achar `apps/api/.env` pela pasta da API) não afeta produção, que não lê arquivo `.env`.

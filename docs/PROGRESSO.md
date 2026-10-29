@@ -40,9 +40,9 @@ Etapa 18 concluída localmente (29/10/2026): rodada de falhas em ambiente isolad
 
 Etapa 19 concluída localmente (29/10/2026): extras opcionais com limite — filtro da vitrine por título/autoria e estado (consulta parametrizada) e tema claro/escuro com escolha salva. Cancelamento com estorno ficou de fora (exige decisão do candidato). 239 testes da API, 28 do web e 4 E2E passam. Commit `bc49166` no ar desde 21:50 UTC.
 
-Etapa 20 concluída localmente (29/10/2026): README para o avaliador, reproduzido num clone limpo (onde apareceu e foi corrigido um defeito do `npm start`), e relato de IA consolidado com texto para o formulário. Ainda sem commit.
+Etapa 20 concluída localmente (29/10/2026): README para o avaliador, reproduzido num clone limpo (onde apareceu e foi corrigido um defeito do `npm start`), e relato de IA consolidado com texto para o formulário. Commit `c2d3c02` no ar desde 22:29 UTC.
 
-Próxima ação: commit e push da etapa 20 (a pedido do candidato); depois, etapa 21 (deploy final e smoke test).
+Próxima ação: etapa 21 (deploy final e smoke test).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1281,3 +1281,7 @@ Não reproduzidos no clone: `npm run dev` (já usado desde a etapa 02; no clone 
 | `npm test` | API **239 de 239**; web **28 de 28** |
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
 | `PORT=3700 npm start` na raiz | Sobe ("API ouvindo em http://127.0.0.1:3700") e `/api/health` ok |
+
+### Deploy da etapa 20
+
+Commit `c2d3c02` enviado às 22:28:07 UTC; o serviço reiniciou às 22:29:01 UTC (`uptimeSeconds` 22). Health ok, página inicial 200 e o `README.md` público no GitHub (200). A correção do `.env` não muda produção (lá `NODE_ENV=production` não lê arquivo).
