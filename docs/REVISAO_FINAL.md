@@ -87,3 +87,5 @@ F2 a F6 não bloqueiam a entrega.
 | F2 | `apps/api/src/shared/config.ts`: o servidor não sobe se `ANCHOR_DATABASE_URL` apontar para o mesmo servidor, porta e banco do `DATABASE_URL` (mesmo com outro usuário) | `test/config.test.ts` (3 testes); suíte completa API 242 de 242 e web 28 de 28; typecheck, lint e build ok; servidor local sobe; produção conferida depois do deploy |
 
 Com isso, o único bloqueio de entrega restante é **R20: enviar o formulário**.
+
+Deploy das correções: commit `fea0e75` enviado às 23:44:11 UTC; o serviço reiniciou às 23:45:06 UTC com `/api/health` ok e a auditoria do lote do seed ÍNTEGRO. Como o servidor só sobe com a âncora num banco diferente do principal, isso também confirma, em produção, que a âncora é outro banco.

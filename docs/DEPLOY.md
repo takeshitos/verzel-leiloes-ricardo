@@ -423,3 +423,7 @@ No PowerShell: `$env:SMOKE_PASSWORD='...'; npm.cmd run smoke:prod`. Sem a variá
 ### Lote aberto para a avaliação
 
 O seed mantém o lote "Rocky, Wooded Landscape with a Dell and Weir" ao vivo até 08/11/2026 02:03 UTC (23:03 de 07/11 em Brasília). Para um encerramento rápido durante a avaliação, crie um lote curto pelo Painel do leiloeiro (README, "Preparar lotes para a avaliação").
+
+## Deploy das correções da revisão final (etapa 22)
+
+Push de `fea0e75` às 23:44:11 UTC; reinício às 23:45:06 UTC. `/api/health` ok e auditoria do lote do seed ÍNTEGRO. A nova regra de configuração (âncora precisa ser outro banco) passou em produção, o que confirma que `ANCHOR_DATABASE_URL` aponta para um banco diferente do `DATABASE_URL`.
