@@ -28,7 +28,7 @@ A garantia é sempre relativa a esse modelo. A interface não usa a frase "à pr
 
 1. **Cadeia de hashes por lote.** O primeiro lance encadeia na gênese do lote: o hash dos parâmetros do lote. `hash = SHA-256(prev_hash + "\n" + conteúdo canônico v1)`. O conteúdo canônico tem campos em ordem fixa, centavos como texto e horário ISO em UTC com milissegundos. Alterar, inserir, remover ou reordenar quebra a cadeia.
 2. **Checkpoint assinado (Ed25519) a cada lance.** A mensagem assinada é `verzel-audit-v1|lot_id|bid_count|last_hash|key_version`. A chave privada fica só no servidor (variável de ambiente), fora do banco e do repositório, e não muda no deploy. A chave pública é publicada em `GET /api/audit/public-key`. Quem só tem acesso ao banco **não consegue gerar assinaturas válidas**: recalcular os hashes não basta.
-3. **Âncora independente.** Cada checkpoint assinado também é gravado num **segundo PostgreSQL** (outro projeto Neon, com credencial própria), numa tabela só de inserção (`anchor_entries`): um gatilho recusa `UPDATE`, `DELETE` e `TRUNCATE`, e em produção o usuário da aplicação só tem `INSERT` e `SELECT`. A âncora guarda o que já aconteceu. Se o banco principal "voltar no tempo" (remoção da cauda, backup antigo, checkpoint antigo), ele terá menos lances que a âncora.
+3. **Âncora independente.** Cada checkpoint assinado também é gravado num **segundo PostgreSQL** (outro projeto Neon, com credencial própria), numa tabela só de inserção (`anchor_entries`): um gatilho recusa `UPDATE`, `DELETE` e `TRUNCATE` (em produção a aplicação usa o usuário dono; o usuário restrito a `INSERT` e `SELECT` não foi aplicado, ver seção 7). A âncora guarda o que já aconteceu. Se o banco principal "voltar no tempo" (remoção da cauda, backup antigo, checkpoint antigo), ele terá menos lances que a âncora.
 
 **Por que não blockchain:** o problema é detectar mudanças feitas por quem tem acesso ao banco, não obter consenso entre partes que não confiam umas nas outras. Uma assinatura digital (só o servidor assina) mais uma cópia independente (o banco principal não apaga) resolvem isso com duas tecnologias simples e verificáveis. Blockchain traria custo, complexidade e dependência externa sem acrescentar garantia ao modelo acima.
 
@@ -83,7 +83,7 @@ A resposta traz o histórico completo (pseudônimo, valor, horário, `bidder_ref
 
 - **Gerar a chave uma única vez:** `npm run audit:keygen -w apps/api` no computador do candidato. Cadastrar no Render como segredo e guardar uma cópia offline (gerenciador de senhas). Não regenerar no deploy: checkpoints antigos deixariam de ser verificáveis.
 - **Troca de chave:** nova `AUDIT_KEY_VERSION`, com a chave pública antiga em `AUDIT_PREVIOUS_PUBLIC_KEYS`.
-- **Usuário da âncora em produção:** só `INSERT` e `SELECT` (SQL em `docs/DEPLOY.md`).
+- **Usuário da âncora em produção:** o dono do projeto Neon da âncora. O gatilho recusa `UPDATE`, `DELETE` e `TRUNCATE` vindos da aplicação. Um usuário restrito a `INSERT` e `SELECT` é um endurecimento opcional **não aplicado** (`docs/DEPLOY.md`); quem tiver a credencial da âncora poderia remover o gatilho, e esse atacante está fora do modelo (seção 2).
 - **Restauração legítima do banco principal:** os lotes afetados passam a aparecer como adulterados. O operador deve registrar o incidente; não há "re-assinatura" automática.
 
 ## 8. O que ainda passa (limites declarados)

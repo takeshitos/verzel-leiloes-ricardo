@@ -259,3 +259,11 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Feito pela IA:** verificação pública sem login (rotas, 404 JSON, HTTPS, WSS, bundle sem segredos, GitHub público, configuração) e o smoke test com login em `e2e/smoke.prod.ts`, que a IA **não executou** (exige login em produção).
 - **Não feito:** nenhum recurso criado, nada contratado, nenhuma alteração no banco público.
 - **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo.
+
+### Etapa 22 — Revisão final por requisito (29/10/2026)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 22.
+- **Feito pela IA:** `docs/REVISAO_FINAL.md` com estado e evidência de R01 a R20, verificações de risco e achados (F1 documentação da âncora; F2 falta de trava contra âncora no mesmo banco; F3 a F6 limitações). Nenhuma alteração no projeto nesta passagem.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo.
+- **Correções pedidas pelo candidato:** F1 (textos sobre o usuário da âncora em README, DEPLOY, AUDITORIA e PLANO) e F2 (trava na configuração contra âncora no mesmo banco, com 3 testes).

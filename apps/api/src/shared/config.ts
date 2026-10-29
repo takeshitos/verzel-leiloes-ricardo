@@ -67,7 +67,31 @@ const envSchema = z.object({
   if (env.NODE_ENV === 'production' && !env.ANCHOR_DATABASE_URL) {
     context.addIssue({ code: 'custom', path: ['ANCHOR_DATABASE_URL'], message: 'obrigatória em produção (âncora da auditoria)' });
   }
+  // A âncora só serve se for OUTRO banco: no mesmo, quem altera o histórico alteraria a âncora junto.
+  if (env.ANCHOR_DATABASE_URL && sameDatabase(env.DATABASE_URL, env.ANCHOR_DATABASE_URL)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['ANCHOR_DATABASE_URL'],
+      message: 'precisa ser outro banco, diferente do DATABASE_URL (a âncora tem de ser independente)',
+    });
+  }
 });
+
+/** Mesmo servidor (host e porta) e mesmo nome de banco, ignorando usuário, senha e parâmetros. */
+export function sameDatabase(first: string, second: string): boolean {
+  try {
+    const a = new URL(first);
+    const b = new URL(second);
+    const port = (url: URL) => url.port || '5432';
+    return (
+      a.hostname.toLowerCase() === b.hostname.toLowerCase() &&
+      port(a) === port(b) &&
+      decodeURIComponent(a.pathname) === decodeURIComponent(b.pathname)
+    );
+  } catch {
+    return false; // formato inválido já é recusado pelas outras regras
+  }
+}
 
 export type AppConfig = {
   nodeEnv: 'development' | 'test' | 'production';

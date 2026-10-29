@@ -36,7 +36,7 @@ Front e API ficam na mesma origem, sem CORS. Banco principal e âncora de audito
 | `DATABASE_URL` | Painel do Render → Environment (segredo) | Etapa 04, **antes do push dessa etapa** | String de conexão do projeto Neon principal, com `sslmode=require`. Sem ela, o novo deploy falha no startup (o anterior continua no ar) |
 | `TRUST_PROXY` / `CLIENT_IP_HEADER` | `render.yaml` (`1` / `cf-connecting-ip`) | Etapa 05 | Sem elas, o limite de login usaria o IP do proxy do Render e todos os usuários dividiriam o mesmo limite. Conferir em Environment se apareceram após o deploy |
 | `RUN_MIGRATIONS_ON_START` / `RUN_SEED_ON_START` | `render.yaml` (`true`) | Etapa 04 | Aplica migrações pendentes e o seed idempotente antes de aceitar conexões. Variáveis novas de um Blueprint existente podem precisar de "Manual Sync" no painel |
-| `ANCHOR_DATABASE_URL` | Painel do Render (segredo) | Etapa 10 | Projeto Neon da âncora, com usuário só de INSERT/SELECT |
+| `ANCHOR_DATABASE_URL` | Painel do Render (segredo) | Etapa 10 | Projeto Neon da âncora (usuário dono; usuário restrito a INSERT/SELECT é endurecimento opcional **não aplicado**) |
 | `AUDIT_SIGNING_PRIVATE_KEY` | Painel do Render (segredo) | Etapa 10 | Chave Ed25519 gerada uma vez e guardada offline; nunca regenerar no deploy |
 | `SETTLEMENT_INTERVAL_MS` | não definir | Etapa 11 | Opcional. Intervalo do job de encerramento; padrão 5000 ms. O job também roda no startup |
 
@@ -246,7 +246,7 @@ Sem estas variáveis o novo deploy não sobe: a configuração exige a chave, e 
 4. Fazer o push. No startup, com `RUN_MIGRATIONS_ON_START=true`, o servidor cria a tabela da âncora.
 5. Conferir: `GET /api/audit/public-key` responde com a chave pública, e `GET /api/lots/<lote>/audit` responde ÍNTEGRO para o lote do seed (sem lances).
 
-**Endurecimento opcional:** depois do primeiro deploy, criar no projeto da âncora um usuário só com `INSERT` e `SELECT` em `anchor_entries` e `SELECT` em `pgmigrations`, e trocar `ANCHOR_DATABASE_URL` para ele. Com o usuário dono, o gatilho já impede `UPDATE`/`DELETE` pela aplicação, mas quem tiver essa credencial poderia remover o gatilho; esse atacante está fora do modelo (`docs/AUDITORIA.md`, seção 2).
+**Endurecimento opcional (não aplicado em 29/10/2026):** depois do primeiro deploy, criar no projeto da âncora um usuário só com `INSERT` e `SELECT` em `anchor_entries` e `SELECT` em `pgmigrations`, e trocar `ANCHOR_DATABASE_URL` para ele. Com o usuário dono, o gatilho já impede `UPDATE`/`DELETE` pela aplicação, mas quem tiver essa credencial poderia remover o gatilho; esse atacante está fora do modelo (`docs/AUDITORIA.md`, seção 2).
 
 Nunca regenerar a chave em deploys: os checkpoints antigos deixariam de ser verificáveis.
 

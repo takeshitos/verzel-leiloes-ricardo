@@ -205,7 +205,7 @@ docs/                    requisitos, decisões, plano, auditoria, testes, deploy
 
 Render (Blueprint `render.yaml`): um web service Node no plano gratuito, `npm ci --include=dev && npm run build`, start `node apps/api/dist/server.js`, health check `/api/health`. No startup, aplica as migrações (banco e âncora) e roda o seed idempotente. Banco principal e âncora em **dois projetos Neon** separados.
 
-Variáveis cadastradas no painel do Render (segredos nunca vão para o repositório): `DATABASE_URL`, `ANCHOR_DATABASE_URL`, `AUDIT_SIGNING_PRIVATE_KEY` (e `AUDIT_KEY_VERSION`). As demais estão no `render.yaml`. Passo a passo, verificações de cada deploy e o SQL do usuário da âncora (só `INSERT` e `SELECT`) em `docs/DEPLOY.md`.
+Variáveis cadastradas no painel do Render (segredos nunca vão para o repositório): `DATABASE_URL`, `ANCHOR_DATABASE_URL`, `AUDIT_SIGNING_PRIVATE_KEY` (e `AUDIT_KEY_VERSION`). As demais estão no `render.yaml`. Passo a passo e verificações de cada deploy em `docs/DEPLOY.md`. A âncora usa o usuário dono do projeto Neon dela: o gatilho do banco recusa `UPDATE` e `DELETE` vindos da aplicação, mas um usuário restrito (só `INSERT` e `SELECT`) **não foi configurado** (endurecimento opcional descrito em `docs/DEPLOY.md`).
 
 ### Preparar lotes para a avaliação
 

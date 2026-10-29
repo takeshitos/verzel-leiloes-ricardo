@@ -9,7 +9,7 @@ apps/web   React + Vite + React Router + socket.io-client
 apps/api   Express + pg + Socket.IO + jobs (encerramento e reconciliação da âncora)
            └─ em produção também serve o build do web (mesma origem)
 PostgreSQL principal (Neon)    usuários, lotes, lances, carteiras, auditoria
-PostgreSQL da âncora (Neon)    só a tabela anchor_entries, credencial própria, só INSERT/SELECT
+PostgreSQL da âncora (Neon)    só a tabela anchor_entries, credencial própria (usuário dono; restrição a INSERT/SELECT planejada, não aplicada)
 ```
 
 Módulos da API (`apps/api/src/modules/`), cada um com `routes.ts`, `service.ts` e `queries.ts` quando necessário:
@@ -254,7 +254,7 @@ A implementação atual (`chainOnlyRecorder`) calcula a cadeia real e devolve se
 | Critério | Disco persistente no Render | PostgreSQL separado (Neon) |
 | --- | --- | --- |
 | Custo | Exige instância paga (preço a conferir no painel; a página de preços não foi lida pela ferramenta) | Plano gratuito: 100 projetos, 1 GB cada, sem expiração informada |
-| Independência do banco principal | Sim, mas no mesmo servidor da aplicação | Sim, com credencial própria e usuário só com INSERT/SELECT |
+| Independência do banco principal | Sim, mas no mesmo servidor da aplicação | Sim, com credencial própria (o usuário só com INSERT/SELECT foi planejado e não aplicado) |
 | Código | Escrever arquivo JSONL com `fsync` | Mesma biblioteca `pg` já usada no projeto |
 | Riscos | Instância única, sem deploy sem interrupção; restaurar snapshot diário do disco volta a âncora no tempo | Mesmo dono de conta do banco principal; o compute suspende após 5 min ocioso |
 

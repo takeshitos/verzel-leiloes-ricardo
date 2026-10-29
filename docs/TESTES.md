@@ -33,6 +33,7 @@ As migrações dos bancos de teste rodam sozinhas no início do `npm test` (glob
 
 | Arquivo | Testes | O que prova |
 | --- | --- | --- |
+| `config.test.ts` | 3 | Âncora precisa ser outro banco: recusa mesmo servidor, porta e nome (etapa 22) |
 | `auth.test.ts` | 21 | Cadastro, login, logout que revoga a sessão, papéis fixos, CSRF (Origin e Sec-Fetch-Site), limite de tentativas, cookie seguro em produção |
 | `authorization.test.ts` | 9 | Visitante 401; papéis (leiloeiro não oferta, licitante não cria lote); propriedade do lote; id/papel enviados pelo cliente são ignorados |
 | `money.test.ts` | 2 | Centavos inteiros e formatação sem ponto flutuante |

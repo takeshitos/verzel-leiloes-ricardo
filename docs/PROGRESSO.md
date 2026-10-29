@@ -44,7 +44,11 @@ Etapa 20 concluída localmente (29/10/2026): README para o avaliador, reproduzid
 
 Etapa 21 (29/10/2026): verificação pública sem login concluída (rotas profundas, 404 JSON, HTTPS e WSS, bundle sem segredos, GitHub público, configuração). Smoke test com login (`e2e/smoke.prod.ts`) executado pelo candidato: 1 passed em 4,4 min. Encerramento com o serviço dormindo documentado como não pontual. Ainda sem commit.
 
-Próxima ação: commit e push da etapa 21 (a pedido do candidato); depois, etapa 22 (revisão final por requisito).
+Etapa 22 (29/10/2026): revisão final em `docs/REVISAO_FINAL.md` (R01–R19 atendidos com evidência, R20 pendente do envio do formulário; achados F1 a F6). Primeira passagem só com achados, sem alterar o projeto.
+
+F1 e F2 corrigidos a pedido do candidato (textos da âncora; trava contra âncora no mesmo banco, com 3 testes). API 242 de 242, web 28 de 28.
+
+Próxima ação: enviar o formulário (R20); depois, etapa 23 (demonstração e entrevista).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
