@@ -36,9 +36,11 @@ Etapa 16 concluída localmente (29/10/2026): páginas públicas de auditoria (hi
 
 Etapa 17 concluída localmente (29/10/2026): mapa dos testes por requisito em `docs/TESTES.md`, teste de privacidade de todas as respostas públicas e E2E com Playwright (leiloeiro, dois licitantes e visitante). 235 testes da API, 28 do web e 1 E2E passam. Commit `d26efe7` no ar desde 18:02 UTC.
 
-Etapa 18 concluída localmente (29/10/2026): rodada de falhas em ambiente isolado registrada em `docs/TESTES_DE_FALHA.md`. Dois defeitos corrigidos com regressão (500 para lance já gravado quando a confirmação pós-commit falhava; mensagens de "sem resposta" no cancelamento e na criação de lote). 238 testes da API, 28 do web e 4 E2E passam. Ainda sem commit.
+Etapa 18 concluída localmente (29/10/2026): rodada de falhas em ambiente isolado registrada em `docs/TESTES_DE_FALHA.md`. Dois defeitos corrigidos com regressão (500 para lance já gravado quando a confirmação pós-commit falhava; mensagens de "sem resposta" no cancelamento e na criação de lote). 238 testes da API, 28 do web e 4 E2E passam. Commit `080b692` no ar desde 21:33 UTC.
 
-Próxima ação: commit e push da etapa 18 (a pedido do candidato); depois, etapa 19 (extras com limite).
+Etapa 19 concluída localmente (29/10/2026): extras opcionais com limite — filtro da vitrine por título/autoria e estado (consulta parametrizada) e tema claro/escuro com escolha salva. Cancelamento com estorno ficou de fora (exige decisão do candidato). 239 testes da API, 28 do web e 4 E2E passam. Ainda sem commit.
+
+Próxima ação: commit e push da etapa 19 (a pedido do candidato); depois, etapa 20 (README e relato de IA).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1203,6 +1205,42 @@ Rodada focada em falhas, só nos bancos `_test`, em servidores locais e no naveg
 | `npm run test:e2e` | **4 de 4** em 4,1 min (3 de falhas + o fluxo completo) |
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
 
+### Deploy da etapa 18
+
+Commit `080b692` enviado às 21:32:47 UTC; novo frontend no ar às 21:33:43 UTC (o JavaScript servido passou a conter a mensagem nova de cancelamento sem resposta). Health ok; lance sem login 401; auditoria do lote do seed ÍNTEGRO. Nenhum teste de falha foi rodado em produção.
+
 ### Limites que permanecem
 
 Listados em `docs/TESTES_DE_FALHA.md`: janela antes da âncora, criação de lote sem chave de idempotência, tempo real de uma instância e serviço que dorme no Render gratuito.
+
+## Etapa 19 — Extras com limite (29/10/2026, concluída localmente)
+
+Antes dos extras, conferi as obrigações: fluxo principal, deploy e integridade estão funcionando e verificados (etapas 05 a 18). O que ainda falta como obrigação (README, deploy final, relato de IA e revisão final) pertence às etapas 20 a 23. Por isso, só os extras de melhor relação esforço/benefício entraram.
+
+### Extras que entraram (opcionais, não são requisitos)
+
+- **Filtro da vitrine** (E01): `GET /api/lots?q=&status=` filtra por trecho do título ou da autoria (sem diferenciar maiúsculas; `%` e `_` viram texto comum) e por um estado (`live`, `scheduled`, `ended`), tudo como parâmetro da consulta SQL e validado com zod (estado inválido = 400). Cancelados continuam fora. Na tela, barra com campo de texto (espera 300 ms de digitação) e seleção de estado, guardados na URL (`?q=&estado=`) para recarregar e compartilhar; vazio por grupo: "Nenhum lote deste grupo corresponde ao filtro."; botão "Limpar filtros". Não substitui a busca de obras no acervo do museu (R03).
+- **Tema claro/escuro** (E05): mesmos tokens de cor com valores escuros em `:root[data-theme='dark']` e, sem escolha salva, `prefers-color-scheme: dark`. Cores fixas viraram tokens (links, destaque como texto, botão de perigo, seleção, borda de erro) para manter contraste AA. Botão no cabeçalho; a escolha fica em `localStorage` (com `try/catch`, se o navegador bloquear vale o sistema) e um script curto no `index.html` aplica o tema antes da primeira pintura.
+
+### Extras consolidados (já existiam)
+
+- **Docker Compose** (E03): `docker-compose.yml` com o PostgreSQL de desenvolvimento e teste desde a etapa 04; sem mudança.
+- **Testes automatizados** (E04): suíte da API, do web e E2E das etapas 09 a 18 (`docs/TESTES.md`); sem reescrita.
+
+### Deixado de fora de propósito
+
+- **Cancelamento de lote com lances e estorno** (E02): mexe em reservas, concorrência, auditoria e liquidação; só com decisão explícita do candidato.
+- Pagamento real, recuperação de senha, chat, revenda, app nativo, microsserviços e blockchain: fora do escopo.
+
+### Verificação
+
+| O que | Resultado |
+| --- | --- |
+| API: filtro por título, por estado, sem resultado, `%` como texto, texto com aspas e SQL, estado inválido, cancelado fora | Teste novo em `lots.test.ts` (passa) |
+| Navegador, servidor local (banco `verzel_dev`) | "virgin" → URL `?q=virgin`, ao vivo 0 e agendados 0 com "Nenhum lote deste grupo corresponde ao filtro.", encerrados 7; estado "Encerrados" → só a seção de encerrados (`?q=virgin&estado=ended`); recarregar mantém campo, estado e resultado; texto inexistente → as três seções vazias e "Limpar filtros" visível |
+| Tema | Sem escolha, seguiu o sistema (escuro); "Tema claro" → `data-theme="light"`, `localStorage.tema = "light"`, fundo claro; abrir outra página manteve o claro; de volta ao escuro, sala do lote, aviso amarelo de VERIFICAÇÃO INDISPONÍVEL e contorno de foco do teclado legíveis. A escolha salva no navegador de teste foi apagada no fim |
+| `npm test` | API **239 de 239**; web **28 de 28** |
+| `npm run test:e2e` | **4 de 4** em 4,6 min |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+
+Não foram criados testes que só copiam propriedades do CSS.

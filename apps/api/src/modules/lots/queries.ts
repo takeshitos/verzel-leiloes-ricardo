@@ -119,14 +119,33 @@ export async function findPublicLot(db: Queryable, lotId: string): Promise<Publi
 
 const SHOWCASE_LIMIT = 60;
 
-/** Vitrine: ao vivo, agendados e encerrados. Cancelados nunca aparecem. */
-export async function listShowcase(db: Queryable) {
+export type ShowcaseFilters = {
+  /** Trecho do título ou da autoria (sem diferenciar maiúsculas). */
+  text?: string;
+  /** Só um grupo da vitrine. */
+  status?: 'live' | 'scheduled' | 'ended';
+};
+
+/** % e _ digitados viram texto comum no LIKE (não curingas). */
+function escapeLike(text: string): string {
+  return text.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+/**
+ * Vitrine: ao vivo, agendados e encerrados. Cancelados nunca aparecem, nem com filtro.
+ * Filtros opcionais (extra da etapa 19), sempre como parâmetros da consulta.
+ */
+export async function listShowcase(db: Queryable, filters: ShowcaseFilters = {}) {
+  const pattern = filters.text ? `%${escapeLike(filters.text)}%` : null;
   const result = await db.query<PublicLotRow>(
     `SELECT * FROM (${PUBLIC_LOT_SELECT} WHERE l.cancelled_at IS NULL) AS lot
+      WHERE ($1::text IS NULL OR title ILIKE $1 OR creators ILIKE $1)
+        AND ($2::text IS NULL OR status = $2)
       ORDER BY CASE status WHEN 'live' THEN 0 WHEN 'scheduled' THEN 1 ELSE 2 END,
                CASE WHEN status = 'live' THEN ends_at END ASC,
                CASE WHEN status = 'scheduled' THEN starts_at END ASC,
                CASE WHEN status = 'ended' THEN ends_at END DESC`,
+    [pattern, filters.status ?? null],
   );
   const lots = result.rows.map(toPublicLot);
   return {

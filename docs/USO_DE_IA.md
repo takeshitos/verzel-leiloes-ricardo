@@ -208,3 +208,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** revisão de código (transações, SQL), servidor sem chave, E2E completo, suíte completa, typecheck, lint e build; a regressão foi rodada sem a correção para provar que pega o defeito.
 - **Erros encontrados e corrigidos:** os dois defeitos acima; no teste de evento perdido, fechar só o lado da página do WebSocket não derrubava a conexão (o Socket.IO estava em long-polling), então o teste espera a queda real, como um navegador sem rede.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 19 — Extras com limite (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 19.
+- **Arquivos gerados pela IA:** filtro parametrizado da vitrine (API, teste e tela), tema escuro por tokens, botão de tema e script de tema no `index.html`.
+- **Verificações executadas:** teste da API do filtro, suíte completa, E2E, typecheck, lint, build e verificação manual no navegador (filtros, vazios, URL, persistência e contraste do tema).
+- **Erros encontrados e corrigidos:** uma linha da vitrine quebrou ao gerar o arquivo pelo shell (crases interpretadas); corrigida e conferida pelo typecheck.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

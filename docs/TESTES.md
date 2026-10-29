@@ -29,7 +29,7 @@ As migrações dos bancos de teste rodam sozinhas no início do `npm test` (glob
 
 ## Suítes
 
-### API (`apps/api/test`, 238 testes em 14 arquivos)
+### API (`apps/api/test`, 239 testes em 14 arquivos)
 
 | Arquivo | Testes | O que prova |
 | --- | --- | --- |
@@ -111,4 +111,12 @@ Cenário, cada pessoa no próprio contexto do navegador (cookies separados):
 | --- | --- |
 | `npm test` | API: **238 de 238**. Web: **28 de 28** |
 | `npm run test:e2e` | **4 de 4** em 4,1 min |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+
+## Resultados de 29/10/2026 (etapa 19)
+
+| Comando | Resultado |
+| --- | --- |
+| `npm test` | API: **239 de 239** (novo: filtros da vitrine em `lots.test.ts`). Web: **28 de 28** |
+| `npm run test:e2e` | **4 de 4** em 4,6 min |
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |

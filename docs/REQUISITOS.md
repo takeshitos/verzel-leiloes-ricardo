@@ -37,11 +37,11 @@ O PDF diz que nenhum destes itens é obrigatório, mas todos entram na avaliaç�
 
 | ID | Extra | Fonte no PDF | Etapa planejada | Estado |
 | --- | --- | --- | --- | --- |
-| E01 | Busca e filtro de lotes na vitrine (diferente da busca de itens na API, que é obrigatória em R03) | p. 6 | 19 | Não iniciado |
-| E02 | Cancelamento de lote com estorno automático (cancelar lote que já tem lances) | p. 6 | 19 | Não iniciado |
-| E03 | Docker Compose | p. 6 | 19 (Docker não está instalado nesta máquina; ver PROGRESSO) | Não iniciado |
-| E04 | Testes automatizados | p. 6 | 09 a 18 (testes críticos), 17 (suíte) | Não iniciado |
-| E05 | Tema claro e escuro | p. 6 | 19 | Não iniciado |
+| E01 | Busca e filtro de lotes na vitrine (diferente da busca de itens na API, que é obrigatória em R03) | p. 6 | 19 | Implementado na etapa 19 (filtro por título/autoria e estado, parametrizado; não substitui R03) |
+| E02 | Cancelamento de lote com estorno automático (cancelar lote que já tem lances) | p. 6 | 19 | Fora desta versão de propósito (altera reservas, concorrência, auditoria e liquidação; exige decisão do candidato) |
+| E03 | Docker Compose | p. 6 | 04, 19 | Implementado na etapa 04 (`docker-compose.yml` com o PostgreSQL de desenvolvimento e teste); consolidado na etapa 19 |
+| E04 | Testes automatizados | p. 6 | 09 a 18 (testes críticos), 17 (suíte) | Implementado (API, web e E2E; `docs/TESTES.md`) |
+| E05 | Tema claro e escuro | p. 6 | 19 | Implementado na etapa 19 (tokens CSS, escolha salva, segue o sistema sem escolha) |
 
 Fora do escopo segundo o PDF (p. 6): nota fiscal, revenda entre usuários, aplicativo nativo e recuperação de senha.
 

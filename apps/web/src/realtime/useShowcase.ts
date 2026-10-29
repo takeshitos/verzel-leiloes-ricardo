@@ -18,7 +18,10 @@ const OFFLINE_POLL_MS = 30_000;
  * - acompanha as salas dos lotes ao vivo e agendados para mostrar lance e prorrogação na hora;
  * - descarta atualização com versão menor que a mostrada.
  */
-export function useShowcase() {
+/** Filtros opcionais da vitrine (extra): trecho do título/autoria e um único estado. */
+export type ShowcaseFilter = { text: string; status: '' | 'live' | 'scheduled' | 'ended' };
+
+export function useShowcase(filter: ShowcaseFilter = { text: '', status: '' }) {
   const socket = getSocket();
   const connection = useConnectionStatus();
   const [lots, setLots] = useState<PublicLot[] | null>(null);
@@ -28,7 +31,11 @@ export function useShowcase() {
 
   const reload = useCallback(() => {
     const sentAt = Date.now();
-    apiGet<ShowcaseResponse>('/lots')
+    const params = new URLSearchParams();
+    if (filter.text.trim()) params.set('q', filter.text.trim());
+    if (filter.status) params.set('status', filter.status);
+    const query = params.toString();
+    apiGet<ShowcaseResponse>(query ? `/lots?${query}` : '/lots')
       .then((response) => {
         const all = [...response.live, ...response.scheduled, ...response.ended];
         lotsRef.current = all;
@@ -39,7 +46,7 @@ export function useShowcase() {
       .catch((caught: unknown) => {
         setError(caught instanceof ApiError ? caught : new ApiError(0, 'UNKNOWN', 'Erro inesperado ao carregar a vitrine.'));
       });
-  }, []);
+  }, [filter.text, filter.status]);
 
   useEffect(() => {
     reload();

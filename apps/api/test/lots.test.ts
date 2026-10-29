@@ -197,6 +197,36 @@ describe('estado do lote e vitrine', () => {
     expect(JSON.stringify(response.body)).not.toMatch(/@|seller_id|password/);
   });
 
+  it('filtros da vitrine (extra): título/autoria e estado, sem mostrar cancelados', async () => {
+    const live = (await createLot()).body.lot;
+    const scheduled = (await createLot(validLot({ startsAt: minutesFromNow(30), endsAt: minutesFromNow(90) }))).body.lot.id;
+    const cancelled = (await createLot()).body.lot.id;
+    expect((await request(app).post(`/api/lots/${cancelled}/cancel`).set('Cookie', seller)).status).toBe(200);
+    const ids = (body: { live: { id: string }[]; scheduled: { id: string }[]; ended: { id: string }[] }) =>
+      [...body.live, ...body.scheduled, ...body.ended].map((lot) => lot.id);
+
+    // Trecho do título, sem diferenciar maiúsculas.
+    const word = String(live.item.title).split(/\s+/)[0].toUpperCase();
+    const byTitle = await request(app).get('/api/lots').query({ q: word });
+    expect(ids(byTitle.body)).toEqual(expect.arrayContaining([live.id, scheduled]));
+    expect(ids(byTitle.body)).not.toContain(cancelled); // cancelado continua fora
+
+    // Só um estado.
+    const onlyScheduled = await request(app).get('/api/lots').query({ status: 'scheduled' });
+    expect(ids(onlyScheduled.body)).toEqual([scheduled]);
+    expect(onlyScheduled.body.live).toEqual([]);
+
+    // Nada encontrado; % e _ são texto, não curingas.
+    expect(ids((await request(app).get('/api/lots').query({ q: 'zzz-nao-existe' })).body)).toEqual([]);
+    expect(ids((await request(app).get('/api/lots').query({ q: '%' })).body)).toEqual([]);
+    expect(ids((await request(app).get('/api/lots').query({ q: "' OR 1=1 --" })).body)).toEqual([]);
+
+    // Estado inválido: 400 com mensagem.
+    const invalid = await request(app).get('/api/lots').query({ status: 'cancelled' });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error.details.fields.status).toMatch(/Estado inválido/);
+  });
+
   it('o estado vem do horário, sem coluna de status para ficar desatualizada', async () => {
     const id = (await createLot(validLot({ startsAt: minutesFromNow(30), endsAt: minutesFromNow(90) }))).body.lot.id;
     expect((await request(app).get(`/api/lots/${id}`)).body.lot.status).toBe('scheduled');

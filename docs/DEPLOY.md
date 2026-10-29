@@ -369,3 +369,7 @@ Ainda não verificado em produção: comprovante real e auditoria de lote com la
 ## Deploy da etapa 17 (testes)
 
 Push de `d26efe7` às 18:01:21 UTC: só testes, `docs/TESTES.md` e `@playwright/test` como dependência de desenvolvimento (o pacote não baixa navegador). O serviço reiniciou às 18:02:33 UTC (`uptimeSeconds` 13). Verificado: `/api/health` 200 com `database: ok`, `/` 200, `/socket.io` respondendo o handshake.
+
+## Deploy da etapa 18 (falhas e recuperação)
+
+Push de `080b692` às 21:32:47 UTC. Novo frontend no ar às 21:33:43 UTC (bundle `/assets/index-CjycqQq1.js`). Verificado: `/api/health` 200 com `database: ok`; lance sem login 401; auditoria do lote do seed ÍNTEGRO. Os testes de falha da etapa rodaram só em ambiente isolado, nunca em produção.

@@ -13,7 +13,13 @@
   --line: #e0d7c9;
   --line-strong: #c9bca8;
   --accent: #7b2d1e; /* bordô (≈8:1 com texto branco) */
-  --accent-hover: #63231716;
+  --accent-hover: #63231a;
+  --accent-text: #7b2d1e; /* destaque usado como texto (links, rótulos) */
+  --accent-text-hover: #561e14;
+  --selected-bg: #fbf3f0;
+  --error-line: #e8b8b2;
+  --danger-bg: #a3241a;
+  --danger-hover: #861d15;
   --accent-ink: #ffffff;
   --gold: #a07a2c;
   --ok: #1d6a3a;
@@ -38,6 +44,75 @@
   background: var(--paper);
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Tema escuro (extra da etapa 19) ----------
+   Vale quando a pessoa escolhe "escuro" ou, sem escolha salva, quando o sistema prefere escuro.
+   Mesmos tokens; texto, links, botões e avisos com contraste AA sobre os fundos escuros. */
+:root[data-theme='dark'] {
+  --paper: #15120f;
+  --surface: #1f1b17;
+  --surface-muted: #2a251f;
+  --ink: #f2ece4; /* ≈15:1 no papel */
+  --muted: #b9aea0; /* ≈8:1 no papel */
+  --line: #3a332b;
+  --line-strong: #564c40;
+  --accent: #b34a32; /* fundo de botão com texto branco (≈5:1) */
+  --accent-hover: #c65a40;
+  --accent-text: #f2a58f; /* links e rótulos (≈8:1 no papel) */
+  --accent-text-hover: #f8c3b4;
+  --gold: #8f6a1f;
+  --ok: #7fd6a0;
+  --ok-soft: #16301f;
+  --warning: #f1c46b;
+  --warning-soft: #352a10;
+  --error: #ff9a8f;
+  --error-soft: #3a1a16;
+  --error-line: #6b2c25;
+  --info: #9cc8f5;
+  --info-soft: #14283b;
+  --focus: #8ab8ff;
+  --selected-bg: #2f211b;
+  --danger-bg: #b3261e;
+  --danger-hover: #c9372e;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #15120f;
+    --surface: #1f1b17;
+    --surface-muted: #2a251f;
+    --ink: #f2ece4;
+    --muted: #b9aea0;
+    --line: #3a332b;
+    --line-strong: #564c40;
+    --accent: #b34a32;
+    --accent-hover: #c65a40;
+    --accent-text: #f2a58f;
+    --accent-text-hover: #f8c3b4;
+    --gold: #8f6a1f;
+    --ok: #7fd6a0;
+    --ok-soft: #16301f;
+    --warning: #f1c46b;
+    --warning-soft: #352a10;
+    --error: #ff9a8f;
+    --error-soft: #3a1a16;
+    --error-line: #6b2c25;
+    --info: #9cc8f5;
+    --info-soft: #14283b;
+    --focus: #8ab8ff;
+    --selected-bg: #2f211b;
+    --danger-bg: #b3261e;
+    --danger-hover: #c9372e;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 16px rgb(0 0 0 / 30%);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 *,
@@ -84,12 +159,12 @@ p {
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-text);
   text-underline-offset: 2px;
 }
 
 a:hover {
-  color: #561e14;
+  color: var(--accent-text-hover);
 }
 
 /* Foco visível em tudo que é interativo (teclado). */
@@ -114,7 +189,7 @@ a:hover {
   top: -48px;
   padding: 8px 12px;
   background: var(--ink);
-  color: #fff;
+  color: var(--paper);
   border-radius: var(--radius-small);
   z-index: 10;
 }
@@ -193,7 +268,7 @@ a:hover {
 }
 
 .brand-mark {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .main-nav {
@@ -289,7 +364,7 @@ a:hover {
 }
 
 .button-primary:hover:not(:disabled) {
-  background: #63231a;
+  background: var(--accent-hover);
   color: var(--accent-ink);
 }
 
@@ -318,7 +393,7 @@ a:hover {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .page-header {
@@ -393,7 +468,7 @@ a:hover {
 }
 
 .state-error {
-  border: 1px solid #e8b8b2;
+  border: 1px solid var(--error-line);
   background: var(--error-soft);
   color: var(--error);
   display: flex;
@@ -751,7 +826,8 @@ a:hover {
   font-weight: 600;
 }
 
-.field input {
+.field input,
+.field select {
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--line-strong);
@@ -811,7 +887,7 @@ a:hover {
 
 .choice.is-selected {
   border-color: var(--accent);
-  background: #fbf3f0;
+  background: var(--selected-bg);
 }
 
 .choice input {
@@ -1292,7 +1368,7 @@ a:hover {
 .confirm-box {
   margin-top: 10px;
   padding: 12px;
-  border: 1px solid #e8b8b2;
+  border: 1px solid var(--error-line);
   border-radius: var(--radius-small);
   background: var(--error-soft);
 }
@@ -1302,12 +1378,12 @@ a:hover {
 }
 
 .button-danger {
-  background: var(--error);
+  background: var(--danger-bg);
   color: #fff;
 }
 
 .button-danger:hover:not(:disabled) {
-  background: #861d15;
+  background: var(--danger-hover);
   color: #fff;
 }
 
@@ -1364,7 +1440,7 @@ a:hover {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 2px;
   font: inherit;
@@ -1575,4 +1651,42 @@ code {
   .card {
     box-shadow: none;
   }
+}
+
+/* ---------- Extras da etapa 19: filtro da vitrine e botão de tema ---------- */
+
+.showcase-filter {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  margin: 8px 0 4px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.showcase-filter .field:first-child {
+  flex: 1 1 260px;
+}
+
+.showcase-filter .field:nth-child(2) {
+  flex: 0 1 200px;
+}
+
+.theme-toggle {
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-muted);
 }

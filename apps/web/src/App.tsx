@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Route, Routes, useNavigate } from 'react-router';
 import { ROLE_LABEL, useAuth } from './auth/useAuth';
 import { RequireRole } from './components/RequireRole';
+import { ThemeToggle } from './components/ThemeToggle';
 import { AboutPage } from './pages/AboutPage';
 import { AuditPage } from './pages/AuditPage';
 import { LoginPage } from './pages/LoginPage';
@@ -54,6 +55,7 @@ function SiteHeader() {
         </nav>
 
         <div className="session">
+          <ThemeToggle />
           {state.status === 'loading' && <span className="muted small">...</span>}
           {state.status === 'anonymous' && (
             <Link to="/entrar" className="button button-primary button-small">
