@@ -285,3 +285,21 @@ Ainda não verificado em produção: uma liquidação real. O lote do seed só t
 ## Tempo real (etapa 12)
 
 O Socket.IO roda no mesmo serviço e na mesma porta (`/socket.io`), na mesma origem do site; não há variável nova. O Render aceita WebSocket no plano usado. A arquitetura é de **uma instância**: com várias, as salas precisariam de um adapter (ex.: Redis). Conexões abertas mantêm o serviço acordado; sem tráfego ele dorme e o cliente se recupera por HTTP ao voltar.
+
+## Deploy da etapa 12 (tempo real)
+
+Push de `b8d5eea` às 15:05:21 UTC. Nova versão no ar às 15:06:22 UTC (`GET /socket.io/?EIO=4&transport=polling` passou a responder o handshake com `sid` e `upgrades: ["websocket"]`). Nenhuma variável nova.
+
+Verificação de fora, sem credenciais:
+
+| Verificação | Resultado |
+| --- | --- |
+| Cliente `socket.io-client` como visitante, só WebSocket | Conectou pelo proxy do Render; `session.state` com `authenticated: false` |
+| `lot.subscribe` no lote do seed | `ok: true` |
+| `lot.subscribe` em lote inexistente | `NOT_FOUND` |
+| Conexão com `Origin: https://site-malicioso.example` | Recusada |
+| `GET /api/lots/<seed>` | Traz `version` (0, sem lances) |
+| `/lotes/<seed>` no navegador | "Ao vivo", contagem pelo horário do servidor |
+| `/api/health` | 200, `database: ok` |
+
+Ainda não verificado em produção: lance e sala privada com usuário logado.

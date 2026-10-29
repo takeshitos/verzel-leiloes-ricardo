@@ -1,32 +1,149 @@
+/* ==========================================================================
+   Casa de Leilões — base visual (etapa 13)
+   Tokens no :root; componentes pequenos e nomeados pelo que são.
+   Contraste: texto e botões passam AA (4,5:1) sobre os fundos usados.
+   ========================================================================== */
+
 :root {
-  --color-bg: #f7f5f2;
-  --color-surface: #ffffff;
-  --color-text: #1f1d1a;
-  --color-muted: #6b665f;
-  --color-border: #e2ddd5;
-  --color-accent: #7a3e1d;
-  --color-ok: #1f7a3d;
-  --color-error: #b3261e;
-  --radius: 8px;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --paper: #f7f3ec; /* fundo da página */
+  --surface: #ffffff;
+  --surface-muted: #f1ebe1;
+  --ink: #1c1915; /* texto principal (≈16:1 no papel) */
+  --muted: #5c554c; /* texto secundário (≈6,6:1 no papel) */
+  --line: #e0d7c9;
+  --line-strong: #c9bca8;
+  --accent: #7b2d1e; /* bordô (≈8:1 com texto branco) */
+  --accent-hover: #63231716;
+  --accent-ink: #ffffff;
+  --gold: #a07a2c;
+  --ok: #1d6a3a;
+  --ok-soft: #e4f2e8;
+  --warning: #85540a;
+  --warning-soft: #fbefd8;
+  --error: #a3241a;
+  --error-soft: #fbe5e2;
+  --info: #24507a;
+  --info-soft: #e5eef7;
+  --focus: #1f5fbf;
+
+  --radius: 10px;
+  --radius-small: 6px;
+  --shadow: 0 1px 2px rgb(28 25 21 / 6%), 0 4px 16px rgb(28 25 21 / 6%);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --content-width: 1180px;
 
   font-family: var(--font-sans);
-  color: var(--color-text);
-  background: var(--color-bg);
+  color: var(--ink);
+  background: var(--paper);
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--paper);
+}
+
+img {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 1.3rem + 2vw, 2.6rem);
+  margin: 0 0 8px;
+}
+
+h2 {
+  font-size: 1.4rem;
+  margin: 0 0 12px;
+}
+
+h3 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+p {
+  margin: 0 0 8px;
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--accent);
+  text-underline-offset: 2px;
 }
+
+a:hover {
+  color: #561e14;
+}
+
+/* Foco visível em tudo que é interativo (teclado). */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  padding: 8px 12px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: var(--radius-small);
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+.status-ok {
+  color: var(--ok);
+}
+
+.status-error {
+  color: var(--error);
+}
+
+.status-warning {
+  color: var(--warning);
+}
+
+/* ---------- Layout ---------- */
 
 .layout {
   min-height: 100vh;
@@ -34,186 +151,398 @@ a {
   flex-direction: column;
 }
 
-.site-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 24px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.site-header nav {
-  display: flex;
-  gap: 16px;
-}
-
-.site-header nav a {
-  text-decoration: none;
-  color: var(--color-muted);
-}
-
-.site-header nav a.active {
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.brand {
-  font-weight: 700;
-  text-decoration: none;
-  color: var(--color-text);
-}
-
 .content {
   flex: 1;
   width: 100%;
-  max-width: 960px;
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 28px 16px 48px;
 }
 
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 16px 20px;
+.content:focus {
+  outline: none;
 }
 
-.card h2 {
-  margin-top: 0;
-  font-size: 1.1rem;
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
-.status-ok {
-  color: var(--color-ok);
-}
-
-.status-error {
-  color: var(--color-error);
-}
-
-.site-footer {
-  padding: 16px;
-  text-align: center;
-  color: var(--color-muted);
-  font-size: 0.875rem;
-}
-
-/* ---------- Sala ao vivo (etapa 12; visual definitivo nas etapas 13 e 15) ---------- */
-
-.muted {
-  color: var(--color-muted);
-}
-
-.small {
-  font-size: 0.875rem;
-}
-
-.lot-room-header {
+.site-header-inner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 10px 16px;
   display: flex;
+  align-items: center;
+  gap: 12px 24px;
   flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
 }
 
-.lot-room-header h1 {
-  margin: 4px 0;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
 }
 
-.lot-status {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.8rem;
-  color: var(--color-accent);
+.brand-mark {
+  color: var(--accent);
+}
+
+.main-nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.main-nav a {
+  padding: 8px 10px;
+  border-radius: var(--radius-small);
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.main-nav a:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.main-nav a.active {
+  color: var(--ink);
   font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
-.lot-room-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 24px;
-  margin: 16px 0 24px;
-}
-
-@media (max-width: 720px) {
-  .lot-room-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.lot-room-image {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius);
-  background: var(--color-surface);
-}
-
-.lot-room-panel p {
-  margin: 4px 0;
-}
-
-.countdown {
+.session {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-variant-numeric: tabular-nums;
 }
 
-.countdown-value {
-  font-size: 2rem;
-  font-weight: 700;
+.session-user {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  text-align: right;
 }
 
-.countdown-final .countdown-value {
-  color: var(--color-error);
+.site-footer {
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
 }
 
-.countdown-extended {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--color-accent);
-  color: #fff;
-  font-size: 0.8rem;
+@media (max-width: 640px) {
+  .site-header-inner {
+    gap: 8px 12px;
+  }
+  .main-nav {
+    order: 3;
+    flex-basis: 100%;
+    margin: 0 -6px;
+  }
+  .session {
+    margin-left: auto;
+  }
+  .session-user {
+    display: none;
+  }
+}
+
+/* ---------- Botões ---------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px; /* alvo de toque */
+  padding: 10px 18px;
+  border-radius: var(--radius-small);
+  border: 1px solid transparent;
+  font: inherit;
   font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.lot-numbers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #63231a;
+  color: var(--accent-ink);
+}
+
+.button-secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.button-secondary:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.button-small {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+/* ---------- Cabeçalhos de página e seções ---------- */
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header-body {
+  color: var(--muted);
+  max-width: 70ch;
+}
+
+.section {
+  margin-top: 32px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.section-heading h2 {
+  margin: 0;
+}
+
+.section-heading p {
+  margin: 0;
+}
+
+.count {
+  display: inline-block;
+  min-width: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  text-align: center;
+  vertical-align: middle;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Estados: carregando, erro, vazio, aviso ---------- */
+
+.state {
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
+  color: var(--muted);
+  margin: 12px 0;
+}
+
+.state-loading {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin: 16px 0 0;
+  border-style: solid;
 }
 
-.lot-numbers dt {
-  font-size: 0.8rem;
-  color: var(--color-muted);
+.state-error {
+  border: 1px solid #e8b8b2;
+  background: var(--error-soft);
+  color: var(--error);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.lot-numbers dd {
+.state-error p {
+  margin: 0;
+}
+
+.state-title {
   margin: 0;
   font-weight: 600;
+  color: var(--ink);
 }
 
-.lot-result {
-  font-weight: 600;
+.state-body {
+  margin-top: 6px;
 }
 
-.my-wallet {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border);
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
 }
 
-.bid-history {
-  padding-left: 24px;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.bid-history li {
-  padding: 4px 0;
-  font-variant-numeric: tabular-nums;
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+.notice {
+  padding: 12px 16px;
+  border-radius: var(--radius-small);
+  border-left: 4px solid currentColor;
+  margin: 12px 0;
+}
+
+.notice p {
+  margin: 0;
+}
+
+.notice-title {
+  font-weight: 700;
+  margin-bottom: 2px !important;
+}
+
+.notice-body {
+  color: var(--ink);
+}
+
+.notice-info {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.notice-success {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.notice-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.notice-error {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+/* ---------- Pílulas e selos ---------- */
+
+.pill,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.pill-live {
+  background: var(--accent);
+  color: #fff;
+}
+
+.pill-live::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.pill-scheduled {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.pill-closing {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.pill-ended {
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.pill-cancelled {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.badge {
+  margin: 4px 0 0 8px;
+}
+
+.badge-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.badge-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.badge-neutral {
+  background: var(--surface-muted);
+  color: var(--muted);
 }
 
 .connection {
@@ -221,23 +550,608 @@ a {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--color-surface);
+  background: var(--surface);
   font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .connection-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--color-muted);
+  background: var(--muted);
 }
 
 .connection-online .connection-dot {
-  background: var(--color-ok);
+  background: var(--ok);
+}
+
+.connection-offline {
+  color: var(--error);
 }
 
 .connection-offline .connection-dot {
-  background: var(--color-error);
+  background: var(--error);
+}
+
+/* ---------- Vitrine ---------- */
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.hero-lead {
+  max-width: 62ch;
+  color: var(--muted);
+}
+
+.showcase-section {
+  margin-top: 32px;
+}
+
+.lot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.lot-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgb(28 25 21 / 8%), 0 10px 24px rgb(28 25 21 / 10%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lot-card,
+  .lot-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+.lot-card-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.lot-card-link:focus-visible {
+  outline-offset: -3px;
+}
+
+.lot-card-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--surface-muted);
+}
+
+/* Absoluta: a proporção do quadro não muda com obras verticais ou horizontais. */
+.lot-card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lot-card-pill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+}
+
+.lot-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.lot-card-title {
+  font-size: 1.05rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lot-card-creator,
+.lot-card-attributes {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lot-card-figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.lot-card-figures dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.lot-card-figures dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lot-card-meta {
+  margin: auto 0 0;
+  padding-top: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.countdown-compact {
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-compact.is-final {
+  color: var(--error);
+}
+
+.list-end {
+  margin-top: 24px;
+  text-align: center;
+}
+
+/* ---------- Formulários ---------- */
+
+.auth-page {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label,
+.role-choice legend {
+  font-weight: 600;
+}
+
+.field input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-small);
+  font: inherit;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.field input:focus-visible {
+  outline-offset: 0;
+}
+
+.field-invalid input {
+  border-color: var(--error);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.field-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--error);
+  font-weight: 600;
+}
+
+.role-choice {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.role-choice legend {
+  margin-bottom: 6px;
+}
+
+.choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.choice > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.choice.is-selected {
+  border-color: var(--accent);
+  background: #fbf3f0;
+}
+
+.choice input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab.is-active {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Números (carteira, painel, sala) ---------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.stat-label {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.stat-value {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-list,
+.participation-list,
+.bid-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.entry-list li,
+.bid-history li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-list li:last-child,
+.bid-history li:last-child,
+.participation:last-child {
+  border-bottom: 0;
+}
+
+.amount-in {
+  color: var(--ok);
+}
+
+.amount-out {
+  color: var(--error);
+}
+
+.participation {
+  display: flex;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.participation-image {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-small);
+  flex-shrink: 0;
+  background: var(--surface-muted);
+}
+
+.participation-body {
+  min-width: 0;
+}
+
+.participation-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.participation-top .badge {
+  margin: 0;
+}
+
+.participation-title {
+  font-size: 1.05rem;
+  margin: 6px 0 4px;
+}
+
+.participation-title a {
+  color: var(--ink);
+}
+
+@media (max-width: 480px) {
+  .participation-image {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* ---------- Sala do lote ---------- */
+
+.breadcrumb {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.lot-room-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .lot-room-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.lot-room-figure {
+  margin: 0;
+}
+
+.lot-room-image {
+  width: 100%;
+  height: auto;
+  max-height: 72vh;
+  object-fit: contain;
+  display: block;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+}
+
+.lot-room-figure figcaption {
+  margin-top: 8px;
+}
+
+.lot-room-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.lot-creator {
+  font-size: 1.05rem;
+  color: var(--muted);
+}
+
+.lot-panel {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lot-panel p {
+  margin: 0;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-value {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 1.6rem + 1.5vw, 2.6rem);
+  font-weight: 700;
+}
+
+.countdown.is-final .countdown-value {
+  color: var(--error);
+}
+
+.countdown-extended {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.figures dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.figures dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.figure-main {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+}
+
+.lot-result {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.my-wallet {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.my-wallet .badge {
+  margin-left: 8px;
+}
+
+.my-wallet p.badge {
+  margin: 6px 0 0;
+}
+
+/* ---------- Auditoria e comprovante ---------- */
+
+.audit-status {
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  border-left: 6px solid currentColor;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.audit-status p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.audit-status .audit-label {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.audit-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.audit-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.audit-error {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 0 0 16px;
+}
+
+.receipt-grid dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.receipt-grid dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.receipt-amount {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
 }

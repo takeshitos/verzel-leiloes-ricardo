@@ -1,22 +1,17 @@
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
+import { useAuth } from '../auth/useAuth';
 import { ArtworkImage } from '../components/ArtworkImage';
 import { ConnectionBadge } from '../components/ConnectionBadge';
 import { Countdown } from '../components/Countdown';
-import { formatBrl, formatDateTime } from '../format';
+import { LotStatusPill } from '../components/LotStatusPill';
+import { EmptyState, ErrorState, Loading, Notice, PendingFeature } from '../components/ui';
+import { browserTimeZone, formatBrl, formatDateTime } from '../format';
 import { useLiveLot } from '../realtime/useLiveLot';
 import { useMyWallet } from '../realtime/useMyWallet';
-import type { PublicLot } from '../realtime/types';
-
-const STATUS_LABEL: Record<PublicLot['status'], string> = {
-  scheduled: 'Agendado',
-  live: 'Ao vivo',
-  ended: 'Encerrado',
-  cancelled: 'Cancelado',
-};
 
 /**
- * Sala do lote em tempo real (etapa 12). Mostra o estado do servidor e o atualiza sem recarregar.
- * Formulário de lance e o visual definitivo da sala entram nas etapas 13 e 15.
+ * Sala do lote em tempo real. Mostra o estado do servidor e o atualiza sem recarregar.
+ * Formulário de lance, posição do usuário e indicadores definitivos entram na etapa 15.
  */
 export function LotPage() {
   const { id = '' } = useParams();
@@ -25,113 +20,168 @@ export function LotPage() {
 }
 
 function LotRoom({ lotId }: { lotId: string }) {
-  const { lot, bids, offsetMs, connection, error } = useLiveLot(lotId);
+  const { user } = useAuth();
+  const { lot, bids, offsetMs, connection, error, resync } = useLiveLot(lotId);
   const { wallet, alias, notices } = useMyWallet();
 
   if (!lot) {
-    return (
-      <section aria-live="polite">
-        {error ? <p className="status-error">{error.message}</p> : <p>Carregando o lote...</p>}
-      </section>
-    );
+    return error ? <ErrorState message={error.message} onRetry={error.status === 404 ? undefined : resync} /> : <Loading label="Carregando o lote..." />;
   }
 
   const leadingNow = alias !== null && lot.leaderAlias === alias;
   // "Superado" deixa de valer quando a pessoa volta a liderar.
   const myNotices = notices.filter((notice) => notice.lotId === lot.id && !(notice.kind === 'outbid' && leadingNow));
+  const details = [
+    lot.item.creationDate,
+    lot.item.technique,
+    lot.item.type,
+    lot.item.culture,
+    lot.item.measurements,
+  ].filter(Boolean);
 
   return (
-    <section className="lot-room">
-      <header className="lot-room-header">
-        <div>
-          <p className="lot-status">{lot.settled ? 'Encerrado e liquidado' : STATUS_LABEL[lot.status]}</p>
-          <h1>{lot.item.title}</h1>
-          {lot.item.creators && <p className="muted">{lot.item.creators}</p>}
-        </div>
-        <ConnectionBadge status={connection} />
-      </header>
-
-      {error && <p className="status-error">Última atualização falhou: {error.message}</p>}
+    <article className="lot-room">
+      <nav className="breadcrumb" aria-label="Você está em">
+        <Link to="/">Vitrine</Link> <span aria-hidden="true">/</span> <span>Lote</span>
+      </nav>
 
       <div className="lot-room-grid">
-        <ArtworkImage
-          className="lot-room-image"
-          src={lot.item.image?.url ?? null}
-          alt={lot.item.title}
-          width={lot.item.image?.width}
-          height={lot.item.image?.height}
-        />
+        <figure className="lot-room-figure">
+          <ArtworkImage
+            className="lot-room-image"
+            src={lot.item.image?.url ?? null}
+            alt={lot.item.title}
+            width={lot.item.image?.width}
+            height={lot.item.image?.height}
+          />
+          <figcaption className="muted small">
+            Fonte: {lot.source.provider}
+            {lot.source.url && (
+              <>
+                {' · '}
+                <a href={lot.source.url} target="_blank" rel="noreferrer">
+                  ver no museu
+                </a>
+              </>
+            )}{' '}
+            · licença {lot.source.license}
+          </figcaption>
+        </figure>
 
-        <div className="card lot-room-panel" aria-live="polite">
-          {lot.status === 'live' && (
-            <>
-              <p className="muted">Termina em</p>
-              <Countdown endsAt={lot.endsAt} offsetMs={offsetMs} />
-              <p className="muted small">Fim: {formatDateTime(lot.endsAt)} (horário do servidor)</p>
-            </>
-          )}
-          {lot.status === 'scheduled' && <p>Começa em {formatDateTime(lot.startsAt)}.</p>}
-          {lot.status === 'ended' && !lot.settled && <p>Tempo esgotado. Aguardando a liquidação pelo servidor...</p>}
-          {lot.status === 'cancelled' && <p>Este lote foi cancelado pelo leiloeiro.</p>}
-
-          {lot.result ? (
-            <p className="lot-result">
-              {lot.result.winnerAlias
-                ? `Vencedor: ${lot.result.winnerAlias} por ${formatBrl(lot.result.finalAmountCents ?? 0)}`
-                : 'Encerrado sem lances.'}
-            </p>
-          ) : (
-            <dl className="lot-numbers">
-              <div>
-                <dt>Lance atual</dt>
-                <dd>{lot.currentBidCents === null ? 'Nenhum lance' : formatBrl(lot.currentBidCents)}</dd>
-              </div>
-              <div>
-                <dt>Próximo lance mínimo</dt>
-                <dd>{formatBrl(lot.nextMinimumBidCents)}</dd>
-              </div>
-              <div>
-                <dt>Líder</dt>
-                <dd>{lot.leaderAlias ?? '—'}</dd>
-              </div>
-              <div>
-                <dt>Lances</dt>
-                <dd>{lot.bidCount}</dd>
-              </div>
-            </dl>
-          )}
-
-          {wallet && (
-            <div className="my-wallet">
-              <p>
-                <strong>Você ({alias})</strong>
-                {lot.status === 'live' && lot.bidCount > 0 && (leadingNow ? ' está ganhando.' : '')}
-              </p>
-              <p className="small">
-                Disponível: {formatBrl(wallet.availableCents)} · Reservado: {formatBrl(wallet.committedCents)}
-              </p>
-              {myNotices.map((notice) => (
-                <p key={notice.id} className={notice.kind === 'won' ? 'status-ok' : 'status-error'} role="status">
-                  {notice.kind === 'won' ? 'Você venceu este lote.' : 'Você foi superado neste lote.'}
-                </p>
-              ))}
+        <div className="lot-room-side">
+          <div className="lot-room-title">
+            <div className="lot-room-badges">
+              <LotStatusPill lot={lot} />
+              <ConnectionBadge status={connection} />
             </div>
-          )}
+            <h1>{lot.item.title}</h1>
+            {lot.item.creators && <p className="lot-creator">{lot.item.creators}</p>}
+            {details.length > 0 && <p className="muted small">{details.join(' · ')}</p>}
+          </div>
+
+          {error && <Notice tone="warning">Última atualização falhou: {error.message}</Notice>}
+
+          <div className="card lot-panel" aria-live="polite">
+            {lot.status === 'live' && (
+              <div className="lot-panel-clock">
+                <p className="stat-label">Termina em</p>
+                <Countdown endsAt={lot.endsAt} offsetMs={offsetMs} />
+                <p className="muted small">
+                  Fim: {formatDateTime(lot.endsAt, true)} ({browserTimeZone()}), pelo relógio do servidor
+                </p>
+              </div>
+            )}
+            {lot.status === 'scheduled' && (
+              <p>
+                Abre para lances em <strong>{formatDateTime(lot.startsAt)}</strong>.
+              </p>
+            )}
+            {lot.status === 'ended' && !lot.settled && <Notice tone="info">Tempo esgotado. Aguardando a liquidação pelo servidor.</Notice>}
+            {lot.status === 'cancelled' && <Notice tone="warning">Este lote foi cancelado pelo leiloeiro.</Notice>}
+
+            {lot.result ? (
+              <div className="lot-result">
+                <p className="stat-label">Resultado</p>
+                <p className="stat-value">
+                  {lot.result.winnerAlias ? formatBrl(lot.result.finalAmountCents ?? 0) : 'Sem lances'}
+                </p>
+                <p>{lot.result.winnerAlias ? `Arrematado por ${lot.result.winnerAlias}` : 'Encerrado sem vencedor.'}</p>
+              </div>
+            ) : (
+              <dl className="figures">
+                <div>
+                  <dt>{lot.currentBidCents === null ? 'Lance inicial' : 'Lance atual'}</dt>
+                  <dd className="figure-main">{formatBrl(lot.currentBidCents ?? lot.startingBidCents)}</dd>
+                </div>
+                <div>
+                  <dt>Próximo lance mínimo</dt>
+                  <dd>{formatBrl(lot.nextMinimumBidCents)}</dd>
+                </div>
+                <div>
+                  <dt>Incremento mínimo</dt>
+                  <dd>{formatBrl(lot.minIncrementCents)}</dd>
+                </div>
+                <div>
+                  <dt>Líder</dt>
+                  <dd>{lot.leaderAlias ?? '—'}</dd>
+                </div>
+              </dl>
+            )}
+
+            {wallet && (
+              <div className="my-wallet">
+                <p>
+                  <strong>Você ({alias})</strong>
+                  {lot.status === 'live' && leadingNow && <span className="badge badge-ok">Você está ganhando</span>}
+                </p>
+                <p className="small">
+                  Disponível: {formatBrl(wallet.availableCents)} · Reservado: {formatBrl(wallet.committedCents)}
+                </p>
+                {myNotices.map((notice) => (
+                  <p key={notice.id} className={notice.kind === 'won' ? 'badge badge-ok' : 'badge badge-warning'} role="status">
+                    {notice.kind === 'won' ? 'Você arrematou este lote.' : 'Você foi superado neste lote.'}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {lot.status === 'live' && !user && (
+              <p className="small">
+                <Link to={`/entrar?next=/lotes/${lot.id}`}>Entre como licitante</Link> para participar.
+              </p>
+            )}
+            {lot.status === 'live' && user?.role === 'seller' && (
+              <p className="muted small">Leiloeiros acompanham a disputa, mas não dão lances.</p>
+            )}
+            {lot.status === 'live' && user?.role === 'bidder' && (
+              <PendingFeature step="etapa 15">O formulário de lance desta sala entra no fluxo do licitante.</PendingFeature>
+            )}
+          </div>
+
+          <p className="small">
+            Leiloeiro {lot.sellerAlias} · <Link to={`/lotes/${lot.id}/auditoria`}>Auditoria do histórico</Link>
+          </p>
         </div>
       </div>
 
-      <h2>Histórico de lances</h2>
-      {bids.length === 0 ? (
-        <p className="muted">Nenhum lance ainda.</p>
-      ) : (
-        <ol className="bid-history" reversed>
-          {bids.map((bid) => (
-            <li key={bid.seq}>
-              <strong>{formatBrl(bid.amountCents)}</strong> · {bid.alias} · {formatDateTime(bid.acceptedAt)}
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
+      <section className="section" aria-labelledby="historico">
+        <h2 id="historico">Histórico de lances ({lot.bidCount})</h2>
+        {bids.length === 0 ? (
+          <EmptyState title="Nenhum lance ainda." />
+        ) : (
+          <ol className="bid-history" reversed>
+            {bids.map((bid) => (
+              <li key={bid.seq}>
+                <span>
+                  {bid.alias}
+                  <span className="muted small"> · {formatDateTime(bid.acceptedAt, true)}</span>
+                </span>
+                <strong>{formatBrl(bid.amountCents)}</strong>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+    </article>
   );
 }

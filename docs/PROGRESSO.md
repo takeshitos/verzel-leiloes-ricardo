@@ -24,9 +24,11 @@ Etapa 10 publicada: o candidato configurou chave, âncora e Render; commit `679e
 
 Etapa 11 concluída e publicada (29/10/2026): liquidação automática com auditoria ÍNTEGRA, comprovante por token e participações. 210 testes passam. Commit `8b0b36b` no ar.
 
-Etapa 12 concluída localmente (29/10/2026): Socket.IO no mesmo servidor, sala pública por lote, sala privada por usuário decidida pela sessão, reconexão com snapshot HTTP e sala ao vivo mínima em `/lotes/:id`. 239 testes passam (224 da API, 15 do web). Ainda sem commit.
+Etapa 12 concluída localmente (29/10/2026): Socket.IO no mesmo servidor, sala pública por lote, sala privada por usuário decidida pela sessão, reconexão com snapshot HTTP e sala ao vivo mínima em `/lotes/:id`. 239 testes passam (224 da API, 15 do web). Commit `b8d5eea` no ar desde 15:06 UTC.
 
-Próxima ação: commit e push da etapa 12 (a pedido do candidato); depois, etapa 13 (base visual e navegação).
+Etapa 13 concluída localmente (29/10/2026): base visual, sessão real no app (login, cadastro, logout), navegação por papel, vitrine com três seções ao vivo e telas de leitura (carteira, participações, painel, auditoria, comprovante) ligadas à API. 242 testes passam (224 da API, 18 do web). Ainda sem commit.
+
+Próxima ação: commit e push da etapa 13 (a pedido do candidato); depois, etapa 14 (painel do leiloeiro).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -883,8 +885,60 @@ Web (`lot-sync.test.ts`): evento antigo descartado, lacuna pede snapshot, prorro
 - Ao parar uma tarefa em segundo plano, o processo Node filho do `npx tsx` continuou vivo nas portas 3100 e 3101; foram encerrados conferindo a linha de comando. Um processo igual (`tsx src/server.ts`, iniciado às 03:53) continua na porta 3000, provavelmente de uma sessão anterior. Não foi encerrado sem confirmação do candidato.
 - A sala ao vivo desta etapa é funcional e simples; posição do usuário, formulário de lance e visual ficam para as etapas 13 e 15 (R06 continua em andamento).
 
+### Deploy da etapa 12
+
+Commit `b8d5eea` enviado às 15:05:21 UTC; nova versão no ar às 15:06:22 UTC (`/socket.io` passou a responder o handshake). Verificado de fora, sem credenciais:
+- cliente `socket.io-client` como visitante conectou por **WebSocket** através do proxy do Render, recebeu `session.state` sem login e entrou na sala do lote do seed; lote inexistente: `NOT_FOUND`;
+- conexão com `Origin` de outro site: recusada;
+- `/lotes/<lote do seed>` no navegador: "Ao vivo", contagem pelo horário do servidor e lote público com `version`;
+- health: ok.
+
+Ainda não verificado em produção: lance e sala privada com usuário logado (exigem login; o candidato pode testar abrindo a sala em duas abas e dando um lance).
+
 ### Pendências
 
-1. Commit e push; verificar em produção que `/socket.io` responde e que o Render mantém o WebSocket.
-2. Etapa 13: base visual e navegação (vitrine com links para `/lotes/:id`, login).
+1. Etapa 13: base visual e navegação (vitrine com links para `/lotes/:id`, login). A sala chama `/api/auth/me` também para visitante e o navegador registra dois 401 no console (tratados, sem efeito na tela); com a sessão no app (etapa 13), a chamada deve sair só para quem está logado.
 3. Etapa 15: formulário de lance, posição do usuário e indicadores definitivos na sala.
+
+## Etapa 13 — Base visual e navegação (29/10/2026, concluída localmente)
+
+Base visual de uma casa de leilões de arte, em português, com CSS próprio (sem biblioteca de layout) e sessão real. As skills `frontend-design` e `Superdesign`, pedidas pelo candidato para as etapas 13 a 16, continuam indisponíveis nesta sessão; o visual foi feito à mão seguindo o prompt (legibilidade, valores e estados primeiro).
+
+### O que foi implementado
+
+- **Sessão real** (`auth/AuthContext.tsx`, `auth/useAuth.ts`): `/api/auth/me` ao abrir; login, cadastro e logout pela API; depois de cada um, a conexão em tempo real é refeita para o servidor reler o cookie. Logout em outra aba (`session.ended`) também atualiza a navegação.
+- **Cliente HTTP central** (`api/client.ts`): mesma origem, cookie, JSON, `Idempotency-Key` opcional, 204, e erro com `status`, `code`, mensagem e `details.fields`. `api/useApi.ts` dá carregando, erro e recarregar às telas de leitura.
+- **Navegação por papel** (`App.tsx`): Vitrine e Sobre para todos; Carteira e Participações para licitante; Painel para leiloeiro; pseudônimo, papel e Sair no cabeçalho. `RequireRole` é só proteção visual: sem login leva a `/entrar?next=...` (só caminhos internos); papel errado vê "Área restrita". A API continua recusando (conferido: `GET /api/seller/lots` como licitante → 403 `FORBIDDEN`).
+- **Rotas:** `/` vitrine, `/entrar` (login e cadastro com escolha de papel), `/lotes/:id` sala, `/lotes/:id/auditoria`, `/comprovantes/:token`, `/carteira`, `/participacoes`, `/painel`, `/sobre` e 404.
+- **Vitrine** (`pages/ShowcasePage.tsx`, `realtime/useShowcase.ts`, `components/LotCard.tsx`): ao vivo, agendados e encerrados, com imagem, título, autoria, data e técnica, valor atual ou inicial, contagem ou horário, número de lances e resultado. Cancelados ficam de fora (a API já filtra e um `lot.updated` cancelado tira o card). Busca de novo ao reconectar, ao voltar o foco, quando um prazo vence (agendado começa, ao vivo termina) e a cada 30 s sem tempo real; acompanha até 25 salas para atualizar os cards na hora; descarta versão menor.
+- **Telas de leitura com dados reais:** carteira (total, reservado, disponível e últimos lançamentos; relê ao receber `wallet.updated`), participações (todos os lotes com lance, posição, resultado e link do comprovante na vitória), painel (total recebido, contagens, lotes do leiloeiro com resultado, pendência de liquidação e comprovante), auditoria (estado, motivo, histórico, "verificar de novo") e comprovante.
+- **Partes de etapas seguintes marcadas como "Em construção"**, sem fingir: depósito e formulário de lance (etapa 15), busca, criação e cancelamento (etapa 14), explicação da auditoria e versão para imprimir do comprovante (etapa 16).
+- **Componentes de estado** (`components/ui.tsx`): carregando, erro com "tentar de novo", vazio, aviso (info, sucesso, alerta, erro), pendência de etapa, cabeçalho de página e campo de formulário com label, dica e erro ligados por `aria-describedby`.
+- **Formatação** (`format.ts`): BRL com `Intl.NumberFormat` a partir de texto decimal montado com inteiros (sem ponto flutuante; testado até R$ 1.000.000.000,99), datas com `Intl.DateTimeFormat` no fuso do navegador, que aparece junto do fim do lote; o transporte continua em centavos e UTC.
+- **Acessibilidade:** link "Pular para o conteúdo", foco visível em tudo que é interativo, navegação por teclado (formulário testado com Tab e Enter), alvos de toque de 44 px, contraste AA nos textos e botões, `role="alert"` em erros, `prefers-reduced-motion` respeitado.
+- **Imagem quebrada:** `ArtworkImage` (etapa 06) mostra o placeholder local com texto alternativo.
+- **Correção da etapa 12:** a sala só busca a carteira de quem é licitante logado (antes chamava `/auth/me` para visitante). Continua existindo um 401 esperado de `/auth/me` para visitante ao abrir o app.
+
+### Verificação no navegador (servidor local na porta 3100, banco `verzel_dev`, contas do seed só no localhost)
+
+| Tamanho | O que foi conferido |
+| --- | --- |
+| 1280 × 900 | Vitrine com 3 ao vivo, agendados vazio ("Nenhum lote agendado.") e 6 encerrados (resultado ou "Sem lances"); cards alinhados (a primeira versão deixava a obra vertical esticar o card; corrigido). `/carteira` sem login → `/entrar?next=/carteira`; senha errada → "Email ou senha incorretos."; login certo → volta para a carteira, com Carteira, Participações, pseudônimo e Sair no menu. Carteira, participações (5 lotes, 1 arremate), comprovante, auditoria ÍNTEGRA e sala ao vivo com dados reais. `/painel` como licitante → "Área restrita". Sair → menu volta a Vitrine, Sobre e Entrar. Login do leiloeiro só com teclado → Painel com R$ 840,00 recebidos, 4 vendidos e a lista de lotes |
+| 375 × 812 | Menu em segunda linha, vitrine em uma coluna, sala com imagem, título e painel empilhados, sem rolagem horizontal (`scrollWidth` 375 = `clientWidth` 375). Cadastro com email e senha inválidos mostra o erro de cada campo vindo da API (nenhuma conta criada) |
+
+Ajuste feito durante a inspeção: o selo de conexão também dizia "Ao vivo", igual ao status do lote; agora diz "Tempo real conectado".
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Ok (o lint pediu separar o hook `useAuth` do componente, por causa do fast refresh) |
+| `npm run build` | Ok (JS 340 kB, 106 kB com gzip) |
+| `npm test` | **224 de 224** na API e **18 de 18** no web (3 novos de formatação de BRL e duração) |
+
+### Pendências
+
+1. Etapa 14: busca no acervo, criação e cancelamento no painel.
+2. Etapa 15: depósito, formulário de lance, posição e indicadores definitivos na sala.
+3. Etapa 16: auditoria explicada e comprovante para imprimir e compartilhar.
+4. Nenhum lote agendado no banco local durante a inspeção: o card agendado só foi visto pelo estado vazio.

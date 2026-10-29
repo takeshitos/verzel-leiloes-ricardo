@@ -151,3 +151,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** dois testes mal montados (relógio do status e restrição da sessão); 4 erros de lint nas regras de efeito do React; o status de conexão mostrava "Conectando..." durante uma queda longa; o aviso de superado continuava depois de a pessoa voltar a liderar.
 - **Credenciais:** login de teste só no localhost, com as contas do seed; nada de produção.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 13 — Base visual e navegação (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5. As skills `frontend-design` e `Superdesign`, pedidas pelo candidato, não estavam disponíveis; o CSS foi escrito à mão.
+- **Tarefa solicitada:** executar a etapa 13.
+- **Arquivos gerados pela IA:** sessão (`auth/`), cliente HTTP e `useApi`, componentes de estado e formulário, card e selo de lote, vitrine com atualização ao vivo, páginas de login e cadastro, carteira, participações, painel, auditoria e comprovante, sala refeita, CSS completo e testes de formatação.
+- **Verificações executadas:** typecheck, lint, build, suíte completa e inspeção no navegador embutido em 1280 × 900 e 375 × 812 (login, erro, cadastro inválido, navegação por papel, área restrita, logout, teclado e rolagem horizontal).
+- **Erros encontrados e corrigidos:** obra vertical esticando o card; dois selos "Ao vivo" na sala; regra de fast refresh do lint.
+- **Credenciais:** só as contas de teste do seed, no localhost.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

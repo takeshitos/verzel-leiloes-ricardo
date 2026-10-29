@@ -29,28 +29,30 @@ export function applySnapshot(state: LiveState, lot: PublicLot, bids: PublicBid[
   };
 }
 
+/** Aplica os campos que mudam durante a disputa (o resto do lote, como a obra, não muda). */
+export function mergeLotUpdate(lot: PublicLot, event: LotUpdatedEvent): PublicLot {
+  return {
+    ...lot,
+    version: event.version,
+    status: event.status,
+    settled: event.settled,
+    startsAt: event.startsAt,
+    endsAt: event.endsAt,
+    currentBidCents: event.currentBidCents,
+    nextMinimumBidCents: event.nextMinimumBidCents,
+    bidCount: event.bidCount,
+    leaderAlias: event.leaderAlias,
+    result: event.result,
+  };
+}
+
 /** lot.updated: resumo completo do lote, relido do banco pelo servidor. */
 export function applyLotUpdated(state: LiveState, event: LotUpdatedEvent): SyncResult {
   const { lot } = state;
   if (!lot || lot.id !== event.lotId) return { state, resync: false };
   if (event.version < lot.version) return { state, resync: false }; // atualização antiga: descarta
 
-  const next: LiveState = {
-    ...state,
-    lot: {
-      ...lot,
-      version: event.version,
-      status: event.status,
-      settled: event.settled,
-      startsAt: event.startsAt,
-      endsAt: event.endsAt,
-      currentBidCents: event.currentBidCents,
-      nextMinimumBidCents: event.nextMinimumBidCents,
-      bidCount: event.bidCount,
-      leaderAlias: event.leaderAlias,
-      result: event.result,
-    },
-  };
+  const next: LiveState = { ...state, lot: mergeLotUpdate(lot, event) };
   // Lote diz que há mais lances do que o histórico conhece: algum bid.accepted se perdeu.
   return { state: next, resync: event.bidCount > lastSeq(state.bids) };
 }

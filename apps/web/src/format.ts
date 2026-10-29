@@ -1,20 +1,30 @@
-// Formatação para a tela. Dinheiro chega sempre em centavos inteiros; aqui não há conta, só texto.
+// Formatação para a tela. Dinheiro chega sempre em centavos inteiros e horários em UTC (ISO);
+// aqui não há conta financeira, só texto no padrão brasileiro.
 
-const reaisFormat = new Intl.NumberFormat('pt-BR');
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-/** 123456 → "R$ 1.234,56" (separa reais e centavos com inteiros, sem ponto flutuante). */
+/**
+ * 123456 → "R$ 1.234,56". O valor vai ao Intl como texto decimal exato ("1234.56"),
+ * montado com inteiros: nenhum centavo passa por ponto flutuante.
+ */
 export function formatBrl(cents: number): string {
   const sign = cents < 0 ? '-' : '';
   const absolute = Math.abs(cents);
-  const reais = Math.floor(absolute / 100);
-  const centavos = String(absolute % 100).padStart(2, '0');
-  return `${sign}R$ ${reaisFormat.format(reais)},${centavos}`;
+  const decimal = `${sign}${Math.floor(absolute / 100)}.${String(absolute % 100).padStart(2, '0')}`;
+  return brl.format(decimal as `${number}`);
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+const dateTimeSecondsFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
 
-export function formatDateTime(iso: string): string {
-  return dateTimeFormat.format(new Date(iso));
+/** Data e hora no fuso do navegador, ex.: "29/10/2026, 11:44". */
+export function formatDateTime(iso: string, withSeconds = false): string {
+  return (withSeconds ? dateTimeSecondsFormat : dateTimeFormat).format(new Date(iso));
+}
+
+/** Nome do fuso do navegador, para mostrar junto dos horários (ex.: "America/Sao_Paulo"). */
+export function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 /** Milissegundos → "2d 03:04:05" ou "03:04:05". */
