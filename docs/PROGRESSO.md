@@ -4,9 +4,9 @@ Estado atual: etapas 00, 01 e 02 concluídas. Existe a base executável (web Rea
 
 **Prazo: desafio recebido em 22/10/2026; entrega até 29/10/2026 (hora limite a confirmar pelo candidato).** O cronograma de 7 dias do guia não cabe no tempo restante. Em 28/10/2026 o candidato decidiu seguir a sequência normal dos prompts em vez do prompt auxiliar E.
 
-Primeiro commit feito a pedido do candidato em 28/10/2026, com a mensagem proposta no fim deste arquivo. Nada foi enviado ao GitHub (sem push).
+Etapa 03 em andamento: código no GitHub e configuração de deploy pronta; falta o candidato criar o serviço no Render (passo a passo em `docs/DEPLOY.md`) e informar a URL para a verificação pública.
 
-Próxima ação: etapa 03 (`docs/prompts/03-primeiro-deploy.md`), que depende de contas no Render e no Neon e do envio do código ao GitHub, autorizado pelo candidato.
+Próxima ação: verificar a URL pública assim que ela existir. Sem depender disso, a etapa 04 (banco, migrações e seed locais) pode começar.
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -217,3 +217,34 @@ chore: estrutura inicial do monorepo com web React e API Express
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ```
+
+Commit `dae1242` feito a pedido do candidato em 28/10/2026.
+
+## Etapa 03 — Primeiro deploy (28/10/2026, em andamento)
+
+Requisito relacionado: R18 (pendente até a URL pública ser verificada).
+
+### O que foi feito
+
+- **Push autorizado pelo candidato:** `git push -u origin main` enviou o commit `dae1242`. A API pública do GitHub mostrou 37 arquivos em `main`, sem PDF, guia, prompts, `.env`, `dist` ou `node_modules`.
+- Criados `render.yaml` (Blueprint: web service Free, região `virginia`, build, start, health check, `NODE_ENV`), `.node-version` (`24.22.1`) e `docs/DEPLOY.md` (configuração, variáveis, simulação, passo a passo do Render e do Neon, checklist da verificação pública).
+- O caminho do PostgreSQL e da âncora ficou documentado: dois projetos Neon em `aws-us-east-1`, variáveis cadastradas no painel do Render nas etapas 04 e 10. Nenhuma migração ou seed foi executada.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `git push -u origin main` | `* [new branch] main -> main` |
+| API do GitHub (`git/trees/main`) | 37 arquivos, nenhum proibido, commit `dae1242` |
+| Cópia limpa + `NODE_ENV=production npm ci` + build | 77 pacotes; build falhou (`tsc` ausente): justifica `--include=dev` |
+| Cópia limpa + `npm ci --include=dev && npm run build` | 259 pacotes; build ok |
+| Config em produção sem `HOST` | `host: 0.0.0.0` |
+| Servidor com `PORT=10000` | `/api/health` 200; `/`, `/sobre`, `/lotes/123/auditoria` 200 HTML; `/api/rota-inexistente` 404 JSON; encerramento ok |
+
+### Ainda não verificado
+
+URL pública, build real no Render com Node 24.22.1 e entrega do SIGTERM pelo Render. **Um build local não conta como deploy concluído.**
+
+### Pedido do candidato durante a etapa
+
+O candidato pediu as skills `frontend-design` e `Superdesign` para um frontend profissional e moderno. As duas constam como habilitadas no catálogo da conta, mas não carregam nesta sessão (`Unknown skill`). Foi mostrado o cartão para ativá-las e a preferência foi registrada em DECISOES para as etapas 13 a 16.

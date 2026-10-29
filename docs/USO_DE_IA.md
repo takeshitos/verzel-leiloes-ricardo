@@ -42,6 +42,17 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
   - A ferramenta de preview injetou `PORT=5173` e a API subiu na porta errada. A correção foi feita só na configuração local do preview, sem mudar o código.
   - Uma leitura de página feita logo após um clique mostrou o conteúdo antigo. Repetida com espera, a navegação estava correta.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **Commit:** `dae1242`, criado pela IA a pedido do candidato, com a linha de coautoria da IA.
+
+### Etapa 03 — Primeiro deploy (28/10/2026, em andamento)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 03; o candidato autorizou o push da `main` para o GitHub.
+- **Arquivos gerados pela IA:** `render.yaml`, `.node-version` e `docs/DEPLOY.md`; atualizações em DECISOES, REQUISITOS, PROGRESSO e neste arquivo.
+- **Verificações executadas:** push e conferência do conteúdo público pela API do GitHub; leitura da documentação do Render (Blueprint) e do Neon (regiões); simulação do build do Render numa cópia limpa, com e sem `--include=dev`; servidor de produção na porta 10000. A IA não criou contas nem serviços e não acessou painéis do Render ou do Neon.
+- **Erro encontrado:** com `NODE_ENV=production`, o `npm ci` não instala as devDependencies e o build quebra. Corrigido com `--include=dev` no comando de build.
+- **Pedido do candidato:** usar as skills `frontend-design` e `Superdesign`. Elas não carregaram nesta sessão; a IA mostrou o cartão de ativação e registrou a preferência para as etapas de interface.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
 
 ## Relato final
 

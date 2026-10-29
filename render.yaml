@@ -1,0 +1,25 @@
+# Configuração de deploy no Render (Blueprint).
+# Um único web service Node serve o React (build), a API em /api e, mais tarde, o Socket.IO.
+# Documentação: docs/DEPLOY.md
+services:
+  - type: web
+    name: verzel-leiloes-ricardo
+    runtime: node
+    # Plano gratuito: o serviço dorme após 15 min sem tráfego (ver docs/DEPLOY.md).
+    plan: free
+    # Mesma região do banco no Neon (AWS us-east-1, N. Virginia). Não pode ser alterada depois.
+    region: virginia
+    branch: main
+    # --include=dev: com NODE_ENV=production o npm pularia as devDependencies,
+    # e o build precisa delas (TypeScript, Vite).
+    buildCommand: npm ci --include=dev && npm run build
+    # Igual ao script "npm start", mas sem o npm no meio: o SIGTERM do Render chega direto ao Node.
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # A versão do Node vem do arquivo .node-version na raiz do repositório.
+      # Variáveis secretas (banco, âncora, chave de auditoria) são cadastradas no painel
+      # do Render nas etapas 04 e 10, nunca neste arquivo.

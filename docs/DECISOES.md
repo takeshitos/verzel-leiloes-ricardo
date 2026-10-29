@@ -23,7 +23,8 @@ Conferido na etapa 00 (28/10/2026) contra o PDF original e revisado na etapa 01 
 | Encerramento | Backend encerra sozinho os lotes vencidos (job periódico e na inicialização), sem depender da tela | Interpretação: o PDF diz "ao encerrar", sem dizer quem dispara (p. 4) |
 | Auth | Sessão opaca em cookie HttpOnly; token aleatório no cookie e só o hash SHA-256 no banco; senha com `scrypt` do `node:crypto` | Proposta |
 | Integridade | Cadeia SHA-256 por lote, checkpoint assinado com Ed25519 (chave fora do banco) e âncora em PostgreSQL separado, só de inserção. Protocolo e modelo de ameaça em PLANO | Proposta; protocolo definido na etapa 01, testes na etapa 10 |
-| Hospedagem | Render (web service gratuito, Node 24 LTS) + Neon gratuito: um projeto para o banco principal e outro, com credenciais próprias, para a âncora | Verificada por consulta; nenhuma conta criada ou contratada |
+| Hospedagem | Render (web service gratuito, Node 24.22.1 via `.node-version`, região `virginia`) + Neon gratuito em `aws-us-east-1`: um projeto para o banco principal e outro, com credenciais próprias, para a âncora. Configuração em `render.yaml`; detalhes em `docs/DEPLOY.md` | `render.yaml` criado e build simulado localmente na etapa 03; serviço ainda não criado |
+| Interface | Usar as skills `frontend-design` e `Superdesign` para um frontend profissional e moderno nas etapas de interface (13 a 16) | Decidido pelo candidato em 28/10/2026. As skills ainda não carregam nesta sessão (`Unknown skill`); o candidato recebeu o cartão para ativá-las |
 | Extras | Testes críticos acompanham as etapas 09 a 18; filtros, dark mode e Compose só depois da base | Proposta |
 
 ### Troca do catálogo: Art Institute of Chicago → Cleveland Museum of Art
