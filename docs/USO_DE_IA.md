@@ -181,3 +181,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** aviso de recusa antigo continuava ao lado do indicador "Você foi superado" (agora some quando o lote muda de versão).
 - **Credenciais:** só as contas de teste do seed, no localhost.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 16 — Auditoria e comprovante públicos (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 16.
+- **Arquivos gerados pela IA:** páginas de auditoria e comprovante completas, página 404 reutilizável, ajuste no `useApi` e estilos (inclusive impressão).
+- **Verificações executadas:** typecheck, lint, build, suíte completa; no navegador, lote íntegro, sem lances, adulterado (fixture só no banco de teste) e âncora fora do ar; comprovante por link direto, recarregar, copiar link, token inválido e desconhecido, celular; script procurando dados pessoais nas respostas públicas.
+- **Erros encontrados e corrigidos:** um ÍNTEGRO antigo poderia continuar na tela se a nova verificação falhasse; contagens "0 de 2" enganosas num lote adulterado; texto do lote sem lances.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

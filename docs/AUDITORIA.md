@@ -126,4 +126,4 @@ Testes em `apps/api/test/audit.test.ts` (27), contra o banco `verzel_test` e a �
 
 Prova de que os testes detectam falha: com a checagem "a âncora tem mais lances que o banco" desligada de propósito, os 3 testes de remoção e rollback falharam; depois o código foi restaurado.
 
-**Estado de R13:** implementado e testado localmente, **atendido dentro do modelo de ameaça da seção 2, com os limites da seção 8**. Em produção, a chave e a âncora foram configuradas em 29/10/2026 e a API de auditoria responde (`docs/DEPLOY.md`). Falta a página pública (etapa 16).
+**Estado de R13:** implementado e testado localmente, **atendido dentro do modelo de ameaça da seção 2, com os limites da seção 8**. Em produção, a chave e a âncora foram configuradas em 29/10/2026 e a API de auditoria responde (`docs/DEPLOY.md`). A página pública (`/lotes/:id/auditoria`) foi feita na etapa 16 e conferida com lote íntegro, sem lances, adulterado e âncora fora do ar (nunca mostra ÍNTEGRO sem a âncora).

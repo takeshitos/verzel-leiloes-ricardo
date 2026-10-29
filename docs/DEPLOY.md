@@ -338,3 +338,17 @@ Teste em produção com login de leiloeiro (29/10/2026, autorizado pelo candidat
 - o primeiro lote terminou sem lances e o painel mudou sozinho, sem recarregar, para "Encerrado sem lances (sem vencedor)" (liquidação automática + tempo real em produção); total recebido R$ 0,00.
 
 Ainda não verificado em produção: recusa de cancelamento com lance concorrente e liquidação com vencedor (exigem login de licitante).
+
+## Deploy da etapa 15 (fluxo do licitante)
+
+Push de `b08fff3` às 17:10:43 UTC. Novo frontend no ar às 17:11:37 UTC (bundle `/assets/index-TRGIn2qc.js` com "Reenviar o mesmo pedido"). Nenhuma variável nova.
+
+| Verificação | Resultado |
+| --- | --- |
+| `POST /api/lots/<seed>/bids` sem login | 401 `UNAUTHENTICATED` |
+| `POST /api/wallet/deposits` sem login | 401 `UNAUTHENTICATED` |
+| Sala do lote do seed com a sessão de leiloeiro do candidato | Sem formulário de lance; "Leiloeiros acompanham a disputa, mas não dão lances." |
+| Lance direto pela API com essa sessão | 403 `FORBIDDEN`, "Leiloeiros não dão lances." |
+| `/api/health` | 200, `database: ok` |
+
+Ainda não verificado em produção: depósito e lance com conta de licitante.

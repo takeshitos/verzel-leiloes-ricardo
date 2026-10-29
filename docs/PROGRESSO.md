@@ -30,9 +30,11 @@ Etapa 13 concluída localmente (29/10/2026): base visual, sessão real no app (l
 
 Etapa 14 concluída localmente (29/10/2026): painel do leiloeiro com busca real no acervo, criação de lote (valores em R$ convertidos para centavos por texto, datas locais convertidas para UTC com o fuso visível), lista dos lotes dele com resultado e total recebido, e cancelamento com confirmação. 249 testes passam (224 da API, 25 do web). Commit `e6a097f` no ar desde 16:43 UTC.
 
-Etapa 15 concluída localmente (29/10/2026): depósito simulado e lance pela tela com chave de idempotência por intenção, posição e "você está ganhando / foi superado" calculados do estado do servidor, mensagens para cada recusa, resposta perdida tratada sem reenvio automático, comprovante com link para compartilhar. Cenário A/B do guia feito em duas sessões reais. 252 testes passam (224 da API, 28 do web). Ainda sem commit.
+Etapa 15 concluída localmente (29/10/2026): depósito simulado e lance pela tela com chave de idempotência por intenção, posição e "você está ganhando / foi superado" calculados do estado do servidor, mensagens para cada recusa, resposta perdida tratada sem reenvio automático, comprovante com link para compartilhar. Cenário A/B do guia feito em duas sessões reais. 252 testes passam (224 da API, 28 do web). Commit `b08fff3` no ar desde 17:11 UTC.
 
-Próxima ação: commit e push da etapa 15 (a pedido do candidato); depois, etapa 16 (auditoria e comprovante públicos).
+Etapa 16 concluída localmente (29/10/2026): páginas públicas de auditoria (histórico completo, estado com explicação fiel, detalhes técnicos, chave pública e limites) e de comprovante (snapshot da liquidação, identificador da transação, copiar link, imprimir), ambas sem login; 404 sem detalhes. Conferidas com lote íntegro, sem lances, adulterado e âncora fora do ar nos bancos de teste. 252 testes passam. Ainda sem commit.
+
+Próxima ação: commit e push da etapa 16 (a pedido do candidato); depois, etapa 17 (testes automatizados).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1057,9 +1059,65 @@ Sala aberta como A num lote novo; servidor parado; "Dar lance" → "Lance sem co
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
 | `npm test` | **224 de 224** na API e **28 de 28** no web (3 novos: posição e situação do usuário) |
 
+### Deploy da etapa 15
+
+Commit `b08fff3` enviado às 17:10:43 UTC; novo frontend no ar às 17:11:37 UTC (o JavaScript servido passou a conter "Reenviar o mesmo pedido"). Verificado:
+- sem login: `POST /api/lots/<seed>/bids` e `POST /api/wallet/deposits` → 401 `UNAUTHENTICATED`;
+- com a sessão de leiloeiro do candidato (login feito por ele): a sala do lote do seed mostra "Leiloeiros acompanham a disputa, mas não dão lances." e nenhum formulário de lance; um lance direto pela API → 403 "Apenas licitantes podem fazer isso. Leiloeiros não dão lances.";
+- health: ok.
+
+Ainda não verificado em produção: depósito e lance com uma conta de licitante (exige login do candidato como licitante).
+
 ### Limites
 
 - O caso "o lance entrou mas a resposta se perdeu" não foi forçado no navegador (exigiria derrubar a conexão depois do COMMIT). A repetição com a mesma chave devolvendo a resposta guardada está coberta pelos testes de idempotência da API (etapas 08 e 09).
 - O navegador embutido negou a área de transferência; o "Copiar link" caiu no modo manual, que mostra o link.
 - O formulário de lance aparece também para quem já lidera; a API recusa com "Você já está ganhando".
 - Ficaram no banco local os lotes e lances deste teste.
+
+## Etapa 16 — Auditoria e comprovante públicos (29/10/2026, concluída localmente)
+
+Só frontend: as páginas consomem as rotas públicas reais (`/api/lots/:id/audit`, `/api/lots/:id`, `/api/audit/public-key`, `/api/receipts/:token`). Nenhuma mudança na API.
+
+### Arquivos
+
+- `apps/web/src/pages/AuditPage.tsx`: estado (ÍNTEGRO, ADULTERADO, VERIFICAÇÃO PENDENTE, VERIFICAÇÃO INDISPONÍVEL) com o motivo do servidor e uma explicação do que foi conferido; histórico completo em ordem (`#`, pseudônimo, valor, horário, hash com detalhes: hash anterior, referência do participante e horário UTC exato); detalhes técnicos (gênese, último checkpoint, lances assinados e ancorados, formato da mensagem assinada), "como funciona", chave pública do servidor e limites. Se a última verificação falhar, o resultado anterior não continua na tela (nunca sobra um selo verde velho). Com ADULTERADO, as contagens aparecem como "não contadas", porque a verificação para na primeira divergência.
+- `apps/web/src/pages/ReceiptPage.tsx`: obra (imagem, título, autoria, fonte e licença), valor final, identificador da transação (`LIQ-…`), data da liquidação, pseudônimos do arrematante e do leiloeiro, lance vencedor, lote e a auditoria registrada na liquidação; "Copiar link do comprovante" e "Imprimir" (CSS de impressão esconde menu e botões).
+- `apps/web/src/pages/NotFoundPage.tsx`: 404 reutilizável, sem dados internos (comprovante e lote inexistentes).
+- `apps/web/src/api/useApi.ts`: "recarregar" volta a mostrar o carregamento.
+- Estilos de tabela, detalhes técnicos, comprovante e impressão.
+
+### Verificação (servidor local na porta 3200 apontando para `verzel_test` e `verzel_anchor_test`; navegador sem sessão válida nesses bancos, como uma janela anônima)
+
+| Caso | Resultado |
+| --- | --- |
+| Lote com 2 lances reais | ÍNTEGRO, 2 de 2 assinados e 2 de 2 na âncora, hashes e chave pública visíveis |
+| Lote sem lances | ÍNTEGRO, "Não há lances para conferir, e a âncora independente também não registra nenhum" |
+| Lote adulterado (fixture: valor do lance 1 mudado por SQL só no banco de teste) | ADULTERADO, "O conteúdo do lance 1 foi alterado." |
+| Âncora fora do ar (instância 3201 com a âncora numa porta sem resposta) | VERIFICAÇÃO INDISPONÍVEL em amarelo: "A âncora independente não respondeu agora..." (nunca verde) |
+| Lote inexistente | 404 "Lote não encontrado" |
+| Comprovante por link direto, sem login | Abre; recarregar a página mantém o comprovante e não pede login |
+| Copiar link | O navegador do app negou a área de transferência; o botão mostrou o link para copiar à mão |
+| Token inválido (`token-invalido-123`) e desconhecido (43 caracteres) | A mesma página "Comprovante não encontrado", sem detalhes |
+| 375 × 812 | Auditoria e comprovante sem rolagem horizontal (a tabela rola dentro da própria caixa) |
+
+### Revisão das respostas, eventos e logs
+
+- Script contra o servidor de teste: comprovante, auditoria, lote, lances, vitrine, chave pública e as respostas 404 **não contêm** `@`, email, id de usuário, senha, sessão, `token_hash`, saldos nem stack trace.
+- Eventos públicos do Socket.IO: já testados na etapa 12 (sem ids, email, token ou saldo).
+- Logs do servidor: só ids de lote e pseudônimos (liquidação e auditoria); nenhum email.
+- A chave pública vem da configuração do servidor (`AUDIT_SIGNING_PRIVATE_KEY`), não do banco auditado; a verificação também usa só essa chave.
+- As páginas não consultam a API do museu: leem o banco (snapshot), como vitrine e sala.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+| `npm test` | **224 de 224** na API e **28 de 28** no web |
+
+### Limites
+
+- A resposta da auditoria não traz as assinaturas dos checkpoints; a página mostra hashes, contagens, formato e a chave pública, mas conferir as assinaturas por conta própria exigiria expor também as assinaturas (não feito para não mudar a API nesta etapa).
+- O caminho "Link copiado." do botão não pôde ser visto no navegador do app (área de transferência negada); o modo manual funcionou.
+- Os bancos de teste ficaram com os dados deste teste; a suíte os limpa a cada execução.

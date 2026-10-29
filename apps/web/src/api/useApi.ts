@@ -21,6 +21,9 @@ export function useApi<T>(path: string | null) {
     return () => controller.abort();
   }, [path, attempt]);
 
-  const reload = useCallback(() => setAttempt((value) => value + 1), []);
+  const reload = useCallback(() => {
+    setState((current) => ({ ...current, loading: true }));
+    setAttempt((value) => value + 1);
+  }, []);
   return { ...state, reload };
 }
