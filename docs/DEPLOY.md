@@ -34,6 +34,7 @@ Front e API ficam na mesma origem, sem CORS. Banco principal e âncora de audito
 | `PORT` | Render (automático) | já | Não definir manualmente |
 | `HOST` | não definir | — | Padrão `0.0.0.0` em produção |
 | `DATABASE_URL` | Painel do Render → Environment (segredo) | Etapa 04, **antes do push dessa etapa** | String de conexão do projeto Neon principal, com `sslmode=require`. Sem ela, o novo deploy falha no startup (o anterior continua no ar) |
+| `TRUST_PROXY` / `CLIENT_IP_HEADER` | `render.yaml` (`1` / `cf-connecting-ip`) | Etapa 05 | Sem elas, o limite de login usaria o IP do proxy do Render e todos os usuários dividiriam o mesmo limite. Conferir em Environment se apareceram após o deploy |
 | `RUN_MIGRATIONS_ON_START` / `RUN_SEED_ON_START` | `render.yaml` (`true`) | Etapa 04 | Aplica migrações pendentes e o seed idempotente antes de aceitar conexões. Variáveis novas de um Blueprint existente podem precisar de "Manual Sync" no painel |
 | `ANCHOR_DATABASE_URL` | Painel do Render (segredo) | Etapa 10 | Projeto Neon da âncora, com usuário só de INSERT/SELECT |
 | `AUDIT_SIGNING_PRIVATE_KEY` | Painel do Render (segredo) | Etapa 10 | Chave Ed25519 gerada uma vez e guardada offline; nunca regenerar no deploy |
@@ -105,8 +106,35 @@ Feita em 2026-10-29T01:24Z (28/10/2026, 22:24 em Brasília) com `curl` e com o n
 - [ ] Num redeploy, o log mostra "Recebido SIGTERM" e "Servidor encerrado" (conferência do candidato).
 - [ ] Tempo de acordar após 15 minutos ocioso (não medido).
 
+## Deploy da etapa 04 (banco no Neon)
+
+O candidato criou o projeto Neon e cadastrou `DATABASE_URL` no Render; a recomendação foi usar a conexão **direta** (sem `-pooler`) e `sslmode=verify-full`. Depois disso, o push de `d75f85c` foi feito em 2026-10-29T01:58Z.
+
+| Horário (UTC) | Observado em `/api/health` |
+| --- | --- |
+| 01:58:16 a 02:02:54 | Versão anterior (sem o campo `database`), sempre 200. Houve um reinício às ~01:59:02, provavelmente ao salvar a variável no painel |
+| 02:03:09 | Nova versão: `{"status":"ok","database":"ok",...}`, `uptimeSeconds: 13` |
+
+Na nova versão: `/` 200, `/sobre` 200, `/api/rota-inexistente` 404 JSON. Nenhuma requisição falhou durante a troca.
+
+**Log do Render (captura enviada pelo candidato; horários de Brasília, UTC−3):**
+
+| Horário | Instância | Linha |
+| --- | --- | --- |
+| 23:01:34 | `vjvhc` | `- DATABASE_URL: deve começar com postgres:// ou postgresql://`: naquele momento a variável estava vazia ou em outro formato. A validação mostrou só o nome, sem o valor, e a versão anterior continuou no ar |
+| 23:02:48 | — | `==> Deploying...` |
+| 23:02:59 | `cjt45` | `Running 'node apps/api/dist/server.js'` |
+| 23:03:02 | `cjt45` | `Aplicando migrações em ep-…us-east-1.aws.neon.tech:5432/…` (endereço sem `-pooler`: conexão direta) |
+| 23:03:03 | `cjt45` | `Migrações aplicadas: 1793238000000_esquema-inicial` |
+| 23:03:05 | `cjt45` | `Usuários criados: leiloeiro@example.com, cliente1@example.com, cliente2@example.com`; `Depósitos iniciais criados agora: 2`; `Lote inicial criado: 7a350b42-… (termina em 2026-11-08…)` |
+| 23:03:05 | `cjt45` | `API ouvindo em http://0.0.0.0:10000 (production)` |
+| 23:03:09 | `gg9s9` | `Recebido SIGTERM. Encerrando o servidor...` e `Servidor encerrado.` (**encerramento limpo confirmado no Linux**) |
+| 23:03:09 | — | `==> Your service is live` |
+
+Migrações e seed em produção: **verificados pelo log**. Conexão: verificada por `/api/health`.
+
 ## Pendências
 
-1. Conferir no log do Render a versão do Node e o SIGTERM num redeploy.
-2. Criar os projetos no Neon até a etapa 04.
+1. Conferir no log de build do Render a versão do Node (24.22.1).
+2. Projeto Neon da âncora (etapa 10).
 3. Deploy final e smoke test completo na etapa 21.

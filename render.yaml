@@ -25,6 +25,12 @@ services:
         value: "true"
       - key: RUN_SEED_ON_START
         value: "true"
+      # Um proxy confiável (o Render termina o HTTPS) e IP real do cliente no cabeçalho
+      # CF-Connecting-IP, que o Cloudflare reescreve. Usado no limite de tentativas de login.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: CLIENT_IP_HEADER
+        value: cf-connecting-ip
       # Segredo: string de conexão do projeto Neon principal. Cadastrar no painel do Render
       # (Environment); o valor nunca entra neste arquivo.
       - key: DATABASE_URL

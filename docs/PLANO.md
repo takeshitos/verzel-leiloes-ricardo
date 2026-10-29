@@ -85,6 +85,26 @@ Recusa = `ROLLBACK`: nada muda em histórico, saldo, reserva ou fim.
 
 Não existe rota pública para liquidar, adulterar ou reconfigurar a auditoria.
 
+### Onde cada permissão é aplicada (definido na etapa 05)
+
+O usuário vem sempre da sessão (`req.user`, carregado por `loadSessionUser` a partir do cookie). Id, papel ou email enviados no corpo, na URL ou em cabeçalhos nunca identificam quem está agindo.
+
+| Rota ou canal | Middleware | Regra no serviço |
+| --- | --- | --- |
+| `GET /api/lots`, `/api/lots/:id`, `/bids`, `/audit`, `/api/audit/public-key`, `/api/receipts/:token`, `/api/health` | nenhum (público) | Respostas só com dados públicos (pseudônimos) |
+| `POST /api/auth/register`, `/login` | limite de tentativas | Papel só `seller` ou `bidder`, escolhido no cadastro e imutável |
+| `GET /api/auth/me` | `requireAuth` | Devolve email, papel e pseudônimo do próprio usuário |
+| `GET /api/catalog/*` | `requireRole('seller')` | Busca na API externa só para leiloeiro |
+| `POST /api/lots` | `requireRole('seller')` | `seller_id` = `req.user.id` |
+| `POST /api/lots/:id/cancel` | `requireRole('seller')` + `requireLotOwner` | Bloqueia o lote e recusa se `bid_count > 0` (o banco também impede) |
+| `GET /api/seller/lots`, `/summary` | `requireRole('seller')` | Filtra por `req.user.id` |
+| `GET /api/wallet`, `POST /api/wallet/deposits` | `requireRole('bidder')` | Carteira de `req.user.id` |
+| `POST /api/lots/:id/bids` | `requireRole('bidder')` | Leiloeiro nunca oferta; licitante = `req.user.id` |
+| `GET /api/me/participations` | `requireRole('bidder')` | Só participações de `req.user.id` |
+| Socket.IO, sala `user:{id}` (etapa 12) | sessão do cookie no handshake | Sessão expirada ou revogada não entra na sala privada |
+
+Toda requisição `/api` que altera estado passa antes por `requireSameOrigin` (Origin e Sec-Fetch-Site) e `requireJsonBody`.
+
 Proteção de sessão: cookie `sid` HttpOnly, `SameSite=Lax`, `Secure` em produção, validade de 7 dias; rotas que alteram estado exigem JSON e conferem o cabeçalho `Origin`; `app.set('trust proxy', 1)` no Render.
 
 ## 5. Códigos de erro
@@ -93,11 +113,14 @@ Formato: `{ "error": { "code": "...", "message": "texto em português", "details
 
 | HTTP | Códigos |
 | --- | --- |
-| 400 | `VALIDATION_ERROR` |
+| 400 | `VALIDATION_ERROR` (com `details.fields`, uma mensagem por campo) |
 | 401 | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` |
-| 403 | `FORBIDDEN` (inclui leiloeiro ofertando e lote de outro dono) |
+| 403 | `FORBIDDEN` (inclui leiloeiro ofertando e lote de outro dono), `FORBIDDEN_ORIGIN` (CSRF) |
 | 404 | `NOT_FOUND` |
 | 409 | `EMAIL_ALREADY_USED`, `LOT_HAS_BIDS`, `IDEMPOTENCY_KEY_REUSED` |
+| 413 | `PAYLOAD_TOO_LARGE` |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` (corpo que não é JSON) |
+| 429 | `TOO_MANY_REQUESTS` (com cabeçalho `Retry-After`) |
 | 422 | `LOT_NOT_STARTED`, `LOT_ENDED`, `LOT_CANCELLED`, `BID_BELOW_MINIMUM`, `ALREADY_LEADING`, `INSUFFICIENT_FUNDS` |
 | 503 | `CATALOG_UNAVAILABLE` (timeout, 429 ou resposta inválida da API externa) |
 | 500 | `INTERNAL_ERROR` (sem stack trace na resposta) |

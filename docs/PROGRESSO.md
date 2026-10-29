@@ -6,9 +6,11 @@ Estado atual: etapas 00, 01 e 02 concluídas. Existe a base executável (web Rea
 
 Etapa 03 concluída: esqueleto publicado em https://verzel-leiloes-ricardo.onrender.com/ e verificado de fora em 28/10/2026 (detalhes em `docs/DEPLOY.md`).
 
-Etapa 04 concluída localmente (28/10/2026): PostgreSQL 18.3 no Docker Compose, migração aplicada em banco vazio, seed idempotente, 23 restrições e o helper de transação verificados (resultados abaixo). Commit local feito a pedido do candidato, **sem push**.
+Etapa 04 concluída: PostgreSQL 18.3 no Docker Compose localmente, migração e seed idempotentes, 23 restrições e o helper de transação verificados. Commit `d75f85c` enviado depois que o candidato cadastrou `DATABASE_URL` (Neon) no Render. Em produção, `/api/health` responde `database: ok` desde 02:03 UTC. O log do Render (captura do candidato) mostra a migração aplicada no Neon, o seed criado e o SIGTERM tratado com encerramento limpo na instância antiga (detalhes em `docs/DEPLOY.md`).
 
-Próxima ação: **antes do push**, o candidato cria o projeto Neon e cadastra `DATABASE_URL` no Render; sem isso o novo deploy falha no startup (o anterior continua no ar). Depois, etapa 05 (autenticação).
+Etapa 05 concluída localmente (28/10/2026): cadastro, login, logout e `/me` com sessão opaca; middlewares de autenticação, papel e propriedade; CSRF e limite de tentativas. 30 testes com PostgreSQL real passam. Commit e push feitos a pedido do candidato.
+
+Próxima ação: commit e push da etapa 05 se o candidato pedir (as novas variáveis `TRUST_PROXY` e `CLIENT_IP_HEADER` estão no `render.yaml`); depois, etapa 06 (catálogo e snapshots).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -332,11 +334,55 @@ Os scripts de verificação ficaram fora do repositório. A suíte automatizada 
 
 ### Pendências
 
-1. Commit local feito a pedido do candidato; push só depois de `DATABASE_URL` no Render.
-2. Projeto Neon principal (ação do candidato) e conferência do seed em produção.
+1. Commit `d75f85c` enviado em 2026-10-29T01:58Z, depois de `DATABASE_URL` no Render. Nova versão no ar às 02:03:09 UTC com `database: ok`.
+2. Migrações e seed em produção confirmados pelo log do Render (23:03 de Brasília). Antes disso, uma instância parou na validação por `DATABASE_URL` inválida, corrigida pelo candidato.
 3. Invariantes que dependem do código das etapas 08 a 11.
 4. No terminal desta sessão o `docker` precisou do caminho completo (o PATH foi carregado antes da instalação). Num terminal novo do candidato ele já funciona.
 
 ### Pedido do candidato durante a etapa
 
 O candidato pediu as skills `frontend-design` e `Superdesign` para um frontend profissional e moderno. As duas constam como habilitadas no catálogo da conta, mas não carregam nesta sessão (`Unknown skill`). Foi mostrado o cartão para ativá-las e a preferência foi registrada em DECISOES para as etapas 13 a 16.
+
+## Etapa 05 — Autenticação e autorização (28/10/2026, concluída localmente)
+
+Requisitos relacionados: R02 (papéis e permissões) e R14 (nada pessoal nas respostas).
+
+### Arquivos
+
+- `apps/api/src/modules/auth/`: `session.ts` (token, cookie, hash), `service.ts` (cadastro e login), `middleware.ts` (`loadSessionUser`, `requireAuth`, `requireRole`), `routes.ts` (`/api/auth/register`, `/login`, `/logout`, `/me`).
+- `apps/api/src/modules/lots/ownership.ts` (`requireLotOwner`, usado a partir da etapa 07).
+- `apps/api/src/shared/`: `request-guards.ts` (CSRF, JSON obrigatório, IP do cliente), `rate-limit.ts`, `validation.ts`.
+- `apps/api/src/types/express.d.ts` (`req.user`).
+- `app.ts`, `config.ts`, `server.ts`, `render.yaml` e `.env.example` (`TRUST_PROXY`, `CLIENT_IP_HEADER`).
+- Testes: `apps/api/vitest.config.ts`, `tsconfig.test.json`, `test/global-setup.ts`, `test/helpers.ts`, `test/auth.test.ts`, `test/authorization.test.ts`. Novos comandos: `npm test`; o `typecheck` da API agora inclui os testes.
+- Dependências: `cookie-parser` 1.4.7; para desenvolvimento, `vitest` 5.0.5, `supertest` 7.3.1 e tipos.
+
+### Como funciona (resumo para defender)
+
+- **Sessão opaca:** no login, o servidor sorteia 32 bytes, manda no cookie e guarda só o SHA-256 no banco. Quem lê o banco não consegue se passar pelo usuário. Logout apaga a linha; cada login gera um token novo.
+- **Cookie:** `HttpOnly` (o JavaScript não lê), `SameSite=Lax` (não vai em POST de outro site) e, em produção, `Secure` com o prefixo `__Host-`.
+- **CSRF:** como front e API estão na mesma origem, toda requisição que altera estado precisa vir da mesma origem (cabeçalhos `Origin` e `Sec-Fetch-Site`) e ter corpo JSON.
+- **Papel:** escolhido no cadastro (`seller` ou `bidder`), validado por lista fechada e lido do banco a cada requisição. Não há rota que altere o papel, e campos extras no corpo são recusados.
+- **Quem age:** sempre `req.user`, vindo da sessão. Id ou papel no corpo e nos cabeçalhos são ignorados.
+- **Tentativas:** limites em memória por IP e por email; o IP vem de `CF-Connecting-IP` no Render.
+- Mapa de permissões por rota em `docs/PLANO.md`, seção 4.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` | Sem erros (API, testes e web) |
+| `npm run lint` | Sem erros (3 problemas corrigidos na primeira execução) |
+| `npm test` | **30 de 30 testes passando** em 2 arquivos, contra o `verzel_test` no Docker |
+| Prova de que os testes detectam falha: checagem de papel e de dono desligada de propósito | 5 testes de autorização falharam; código restaurado e 30/30 de novo |
+| `npm run build` | Ok |
+| Servidor compilado em produção (`TRUST_PROXY=1`, `CLIENT_IP_HEADER`) no `verzel_dev` | Login 200 com cookie `__Host-sid=…; Max-Age=604800; Path=/; HttpOnly; Secure; SameSite=Lax`; `/me` 200; logout de outra origem 403 `FORBIDDEN_ORIGIN`; logout 204; `/me` depois 401; SIGTERM ok |
+
+Casos cobertos pelos testes: cadastro dos dois papéis; email duplicado (inclusive com maiúsculas); papel inválido; campo extra (`isAdmin`); mensagens por campo; nenhuma senha, hash, token ou id na resposta; login das 3 contas do seed; mesma resposta para senha errada e email inexistente; token novo a cada login com revogação do anterior; 429 com `Retry-After` na 11ª tentativa; `/me` sem e com sessão; logout revoga no banco; sessão expirada; token inventado; CSRF (Origin estranho, `cross-site`, mesma origem, formulário); cookie de produção; visitante 401; licitante em rota de leiloeiro 403; leiloeiro dando lance 403; papel ou id falsos em corpo e cabeçalhos ignorados; dono gerencia o lote; outro leiloeiro 403; lote inexistente ou id inválido 404.
+
+### Pendências
+
+1. Rotas de lotes, carteira e lances (etapas 07 a 09) devem usar estes middlewares, conforme o mapa do PLANO.
+2. Sessão no Socket.IO (etapa 12).
+3. Confirmar no Render que `TRUST_PROXY` e `CLIENT_IP_HEADER` aparecem em Environment depois do próximo deploy.
+4. O limite de tentativas é por instância (memória); suficiente para uma instância só.

@@ -21,6 +21,13 @@ const envSchema = z.object({
   RUN_MIGRATIONS_ON_START: booleanFlag,
   // Roda o seed idempotente na inicialização (só cria o que falta; nunca apaga).
   RUN_SEED_ON_START: booleanFlag,
+  // Quantidade de proxies confiáveis na frente da API (Render: 1). Localmente: 0.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
+  // Cabeçalho com o IP real do cliente, reescrito pelo proxy (Render/Cloudflare: cf-connecting-ip).
+  CLIENT_IP_HEADER: z
+    .string()
+    .regex(/^[a-z0-9-]+$/i, 'use só o nome do cabeçalho, ex.: cf-connecting-ip')
+    .optional(),
 });
 
 export type AppConfig = {
@@ -32,6 +39,8 @@ export type AppConfig = {
   databasePoolMax: number;
   runMigrationsOnStart: boolean;
   runSeedOnStart: boolean;
+  trustProxyHops: number;
+  clientIpHeader?: string;
 };
 
 /**
@@ -68,5 +77,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     databasePoolMax: data.DATABASE_POOL_MAX,
     runMigrationsOnStart: data.RUN_MIGRATIONS_ON_START,
     runSeedOnStart: data.RUN_SEED_ON_START,
+    trustProxyHops: data.TRUST_PROXY,
+    clientIpHeader: data.CLIENT_IP_HEADER?.toLowerCase(),
   };
 }

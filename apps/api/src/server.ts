@@ -44,7 +44,13 @@ if (config.runSeedOnStart) {
 // os dois ficam dois níveis abaixo de apps/, então o build do web está em apps/web/dist.
 const webDistDir = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
-const app = createApp({ webDistDir, pool });
+const app = createApp({
+  webDistDir,
+  pool,
+  isProduction: config.isProduction,
+  trustProxyHops: config.trustProxyHops,
+  clientIpHeader: config.clientIpHeader,
+});
 // Servidor HTTP explícito: o Socket.IO será ligado nele na etapa 12.
 const server = createServer(app);
 

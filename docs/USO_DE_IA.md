@@ -71,3 +71,13 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
 ## Relato final
 
 Preparar somente após a implementação, a partir deste registro. Não afirmar revisão manual completa, autoria exclusiva, testes, deploy ou resultados que não aconteceram.
+
+### Etapa 05 — Autenticação e autorização (28/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 05.
+- **Arquivos gerados pela IA:** módulo `auth` (sessão, serviço, middlewares, rotas), `requireLotOwner`, proteções de requisição (CSRF, JSON, IP), limitador, validação, configuração de proxy e os testes Vitest/Supertest.
+- **Pesquisa:** busca na web sobre como o Render repassa o IP do cliente. As fontes encontradas foram artigos e fórum do Render, não documentação formal; a decisão ficou registrada como "a confirmar".
+- **Verificações executadas:** typecheck, lint, 30 testes com PostgreSQL real, prova de que os testes falham quando a checagem de papel e de dono é desligada (depois restaurada), build e fluxo completo no servidor compilado em modo produção.
+- **Erros encontrados e corrigidos:** 3 apontamentos do lint (variável descartada e atribuição inútil), resolvidos com funções próprias para opções do cookie e para extrair o host.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
