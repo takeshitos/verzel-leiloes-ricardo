@@ -26,7 +26,7 @@ Legenda: **Atendido** (há implementação e evidência), **Parcial**, **Pendent
 | R16 Seed: 1 vendedor, 2 clientes, lote aberto | Empresa | Atendido | `db/seed-data.ts` (idempotente); produção: lote do seed ao vivo até 08/11/2026 02:03 UTC (conferido 29/10 23:26 UTC) |
 | R17 README com configuração, execução e comportamentos inesperados | Empresa | Atendido | `README.md` reproduzido num clone limpo (etapa 20). Ver F1 (uma frase do README promete mais do que foi feito na âncora) |
 | R18 Deploy público e repositório público | Empresa | Atendido | https://verzel-leiloes-ricardo.onrender.com/ (smoke com login: 1 passed, 29/10); GitHub público (API do GitHub, sem sessão) |
-| R19 Relato de uso de IA | Empresa | Atendido | `docs/USO_DE_IA.md` (registro por etapa, resumo e texto para o formulário com a revisão informada pelo candidato) |
+| R19 Relato de uso de IA | Empresa | Atendido | Seção "Uso de IA" do README e `docs/USO_DE_IA.md` (registro por etapa e resumo, com a revisão informada pelo candidato) |
 | R20 Entrega no prazo pelo formulário | Empresa | **Pendente** | Recebido em 22/10/2026, prazo 29/10/2026 (hora limite não informada). O envio do formulário (nome, email, repositório, deploy, relato de IA) só o candidato pode fazer |
 
 Extras: E01 filtro da vitrine e E05 tema (etapa 19), E03 Compose (etapa 04) e E04 testes (etapas 09 a 18) atendidos; E02 cancelamento com estorno **não implementado de propósito**.
@@ -74,7 +74,7 @@ Extras: E01 filtro da vitrine e E05 tema (etapa 19), E03 Compose (etapa 04) e E0
 
 ## Bloqueios de entrega
 
-1. **R20 — enviar o formulário** em https://elitedev.verzel.com.br/?elite-dev-2026-2 com nome, email, repositório (https://github.com/takeshitos/verzel-leiloes-ricardo), deploy (https://verzel-leiloes-ricardo.onrender.com/) e o relato de IA (`docs/USO_DE_IA.md`, "Texto curto para o formulário"). Prazo: 29/10/2026.
+1. **R20 — enviar o formulário** em https://elitedev.verzel.com.br/?elite-dev-2026-2 com nome, email, repositório (https://github.com/takeshitos/verzel-leiloes-ricardo), deploy (https://verzel-leiloes-ricardo.onrender.com/) e o relato de IA (seção "Uso de IA" do README). Prazo: 29/10/2026.
 2. **F1 — corrigir o texto sobre o usuário da âncora** antes de enviar, para não declarar uma proteção que não foi aplicada (alteração só de documentação).
 
 F2 a F6 não bloqueiam a entrega.

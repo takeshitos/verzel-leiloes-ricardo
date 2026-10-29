@@ -228,4 +228,80 @@ Variáveis cadastradas no painel do Render (segredos nunca vão para o repositó
 
 ## Uso de IA
 
-O projeto foi desenvolvido com o Claude Code (modelo Claude Opus 5.5), etapa por etapa, com o candidato decidindo, autorizando commits, pushes e ações em contas externas. O registro factual (tarefas, arquivos, verificações, defeitos e correções) está em `docs/USO_DE_IA.md`.
+IA foi usada do planejamento à entrega. Esta seção resume o que aconteceu; o diário completo, com cada etapa, está em `docs/USO_DE_IA.md` e os comandos com resultados em `docs/PROGRESSO.md`.
+
+### Ferramentas
+
+- **Planejamento:** um assistente de IA leu o PDF do desafio e preparou um kit com requisitos, decisões propostas, cronograma, critérios de validação e uma sequência de prompts (etapas 00 a 23).
+- **Implementação:** **Claude Code** (app desktop, modelo **Claude Opus 5.5**), com terminal, editor de arquivos e um navegador embutido para conferir as telas. Nas etapas finais, o Playwright passou a fazer parte dos testes automáticos.
+
+### Como foi o processo
+
+1. Cada etapa começava com o prompt do kit e a leitura dos documentos de controle (`docs/REQUISITOS.md`, `docs/DECISOES.md`, `docs/PROGRESSO.md`).
+2. A IA implementava só aquela etapa, rodava as verificações (testes com PostgreSQL real, typecheck, lint, build e, quando havia tela, o navegador) e registrava comandos e resultados reais.
+3. No fim de cada etapa, a IA perguntava se podia fazer commit e push; **nada foi para o GitHub sem a autorização explícita do candidato**.
+4. Depois de cada push, a IA acompanhava o deploy no Render e conferia a URL pública de fora, sem login.
+
+As decisões do kit foram tratadas como propostas até serem implementadas e verificadas. Quando algo mudou (por exemplo, a troca do catálogo), a mudança ficou registrada em `docs/DECISOES.md`.
+
+### Quem fez o quê
+
+| A IA (Claude Code) | O candidato |
+| --- | --- |
+| Escreveu praticamente todo o código de `apps/api`, `apps/web` e `e2e`, as migrações, o seed, o `render.yaml`, o `docker-compose.yml`, este README e os documentos em `docs/` | Decidiu os pontos abertos: catálogo de Cleveland, Docker, Neon, extras e se cada correção da revisão final entraria |
+| Escreveu e rodou os testes (Vitest com PostgreSQL real, Supertest, Playwright) e conferiu as telas no navegador | Criou as contas e serviços externos: repositório no GitHub, serviço no Render, dois projetos no Neon |
+| Fez commit e push quando autorizado e acompanhou cada deploy | Gerou e cadastrou a chave de auditoria de produção (a IA nunca viu a chave) |
+| Registrou cada etapa com comandos e resultados reais | Fez os logins em produção quando foi preciso e rodou o smoke test com login (`npm run smoke:prod`, 1 passed) |
+
+A IA **não** criou contas, não acessou os painéis do Render ou do Neon, não digitou senha em produção e não contratou nenhum serviço.
+
+### O que cada etapa produziu
+
+| Etapa | Resultado |
+| --- | --- |
+| 00–01 | Requisitos R01–R20 a partir do PDF; validação de versões e APIs; troca do catálogo para o Cleveland Museum of Art (as imagens da primeira opção eram bloqueadas) |
+| 02–03 | Monorepo, servidor único e primeiro deploy no Render |
+| 04 | PostgreSQL (com e sem Docker), migrações em SQL, seed idempotente |
+| 05 | Cadastro, login, sessão em cookie HttpOnly, papéis e proteção contra CSRF |
+| 06–07 | Cliente da API do museu com timeout e cache, snapshot da obra, criação e cancelamento de lotes, vitrine |
+| 08–09 | Carteira, depósito idempotente e lance transacional com reservas, bloqueios e prorrogação |
+| 10 | Auditoria: cadeia de hashes, checkpoint assinado (Ed25519) e âncora em outro banco |
+| 11 | Encerramento automático, liquidação idempotente, comprovante e participações |
+| 12 | Tempo real (Socket.IO) com reconexão e recuperação por HTTP |
+| 13–16 | Interface: navegação, painel do leiloeiro, fluxo do licitante, auditoria e comprovante públicos |
+| 17 | Mapa de testes por requisito, teste de privacidade das respostas públicas e E2E com Playwright |
+| 18 | Testes de falha (resposta perdida, evento perdido, âncora fora do ar) e correções |
+| 19 | Extras: filtro da vitrine e tema claro/escuro |
+| 20 | Este README, reproduzido num clone limpo |
+| 21 | Verificação pública final e smoke test de produção |
+| 22 | Revisão final por requisito (`docs/REVISAO_FINAL.md`) e correções aprovadas pelo candidato |
+
+### Verificação do trabalho da IA
+
+O código gerado não foi aceito só por "parecer certo":
+- **Testes contra PostgreSQL real**, inclusive disputas com conexões simultâneas (bloqueio seguro de verdade antes de soltar os concorrentes), ataques à auditoria em banco isolado e falhas simuladas.
+- **Provas de que os testes pegam erros:** mudanças erradas feitas de propósito e desfeitas em seguida (aceitar lance R$ 0,01 abaixo do mínimo derrubou 3 testes; expor o id do licitante derrubou o teste de privacidade; desligar uma checagem da auditoria derrubou 3 testes de remoção).
+- **Navegador:** cada tela foi conferida em desktop e celular; os fluxos com dois licitantes usaram sessões separadas.
+- **Produção:** cada deploy conferido de fora; smoke test completo com login rodado pelo candidato.
+- **Resultados finais:** API 242 testes, web 28, E2E 4 cenários (`docs/TESTES.md`).
+
+### Defeitos que a própria verificação encontrou e foram corrigidos
+
+- Build do Render sem as dependências de desenvolvimento (corrigido com `npm ci --include=dev`).
+- Perda de microssegundos ao regravar o fim do lote, que faria o lance dar erro 500.
+- Índice duplicado numa migração; lotes de teste curtos demais (a prorrogação mudava o fim).
+- Avisos de interface antigos ou contraditórios e regras de efeito do React apontadas pelo lint.
+- Lance já gravado respondendo 500 quando a confirmação na âncora falhava depois do commit.
+- "Sem resposta do servidor" tratada como recusa no cancelamento e na criação de lote.
+- `npm start` na raiz não encontrava `apps/api/.env` (achado ao seguir este README num clone limpo).
+- Revisão final: documentação que afirmava uma restrição de permissão da âncora não aplicada, e falta de trava contra configurar a âncora no mesmo banco principal.
+
+### Limites e recusas
+
+- As skills de design pedidas pelo candidato (`frontend-design` e `Superdesign`) não estavam disponíveis; a interface foi feita com CSS próprio.
+- Uma tentativa de contornar o bloqueio de imagens do primeiro museu foi recusada pela política de segurança da sessão; a solução foi trocar o catálogo.
+- A IA não faz login em produção; por isso o smoke test com login foi preparado por ela e executado pelo candidato.
+
+### O que o candidato revisou
+
+Informado pelo candidato em 29/10/2026: leu os resumos de cada etapa antes de autorizar commit e push, testou o site publicado, leu o README e os documentos em `docs/` e leu parte do código.
