@@ -1,0 +1,25 @@
+# PostgreSQL para desenvolvimento local (alternativa ao PostgreSQL já instalado).
+# Uso: docker compose up -d   e depois   npm run db:migrate && npm run db:seed
+# As credenciais abaixo são SÓ de desenvolvimento; nunca use em produção.
+# Porta 5433 no computador para não conflitar com um PostgreSQL local na 5432.
+services:
+  postgres:
+    image: postgres:18.3-alpine
+    environment:
+      POSTGRES_USER: verzel
+      POSTGRES_PASSWORD: verzel_dev_only
+      POSTGRES_DB: verzel_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      # A partir do PostgreSQL 18 a imagem oficial guarda os dados em /var/lib/postgresql/18/docker;
+      # o volume deve ser montado em /var/lib/postgresql.
+      - verzel_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verzel -d verzel_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  verzel_pgdata:

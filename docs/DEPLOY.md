@@ -33,7 +33,8 @@ Front e API ficam na mesma origem, sem CORS. Banco principal e âncora de audito
 | `NODE_ENV` | `render.yaml` | já | `production` |
 | `PORT` | Render (automático) | já | Não definir manualmente |
 | `HOST` | não definir | — | Padrão `0.0.0.0` em produção |
-| `DATABASE_URL` | Painel do Render → Environment (segredo) | Etapa 04 | String de conexão do projeto Neon principal, com `sslmode=require` |
+| `DATABASE_URL` | Painel do Render → Environment (segredo) | Etapa 04, **antes do push dessa etapa** | String de conexão do projeto Neon principal, com `sslmode=require`. Sem ela, o novo deploy falha no startup (o anterior continua no ar) |
+| `RUN_MIGRATIONS_ON_START` / `RUN_SEED_ON_START` | `render.yaml` (`true`) | Etapa 04 | Aplica migrações pendentes e o seed idempotente antes de aceitar conexões. Variáveis novas de um Blueprint existente podem precisar de "Manual Sync" no painel |
 | `ANCHOR_DATABASE_URL` | Painel do Render (segredo) | Etapa 10 | Projeto Neon da âncora, com usuário só de INSERT/SELECT |
 | `AUDIT_SIGNING_PRIVATE_KEY` | Painel do Render (segredo) | Etapa 10 | Chave Ed25519 gerada uma vez e guardada offline; nunca regenerar no deploy |
 

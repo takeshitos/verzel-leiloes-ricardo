@@ -54,6 +54,18 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
 - **Pedido do candidato:** usar as skills `frontend-design` e `Superdesign`. Elas não carregaram nesta sessão; a IA mostrou o cartão de ativação e registrou a preferência para as etapas de interface.
 - **Deploy:** o candidato criou o serviço no Render e informou a URL. A IA verificou a URL com `curl` e com o navegador embutido. A primeira navegação, numa aba antiga, foi recusada pelo navegador; em uma aba nova funcionou.
 - **Commit `80536a7`:** criado e enviado pela IA dentro do push autorizado da etapa 03.
+- **Commit `66bb563`:** documentação, enviado a pedido do candidato.
+
+### Etapa 04 — Banco, migrações e seed (28/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 04.
+- **Arquivos gerados pela IA:** migração SQL inicial, camada `src/db`, hash de senha, pseudônimo, normalização do catálogo, seed, lote de demonstração, `docker-compose.yml`, `.env.example` e `render.yaml` atualizados. A IA também criou o `apps/api/.env` local, só com credenciais de desenvolvimento do Compose.
+- **Verificações executadas:** leitura do código e dos tipos do `node-pg-migrate` 9 (formato SQL, opções do runner, CLI); conferência da tag `postgres:18.3-alpine` e da mudança de volume do PostgreSQL 18 no Docker Hub; typecheck, lint e caminhos de erro sem banco. Resultados em `PROGRESSO.md`.
+- **Erro encontrado e corrigido:** a mensagem de falha de conexão saía vazia (`AggregateError`); foi criado `describeError`.
+- **Bloqueio resolvido:** o PostgreSQL local exige senha, que a IA não tem nem pediu na conversa. O candidato escolheu Docker e instalou o Docker Desktop; a IA rodou `docker compose up -d`.
+- **Verificações com banco real:** migração em banco vazio e repetida; down/up no banco de teste; seed duas vezes com estado idêntico; 23 restrições; helper de transação com deadlock real; conversão de BIGINT; senhas; lote de demonstração; inicialização de produção duas vezes num banco descartável; persistência do volume. Os scripts de verificação ficaram fora do repositório (pasta temporária da sessão).
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
 
 ## Relato final

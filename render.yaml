@@ -20,6 +20,14 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Aplica migrações pendentes e roda o seed idempotente antes de aceitar conexões.
+      - key: RUN_MIGRATIONS_ON_START
+        value: "true"
+      - key: RUN_SEED_ON_START
+        value: "true"
+      # Segredo: string de conexão do projeto Neon principal. Cadastrar no painel do Render
+      # (Environment); o valor nunca entra neste arquivo.
+      - key: DATABASE_URL
+        sync: false
       # A versão do Node vem do arquivo .node-version na raiz do repositório.
-      # Variáveis secretas (banco, âncora, chave de auditoria) são cadastradas no painel
-      # do Render nas etapas 04 e 10, nunca neste arquivo.
+      # Segredos da auditoria (âncora e chave) entram no painel na etapa 10.

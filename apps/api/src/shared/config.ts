@@ -3,10 +3,24 @@ import { z } from 'zod';
 
 // Variáveis de ambiente aceitas pela API. A validação roda no startup:
 // se algo estiver errado, o servidor nem chega a subir.
+// "true"/"false" em texto (variáveis de ambiente são sempre strings).
+const booleanFlag = z
+  .enum(['true', 'false'], { error: 'use true ou false' })
+  .default('false')
+  .transform((value) => value === 'true');
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   HOST: z.string().min(1).optional(),
+  DATABASE_URL: z
+    .string({ error: 'obrigatória (veja apps/api/.env.example)' })
+    .regex(/^postgres(ql)?:\/\//, 'deve começar com postgres:// ou postgresql://'),
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
+  // Em produção (Render), aplica migrações pendentes antes de aceitar conexões.
+  RUN_MIGRATIONS_ON_START: booleanFlag,
+  // Roda o seed idempotente na inicialização (só cria o que falta; nunca apaga).
+  RUN_SEED_ON_START: booleanFlag,
 });
 
 export type AppConfig = {
@@ -14,6 +28,10 @@ export type AppConfig = {
   isProduction: boolean;
   port: number;
   host: string;
+  databaseUrl: string;
+  databasePoolMax: number;
+  runMigrationsOnStart: boolean;
+  runSeedOnStart: boolean;
 };
 
 /**
@@ -37,14 +55,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error(`Configuração inválida:\n${problems}`);
   }
 
-  const { NODE_ENV, PORT, HOST } = result.data;
-  const isProduction = NODE_ENV === 'production';
+  const data = result.data;
+  const isProduction = data.NODE_ENV === 'production';
 
   return {
-    nodeEnv: NODE_ENV,
+    nodeEnv: data.NODE_ENV,
     isProduction,
-    port: PORT,
+    port: data.PORT,
     // Em produção a hospedagem precisa alcançar o processo por qualquer interface.
-    host: HOST ?? (isProduction ? '0.0.0.0' : '127.0.0.1'),
+    host: data.HOST ?? (isProduction ? '0.0.0.0' : '127.0.0.1'),
+    databaseUrl: data.DATABASE_URL,
+    databasePoolMax: data.DATABASE_POOL_MAX,
+    runMigrationsOnStart: data.RUN_MIGRATIONS_ON_START,
+    runSeedOnStart: data.RUN_SEED_ON_START,
   };
 }

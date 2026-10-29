@@ -6,7 +6,9 @@ Estado atual: etapas 00, 01 e 02 concluídas. Existe a base executável (web Rea
 
 Etapa 03 concluída: esqueleto publicado em https://verzel-leiloes-ricardo.onrender.com/ e verificado de fora em 28/10/2026 (detalhes em `docs/DEPLOY.md`).
 
-Próxima ação: etapa 04 (banco, migrações e seed), com o PostgreSQL local para desenvolvimento e testes. Os projetos no Neon são necessários antes de publicar o banco.
+Etapa 04 concluída localmente (28/10/2026): PostgreSQL 18.3 no Docker Compose, migração aplicada em banco vazio, seed idempotente, 23 restrições e o helper de transação verificados (resultados abaixo). Commit local feito a pedido do candidato, **sem push**.
+
+Próxima ação: **antes do push**, o candidato cria o projeto Neon e cadastra `DATABASE_URL` no Render; sem isso o novo deploy falha no startup (o anterior continua no ar). Depois, etapa 05 (autenticação).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -260,6 +262,80 @@ Critério da etapa atendido: o frontend fala com o backend por URL pública.
 ### Ainda não verificado
 
 Versão do Node e SIGTERM nos logs do Render (a IA não acessa o painel) e tempo de acordar depois de 15 minutos ocioso.
+
+Depois da verificação, o commit `66bb563` (documentação) foi enviado a pedido do candidato. O Render publicou sozinho: às 01:29:04 UTC respondeu uma instância nova (`uptimeSeconds` 18), sem nenhuma requisição com erro durante a troca.
+
+## Etapa 04 — Banco, migrações e seed (28/10/2026, concluída localmente)
+
+Requisitos relacionados: R01 (banco), R16 (seed), e a base de R07, R10, R13 e R14.
+
+### Arquivos
+
+- `apps/api/migrations/1793238000000_esquema-inicial.sql`: todas as tabelas, chaves estrangeiras, índices e restrições (com `-- Down Migration`).
+- `apps/api/src/db/`: `pool.ts`, `transaction.ts`, `database-url.ts`, `migrations.ts`, `migrate.ts`, `seed-data.ts`, `seed.ts`, `demo-lot.ts`.
+- `apps/api/src/modules/auth/password.ts` e `alias.ts`; `apps/api/src/modules/catalog/cma.ts` (normalização validada com zod).
+- `apps/api/src/shared/describe-error.ts`; `config.ts`, `server.ts`, `app.ts` e o health check atualizados.
+- `docker-compose.yml`, `apps/api/.env.example` (opções A e B), scripts `db:*` e `render.yaml` (`RUN_MIGRATIONS_ON_START`, `RUN_SEED_ON_START`, `DATABASE_URL` como segredo).
+- `apps/api/.env` local, ignorado pelo git, só com as credenciais de desenvolvimento do Compose.
+
+### Invariantes garantidas pelo banco
+
+- Dinheiro em `BIGINT`: total da carteira ≥ 0; lance inicial, incremento, lance, reserva, lançamento e liquidação > 0.
+- `lots`: fim original > início; fim atual ≥ fim original; **cancelado só com zero lances**; há líder se e somente se há lances; o líder é um lance do mesmo lote.
+- `bids`: sequência única por lote; hashes com 64 hex.
+- **Uma reserva por lote** (chave primária), apontando para um lance do mesmo lote.
+- **Uma liquidação por lote** (chave primária); vencedor, lance e valor presentes juntos ou ausentes juntos.
+- `wallet_entries`: `operation_key` única; depósito sem lote e liquidação com lote.
+- Um comprovante por liquidação, com token público único de pelo menos 32 caracteres.
+- Checkpoints de auditoria: `pending`/`confirmed`, com `confirmed_at` coerente.
+- Usuários: email único em minúsculas; papel `seller` ou `bidder`; pseudônimo único `VEN-`/`LIC-` + 6 hex.
+
+Invariantes que dependem de código (etapas 08 a 11): disponível ≥ 0 considerando reservas de todos os lotes; total da carteira = soma dos lançamentos; ordem de bloqueio.
+
+### Verificado sem banco
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Sem erros |
+| `db:migrate` com o banco fora do ar | Saída 1: "Falha nas migrações: connect ECONNREFUSED ::1:5433 \| connect ECONNREFUSED 127.0.0.1:5433" |
+| `db:migrate:test` com banco sem `_test` | Recusado: "TEST_DATABASE_URL precisa apontar para um banco cujo nome termina em \"_test\"" |
+| Servidor com `DATABASE_URL` vazia | Saída 1: "Configuração inválida: DATABASE_URL..." |
+| `/api/health` com o banco fora do ar | 503 `{"status":"degraded","database":"unavailable",...}` |
+| CLI do `node-pg-migrate` | Opções `--migrations-dir` e `--migration-file-language` confirmadas no `--help` |
+
+**Defeito encontrado e corrigido:** a primeira falha de conexão saiu com mensagem vazia (o `AggregateError` do `localhost` tem `message` vazio). Foi criado `describeError`, que mostra os erros internos.
+
+### Verificado com banco real (Docker)
+
+O candidato instalou o Docker Desktop 29.9.2 (Compose v5.6.1). O container não existia, então a IA rodou `docker compose up -d` na pasta do projeto.
+
+| Verificação | Resultado |
+| --- | --- |
+| `docker compose config --quiet` / `up -d` | Arquivo válido; container `healthy` em cerca de 6 s; PostgreSQL 18.3; porta 5433; volume em `/var/lib/postgresql` |
+| `npm run db:migrate` em banco vazio | Aplicou `1793238000000_esquema-inicial`; 12 tabelas + `pgmigrations` |
+| `npm run db:migrate` de novo | "Nenhuma migração pendente." |
+| `npm run db:migrate:test` | Criou `verzel_test` automaticamente e aplicou a migração; repetido: nada pendente |
+| Migração down/up no `verzel_test` | Down removeu as 12 tabelas; up recriou as 12 |
+| `npm run db:seed` (1ª vez) | 3 usuários, 2 depósitos iniciais, 1 snapshot, 1 lote ao vivo (fim em 2026-11-08) |
+| `npm run db:seed` (2ª vez) | "nada alterado"; estado idêntico (contagens e hash de usuários e lotes iguais) |
+| Carteiras × lançamentos | Total = soma dos lançamentos nas 3 carteiras (R$ 10.000,00, R$ 10.000,00, R$ 0,00) |
+| Senhas do seed | Formato `scrypt$32768$...`; senha padrão confere para as 3 contas |
+| Pseudônimos | `VEN-BA4F3F`, `LIC-9E250C`, `LIC-670E1A` (aleatórios) |
+| Restrições (script de verificação no `verzel_test`, transação desfeita no fim) | **23 de 23** violações recusadas pelo banco com a restrição esperada |
+| `withTransaction` | Rollback em erro; commit em sucesso; conexão sempre devolvida; **deadlock real** (duas transações em ordem oposta): o PostgreSQL abortou uma (40P01), o helper repetiu, e as duas terminaram com efeitos aplicados uma única vez |
+| Conversão de BIGINT | `9007199254740991` vira number; `9007199254740993` gera erro em vez de arredondar |
+| `db:demo-lot --key teste-etapa-04 --minutes 30` | Criou o lote; repetir a chave não duplica; chave inválida e obra fora das fixtures recusadas com mensagem |
+| Inicialização de produção em banco novo (`RUN_MIGRATIONS_ON_START` e `RUN_SEED_ON_START`), duas vezes | 1ª: migração + seed + `/api/health` 200 com `database: ok`; 2ª: nada pendente, seed sem mudanças; banco descartável removido depois |
+| `docker compose down` e `up -d` | Dados preservados (3 usuários, 2 lotes) |
+
+Os scripts de verificação ficaram fora do repositório. A suíte automatizada da etapa 17 deve transformar esses casos em testes versionados.
+
+### Pendências
+
+1. Commit local feito a pedido do candidato; push só depois de `DATABASE_URL` no Render.
+2. Projeto Neon principal (ação do candidato) e conferência do seed em produção.
+3. Invariantes que dependem do código das etapas 08 a 11.
+4. No terminal desta sessão o `docker` precisou do caminho completo (o PATH foi carregado antes da instalação). Num terminal novo do candidato ele já funciona.
 
 ### Pedido do candidato durante a etapa
 

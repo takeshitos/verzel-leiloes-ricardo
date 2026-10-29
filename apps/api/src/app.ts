@@ -1,22 +1,25 @@
 import express from 'express';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { healthRouter } from './modules/health/routes.js';
+import type { Pool } from 'pg';
+import { createHealthRouter } from './modules/health/routes.js';
 import { apiNotFound, errorBody, errorHandler } from './shared/errors.js';
 
 type AppOptions = {
   /** Pasta com o build do React (apps/web/dist). Se não existir, a API não serve o frontend. */
   webDistDir: string;
+  /** Pool de conexões do PostgreSQL, criado uma vez no startup. */
+  pool: Pool;
 };
 
-export function createApp({ webDistDir }: AppOptions) {
+export function createApp({ webDistDir, pool }: AppOptions) {
   const app = express();
 
   app.disable('x-powered-by');
   app.use(express.json({ limit: '100kb' }));
 
   // 1. API
-  app.use('/api', healthRouter);
+  app.use('/api', createHealthRouter(pool));
   app.use('/api', apiNotFound);
 
   // 2. Frontend (produção): arquivos estáticos e qualquer rota da SPA devolvendo index.html.
