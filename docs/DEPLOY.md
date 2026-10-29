@@ -352,3 +352,16 @@ Push de `b08fff3` às 17:10:43 UTC. Novo frontend no ar às 17:11:37 UTC (bundle
 | `/api/health` | 200, `database: ok` |
 
 Ainda não verificado em produção: depósito e lance com conta de licitante.
+
+## Deploy da etapa 16 (auditoria e comprovante públicos)
+
+Push de `4423568` às 17:45:26 UTC. Novo frontend no ar às 17:46:37 UTC (bundle `/assets/index-C18EwIv8.js` com "Identificador da transação"). Nenhuma variável nova.
+
+| Verificação | Resultado |
+| --- | --- |
+| `/lotes/<seed>/auditoria` | ÍNTEGRO, lote sem lances, gênese, contagens 0 de 0, chave pública Ed25519 |
+| Auditoria do lote de teste do candidato (encerrado sem lances) | ÍNTEGRO |
+| `/comprovantes/token-invalido-123` | "Comprovante não encontrado" |
+| `/api/health` | 200, `database: ok` |
+
+Ainda não verificado em produção: comprovante real e auditoria de lote com lances (não há venda em produção ainda).

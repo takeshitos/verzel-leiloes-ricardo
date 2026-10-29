@@ -32,9 +32,11 @@ Etapa 14 concluída localmente (29/10/2026): painel do leiloeiro com busca real 
 
 Etapa 15 concluída localmente (29/10/2026): depósito simulado e lance pela tela com chave de idempotência por intenção, posição e "você está ganhando / foi superado" calculados do estado do servidor, mensagens para cada recusa, resposta perdida tratada sem reenvio automático, comprovante com link para compartilhar. Cenário A/B do guia feito em duas sessões reais. 252 testes passam (224 da API, 28 do web). Commit `b08fff3` no ar desde 17:11 UTC.
 
-Etapa 16 concluída localmente (29/10/2026): páginas públicas de auditoria (histórico completo, estado com explicação fiel, detalhes técnicos, chave pública e limites) e de comprovante (snapshot da liquidação, identificador da transação, copiar link, imprimir), ambas sem login; 404 sem detalhes. Conferidas com lote íntegro, sem lances, adulterado e âncora fora do ar nos bancos de teste. 252 testes passam. Ainda sem commit.
+Etapa 16 concluída localmente (29/10/2026): páginas públicas de auditoria (histórico completo, estado com explicação fiel, detalhes técnicos, chave pública e limites) e de comprovante (snapshot da liquidação, identificador da transação, copiar link, imprimir), ambas sem login; 404 sem detalhes. Conferidas com lote íntegro, sem lances, adulterado e âncora fora do ar nos bancos de teste. 252 testes passam. Commit `4423568` no ar desde 17:46 UTC.
 
-Próxima ação: commit e push da etapa 16 (a pedido do candidato); depois, etapa 17 (testes automatizados).
+Etapa 17 concluída localmente (29/10/2026): mapa dos testes por requisito em `docs/TESTES.md`, teste de privacidade de todas as respostas públicas e E2E com Playwright (leiloeiro, dois licitantes e visitante). 235 testes da API, 28 do web e 1 E2E passam. Ainda sem commit.
+
+Próxima ação: commit e push da etapa 17 (a pedido do candidato); depois, etapa 18 (falhas e recuperação).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1116,8 +1118,52 @@ Só frontend: as páginas consomem as rotas públicas reais (`/api/lots/:id/audi
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
 | `npm test` | **224 de 224** na API e **28 de 28** no web |
 
+### Deploy da etapa 16
+
+Commit `4423568` enviado às 17:45:26 UTC; novo frontend no ar às 17:46:37 UTC (o JavaScript servido passou a conter "Identificador da transação"). Verificado em produção:
+- auditoria do lote do seed: ÍNTEGRO, "Não há lances para conferir...", gênese, contagens 0 de 0 e chave pública Ed25519 (a mesma de `/api/audit/public-key`);
+- auditoria do lote de teste do candidato encerrado sem lances: ÍNTEGRO;
+- `/comprovantes/token-invalido-123`: "Comprovante não encontrado";
+- health: ok.
+
+Ainda não verificado em produção: um comprovante real (nenhum lote de produção foi vendido ainda) e um lote com lances na auditoria.
+
 ### Limites
 
 - A resposta da auditoria não traz as assinaturas dos checkpoints; a página mostra hashes, contagens, formato e a chave pública, mas conferir as assinaturas por conta própria exigiria expor também as assinaturas (não feito para não mudar a API nesta etapa).
 - O caminho "Link copiado." do botão não pôde ser visto no navegador do app (área de transferência negada); o modo manual funcionou.
 - Os bancos de teste ficaram com os dados deste teste; a suíte os limpa a cada execução.
+
+## Etapa 17 — Testes automatizados (29/10/2026, concluída localmente)
+
+Revisão dos testes existentes contra a lista do prompt e os requisitos. A maior parte já estava coberta nas etapas 05 a 16 (inclusive casos em `it.each`: recusas por saldo, início, fim e cancelamento; alteração de valor, horário e pseudônimo na auditoria). Lacunas fechadas nesta etapa: uma varredura única de dados pessoais nas respostas públicas e o E2E. Mapa completo em `docs/TESTES.md`.
+
+### Arquivos
+
+- `apps/api/test/public-privacy.test.ts` (11 testes): cenário real (lote, dois lances pela rota, liquidação, comprovante) e leitura como texto de vitrine, lote, lances, auditoria, comprovante, chave pública, saúde e três respostas 404: sem `@`, email, id de usuário, hash de sessão, saldos ou ids privados (`bidderId`, `winnerId`, `receiptToken`...); nenhuma cria sessão.
+- `e2e/playwright.config.ts`, `e2e/server.ts`, `e2e/leilao.spec.ts`, `e2e/tsconfig.json`: E2E com o Chrome instalado (sem baixar navegador). O servidor do E2E é o mesmo `server.ts`, nos bancos `_test` (recusa outro nome), com o imitador local da API do museu e liquidação a cada 1 s. Sem relógio falso nem rota extra.
+- `package.json`: `@playwright/test` 1.64.1 (dev), `npm run test:e2e`, e `typecheck` também cobre o E2E. `eslint.config.js`: globals de Node para `e2e/`.
+- `docs/TESTES.md`: como rodar, o que cada arquivo prova, requisitos × testes, resultados e limites.
+
+### Prova de que os testes pegam erros (mudanças temporárias, desfeitas com `git checkout` do arquivo e conferidas com `git diff`)
+
+| Mudança de propósito | Resultado |
+| --- | --- |
+| Expor `bidderId` no histórico público de lances | `public-privacy`: 1 falha ("histórico de lances") |
+| Aceitar lance R$ 0,01 abaixo do mínimo | `bid-rules`/`bids`: 3 falhas (abaixo do inicial, primeiro igual ao inicial, atual + incremento exato) |
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm test` | API **235 de 235** (14 arquivos); web **28 de 28** (3 arquivos) |
+| `npm run test:e2e` | **1 de 1** em 3,8 min; o job liquidou o lote ("vencedor LIC-9DC84A, R$ 120,00") |
+| `npm run typecheck` (API, web e E2E) / `npm run lint` / `npm run build` | Ok |
+
+Cobertura de linhas **não foi medida**.
+
+### Limites
+
+- O E2E espera o lote terminar de verdade (~4 min no total). Não há relógio falso nem rota para fechar lote, por decisão: nada que possa ficar aberto em produção.
+- O E2E usa o Chrome instalado; sem Chrome, troque `channel` para `msedge` ou instale o navegador do Playwright.
+- `npm test` e `npm run test:e2e` usam o mesmo banco de teste: não rode os dois ao mesmo tempo.

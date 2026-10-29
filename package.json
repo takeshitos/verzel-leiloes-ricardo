@@ -14,7 +14,7 @@
     "dev": "concurrently --names api,web --prefix-colors blue,green --kill-others-on-fail \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
     "build": "npm run build -w apps/web && npm run build -w apps/api",
     "start": "node apps/api/dist/server.js",
-    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web",
+    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web && tsc -p e2e/tsconfig.json",
     "lint": "eslint .",
     "test": "npm run test -w apps/api && npm run test -w apps/web",
     "db:migrate": "npm run db:migrate -w apps/api",
@@ -23,10 +23,12 @@
     "db:seed:test": "npm run db:seed:test -w apps/api",
     "db:demo-lot": "npm run db:demo-lot -w apps/api --",
     "db:migrate:anchor": "npm run db:migrate:anchor -w apps/api",
-    "db:migrate:anchor:test": "npm run db:migrate:anchor:test -w apps/api"
+    "db:migrate:anchor:test": "npm run db:migrate:anchor:test -w apps/api",
+    "test:e2e": "npm run build -w apps/web && playwright test -c e2e/playwright.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
     "concurrently": "10.0.6",
     "eslint": "10.13.0",
     "eslint-plugin-react-hooks": "7.1.1",

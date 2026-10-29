@@ -27,6 +27,12 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
 
+  // E2E (Playwright) e servidor do E2E: código Node
+  {
+    files: ['e2e/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
+
   // Web: código de navegador com React
   {
     files: ['apps/web/**/*.{ts,tsx}'],

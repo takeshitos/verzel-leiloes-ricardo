@@ -190,3 +190,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, build, suíte completa; no navegador, lote íntegro, sem lances, adulterado (fixture só no banco de teste) e âncora fora do ar; comprovante por link direto, recarregar, copiar link, token inválido e desconhecido, celular; script procurando dados pessoais nas respostas públicas.
 - **Erros encontrados e corrigidos:** um ÍNTEGRO antigo poderia continuar na tela se a nova verificação falhasse; contagens "0 de 2" enganosas num lote adulterado; texto do lote sem lances.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 17 — Testes automatizados (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 17.
+- **Arquivos gerados pela IA:** teste de privacidade das respostas públicas, E2E com Playwright (configuração, servidor nos bancos de teste e cenário), scripts e `docs/TESTES.md`.
+- **Verificações executadas:** suíte completa, E2E (passou na primeira execução), typecheck, lint, build e duas mutações de propósito para provar que os testes falham com o erro.
+- **Erros encontrados e corrigidos:** o `tsconfig` do E2E não incluía a extensão de tipos do Express da API.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
