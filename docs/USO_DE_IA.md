@@ -19,11 +19,11 @@
 
 **Limites do trabalho com IA registrados.** As skills de design pedidas (`frontend-design` e `Superdesign`) não estavam disponíveis; a interface foi feita com CSS próprio. Uma tentativa de contornar o bloqueio de imagens da AIC foi recusada pela política da sessão e o catálogo foi trocado.
 
-**O que o candidato leu, revisou ou ajustou:** _a preencher pelo candidato_ (não registrado pela IA).
+**O que o candidato leu, revisou ou ajustou** (informado pelo candidato em 29/10/2026): li os resumos de cada etapa antes de autorizar commit e push, testei o site publicado, li o README e as docs em docs/ e li parte do código.
 
 ### Texto curto para o formulário (só fatos; completar o campo pendente)
 
-> Usei o Claude Code (modelo Claude Opus 5.5) para planejar e implementar o projeto etapa por etapa, a partir de um roteiro de prompts preparado com IA a partir do PDF. A IA escreveu o código, os testes (Vitest com PostgreSQL real e Playwright) e a documentação, e verificou cada etapa com testes, typecheck, build e navegador; os defeitos que ela encontrou e corrigiu estão listados em docs/USO_DE_IA.md. Eu tomei as decisões abertas, criei as contas e o deploy (Render e Neon), gerei a chave de auditoria de produção e autorizei cada commit e push. Revisei pessoalmente: **[a completar pelo candidato]**.
+> Usei o Claude Code (modelo Claude Opus 5.5) para planejar e implementar o projeto etapa por etapa, a partir de um roteiro de prompts preparado com IA a partir do PDF. A IA escreveu o código, os testes (Vitest com PostgreSQL real e Playwright) e a documentação, e verificou cada etapa com testes, typecheck, build e navegador; os defeitos que ela encontrou e corrigiu estão listados em docs/USO_DE_IA.md. Eu tomei as decisões abertas, criei as contas e o deploy (Render e Neon), gerei a chave de auditoria de produção e autorizei cada commit e push. Revisei pessoalmente: li os resumos de cada etapa antes de autorizar commit e push, testei o site publicado, li o README e as docs em docs/ e li parte do código.
 
 ## Planejamento inicial
 
@@ -41,7 +41,7 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
 - **Verificações executadas:** comandos de versão e estado somente leitura (lista e resultados em `PROGRESSO.md`); consulta à API pública do GitHub sobre o repositório; contagem das 20 linhas de requisitos e busca por referências ao nome antigo do PDF.
 - **Problema encontrado:** o PDF não tem texto extraível (páginas em imagem) e `pdftoppm` não está instalado. **Contorno:** as imagens JPEG das páginas foram extraídas por um script Node temporário fora do projeto e lidas visualmente pela IA, sem OCR.
 - **Decisões tomadas pelo candidato nesta etapa:** data de recebimento (22/10/2026, prazo 29/10/2026); deixar `git init` para a etapa 02; não versionar PDF, guia e prompts; renomear o PDF.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 01 — Validar plano e dependências (28/10/2026)
 
@@ -54,7 +54,7 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
   - O TypeScript 7 é incompatível com o `typescript-eslint`, então foi escolhido o 6.0.3.
   - A página de preços do Render não pôde ser lida.
 - **Decisão do candidato nesta etapa:** seguir a ordem normal dos prompts.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 02 — Estrutura do projeto (28/10/2026)
 
@@ -66,7 +66,7 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
   - O teste de encerramento por sinal travou no Windows. Foi trocado por um evento disparado no processo; a entrega real do sinal fica para o deploy em Linux.
   - A ferramenta de preview injetou `PORT=5173` e a API subiu na porta errada. A correção foi feita só na configuração local do preview, sem mudar o código.
   - Uma leitura de página feita logo após um clique mostrou o conteúdo antigo. Repetida com espera, a navegação estava correta.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 - **Commit:** `dae1242`, criado pela IA a pedido do candidato, com a linha de coautoria da IA.
 
 ### Etapa 03 — Primeiro deploy (28/10/2026, concluída)
@@ -90,8 +90,8 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
 - **Erro encontrado e corrigido:** a mensagem de falha de conexão saía vazia (`AggregateError`); foi criado `describeError`.
 - **Bloqueio resolvido:** o PostgreSQL local exige senha, que a IA não tem nem pediu na conversa. O candidato escolheu Docker e instalou o Docker Desktop; a IA rodou `docker compose up -d`.
 - **Verificações com banco real:** migração em banco vazio e repetida; down/up no banco de teste; seed duas vezes com estado idêntico; 23 restrições; helper de transação com deadlock real; conversão de BIGINT; senhas; lote de demonstração; inicialização de produção duas vezes num banco descartável; persistência do volume. Os scripts de verificação ficaram fora do repositório (pasta temporária da sessão).
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ## Relato final
 
@@ -105,7 +105,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Pesquisa:** busca na web sobre como o Render repassa o IP do cliente. As fontes encontradas foram artigos e fórum do Render, não documentação formal; a decisão ficou registrada como "a confirmar".
 - **Verificações executadas:** typecheck, lint, 30 testes com PostgreSQL real, prova de que os testes falham quando a checagem de papel e de dono é desligada (depois restaurada), build e fluxo completo no servidor compilado em modo produção.
 - **Erros encontrados e corrigidos:** 3 apontamentos do lint (variável descartada e atribuição inútil), resolvidos com funções próprias para opções do cookie e para extrair o host.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 06 — API externa e snapshots (28/10/2026, concluída localmente)
 
@@ -115,7 +115,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, 52 testes com PostgreSQL real e servidor local que imita o museu, 3 testes contra a API real, ponta a ponta local com o servidor compilado e build.
 - **Erros encontrados e corrigidos:** erro de tipo num teste (`response.json()` devolve `unknown`). O teste real da imagem usava `HEAD` e estourou o tempo; a IA investigou com `curl`, confirmou que o CDN não responde a `HEAD` e trocou por `GET` com `Range`, sem afrouxar o objetivo do teste.
 - **Decisão de escopo:** `GET /api/lots/:id` foi antecipado da etapa 07 para provar que o lote funciona com o museu fora do ar.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 07 — Gestão de lotes (28/10/2026, concluída localmente)
 
@@ -126,7 +126,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erro encontrado pelos testes e corrigido:** soma de centavos voltando como texto (`sum()` de BIGINT é NUMERIC no PostgreSQL); corrigido com `::bigint`.
 - **Ocorrência não reproduzida:** uma execução com um teste "durando" 920 s; repetida sozinha e completa, passou. Registrada como provável suspensão do processo.
 - **Falha de ferramenta:** a primeira tentativa de atualizar estes documentos por um comando de shell falhou por causa de aspas; refeita com um script em arquivo.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 08 — Carteira e depósitos (29/10/2026, concluída localmente)
 
@@ -135,7 +135,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** módulo `wallet` (regras centrais de bloqueio e saldo, serviço e rotas), idempotência genérica, utilitários de dinheiro e 37 testes.
 - **Verificações executadas:** typecheck, lint, testes com PostgreSQL real (inclusive requisições simultâneas), suíte completa e build.
 - **Erro encontrado pelos testes e corrigido:** respostas com as chaves do JSON em ordem diferente entre a primeira requisição e as repetidas (JSONB reordena). A IA confirmou que não houve depósito duplicado e passou a devolver sempre a resposta gravada.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 09 — Lances transacionais (29/10/2026, concluída localmente)
 
@@ -145,7 +145,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, testes com PostgreSQL real e disputas reais (bloqueio segurado e conferência no `pg_stat_activity`), suíte completa, build e ponta a ponta local.
 - **Erros encontrados e corrigidos:** perda de microssegundos ao regravar o fim do lote (erro 500 que também atingiria o seed em produção); testes de corrida que não disparavam as requisições; bloqueio de teste não liberado em falha.
 - **Limite declarado:** R13 continua pendente; a cadeia de hashes sozinha não protege contra quem edita o banco.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 10 — Integridade e âncora (29/10/2026, concluída localmente)
 
@@ -156,7 +156,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** regex quebrado por escape do shell na configuração; barras invertidas indevidas no Markdown (o primeiro conserto com `sed` piorou o arquivo, que foi recuperado por script); três scripts de ataque mal montados (barrados pelas restrições do banco).
 - **Segredos:** a chave local de desenvolvimento foi gravada direto no `apps/api/.env` (ignorado pelo git) sem ser exibida. A chave de produção será gerada pelo candidato.
 - **Limite declarado:** R13 fica parcial até a configuração em produção; ataques que ainda passam listados em `docs/AUDITORIA.md`.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 11 — Liquidação e comprovantes (29/10/2026, concluída localmente)
 
@@ -165,7 +165,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** módulo `settlement` (serviço, job e rotas), migração `settlement_issues`, consultas de participações e do painel do leiloeiro, evento `lot.closed`, defesa extra no lance e 18 testes.
 - **Verificações executadas:** migrações nos bancos locais, testes com PostgreSQL e âncora reais (disputas com bloqueio segurado, falha simulada por gatilho no banco de teste), suíte completa, typecheck, lint, build e ponta a ponta local com o servidor.
 - **Erros encontrados e corrigidos:** índice duplicado na primeira versão da migração; lotes de teste curtos demais (o lance prorrogava o fim e o job não encontrava o lote).
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 12 — Tempo real e reconexão (29/10/2026, concluída localmente)
 
@@ -175,7 +175,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** testes com servidor HTTP e clientes Socket.IO reais, suíte completa, typecheck, lint, build e verificação em duas abas do navegador embutido (lance, prorrogação, liquidação, carteira privada, logout e queda/reconexão com uma segunda instância).
 - **Erros encontrados e corrigidos:** dois testes mal montados (relógio do status e restrição da sessão); 4 erros de lint nas regras de efeito do React; o status de conexão mostrava "Conectando..." durante uma queda longa; o aviso de superado continuava depois de a pessoa voltar a liderar.
 - **Credenciais:** login de teste só no localhost, com as contas do seed; nada de produção.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 13 — Base visual e navegação (29/10/2026, concluída localmente)
 
@@ -185,7 +185,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, build, suíte completa e inspeção no navegador embutido em 1280 × 900 e 375 × 812 (login, erro, cadastro inválido, navegação por papel, área restrita, logout, teclado e rolagem horizontal).
 - **Erros encontrados e corrigidos:** obra vertical esticando o card; dois selos "Ao vivo" na sala; regra de fast refresh do lint.
 - **Credenciais:** só as contas de teste do seed, no localhost.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 14 — Painel do leiloeiro (29/10/2026, concluída localmente)
 
@@ -195,7 +195,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, build, suíte completa e verificação no navegador embutido com três instâncias locais (normal, lance concorrente e museu fora do ar), além de chamadas diretas à API como licitante.
 - **Erros encontrados e corrigidos:** formulário longe da vista; erro de campo que não sumia depois de corrigido; tipo errado da origem do cache (`live`, não `network`).
 - **Credenciais:** só as contas de teste do seed, no localhost.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 15 — Fluxo do licitante (29/10/2026, concluída localmente)
 
@@ -205,7 +205,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, build, suíte completa, cenário A/B do guia em duas sessões reais no navegador embutido (depósito com clique duplo, reserva, recusas, superação, liberação, encerramento, carteiras e leiloeiro) e resposta perdida com o servidor parado.
 - **Erros encontrados e corrigidos:** aviso de recusa antigo continuava ao lado do indicador "Você foi superado" (agora some quando o lote muda de versão).
 - **Credenciais:** só as contas de teste do seed, no localhost.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 16 — Auditoria e comprovante públicos (29/10/2026, concluída localmente)
 
@@ -214,7 +214,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** páginas de auditoria e comprovante completas, página 404 reutilizável, ajuste no `useApi` e estilos (inclusive impressão).
 - **Verificações executadas:** typecheck, lint, build, suíte completa; no navegador, lote íntegro, sem lances, adulterado (fixture só no banco de teste) e âncora fora do ar; comprovante por link direto, recarregar, copiar link, token inválido e desconhecido, celular; script procurando dados pessoais nas respostas públicas.
 - **Erros encontrados e corrigidos:** um ÍNTEGRO antigo poderia continuar na tela se a nova verificação falhasse; contagens "0 de 2" enganosas num lote adulterado; texto do lote sem lances.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 17 — Testes automatizados (29/10/2026, concluída localmente)
 
@@ -223,7 +223,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** teste de privacidade das respostas públicas, E2E com Playwright (configuração, servidor nos bancos de teste e cenário), scripts e `docs/TESTES.md`.
 - **Verificações executadas:** suíte completa, E2E (passou na primeira execução), typecheck, lint, build e duas mutações de propósito para provar que os testes falham com o erro.
 - **Erros encontrados e corrigidos:** o `tsconfig` do E2E não incluía a extensão de tipos do Express da API.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 18 — Falhas e recuperação (29/10/2026, concluída localmente)
 
@@ -232,7 +232,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** correção pós-commit do lance, mensagens de "sem resposta" no painel, 3 testes E2E de falha, regressões na API e `docs/TESTES_DE_FALHA.md`.
 - **Verificações executadas:** revisão de código (transações, SQL), servidor sem chave, E2E completo, suíte completa, typecheck, lint e build; a regressão foi rodada sem a correção para provar que pega o defeito.
 - **Erros encontrados e corrigidos:** os dois defeitos acima; no teste de evento perdido, fechar só o lado da página do WebSocket não derrubava a conexão (o Socket.IO estava em long-polling), então o teste espera a queda real, como um navegador sem rede.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 19 — Extras com limite (29/10/2026, concluída localmente)
 
@@ -241,7 +241,7 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** filtro parametrizado da vitrine (API, teste e tela), tema escuro por tokens, botão de tema e script de tema no `index.html`.
 - **Verificações executadas:** teste da API do filtro, suíte completa, E2E, typecheck, lint, build e verificação manual no navegador (filtros, vazios, URL, persistência e contraste do tema).
 - **Erros encontrados e corrigidos:** uma linha da vitrine quebrou ao gerar o arquivo pelo shell (crases interpretadas); corrigida e conferida pelo typecheck.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
 
 ### Etapa 20 — README e relato de IA (29/10/2026, concluída localmente)
 
@@ -250,4 +250,4 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** `README.md`, o resumo consolidado e o texto para o formulário neste arquivo, e a correção de `apps/api/src/shared/config.ts`.
 - **Verificações executadas:** reprodução do README num clone limpo do repositório, com bancos próprios e chave nova (instalação, `.env`, migrações, seed, build, `npm start`, login, vitrine, auditoria, Socket.IO e `npm test`); depois, os bancos e o clone foram apagados.
 - **Erro encontrado e corrigido:** `npm start` na raiz não encontrava `apps/api/.env` (o servidor não subia); agora o `.env` é procurado pela pasta da API.
-- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
