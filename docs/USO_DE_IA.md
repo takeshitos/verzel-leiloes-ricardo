@@ -161,3 +161,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** obra vertical esticando o card; dois selos "Ao vivo" na sala; regra de fast refresh do lint.
 - **Credenciais:** só as contas de teste do seed, no localhost.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 14 — Painel do leiloeiro (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 14.
+- **Arquivos gerados pela IA:** conversão de valores e datas (com 7 testes), busca no acervo, formulário de criação, lista com cancelamento e o painel.
+- **Verificações executadas:** typecheck, lint, build, suíte completa e verificação no navegador embutido com três instâncias locais (normal, lance concorrente e museu fora do ar), além de chamadas diretas à API como licitante.
+- **Erros encontrados e corrigidos:** formulário longe da vista; erro de campo que não sumia depois de corrigido; tipo errado da origem do cache (`live`, não `network`).
+- **Credenciais:** só as contas de teste do seed, no localhost.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

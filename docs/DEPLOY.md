@@ -303,3 +303,18 @@ Verificação de fora, sem credenciais:
 | `/api/health` | 200, `database: ok` |
 
 Ainda não verificado em produção: lance e sala privada com usuário logado.
+
+## Deploy da etapa 13 (base visual e navegação)
+
+Push de `63c7028` às 16:15:29 UTC. Novo frontend no ar às 16:16:39 UTC (o bundle `/assets/index-CmTomKJ_.js` contém o texto novo "Tempo real conectado"). Nenhuma variável nova.
+
+| Verificação (sem login) | Resultado |
+| --- | --- |
+| Vitrine `/` | Três seções; o lote do seed em "Ao vivo"; agendados e encerrados com estado vazio; selo "Tempo real conectado" |
+| `/carteira` | Redireciona para `/entrar?next=/carteira` |
+| `/lotes/<seed>/auditoria` | ÍNTEGRO, 0 lances |
+| `/comprovantes/token-que-nao-existe` | "Comprovante não encontrado." |
+| Rotas da SPA | 200 |
+| `/api/health` | 200, `database: ok` |
+
+Ainda não verificado em produção: telas com login.

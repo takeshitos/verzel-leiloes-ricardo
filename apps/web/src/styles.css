@@ -1155,3 +1155,158 @@ a:hover {
   font-family: var(--font-serif);
   font-size: 1.6rem;
 }
+
+/* ---------- Painel do leiloeiro (etapa 14) ---------- */
+
+.search-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.search-form .field {
+  flex: 1 1 320px;
+}
+
+.search-form .button {
+  margin-top: 30px;
+}
+
+@media (max-width: 640px) {
+  .search-form .button {
+    margin-top: 0;
+    width: 100%;
+  }
+}
+
+.catalog-grid {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.catalog-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background: var(--surface-muted);
+}
+
+.catalog-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.catalog-body p {
+  margin: 0;
+}
+
+.catalog-body .button {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+.catalog-title {
+  font-size: 0.98rem;
+  margin: 0 0 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalog-body .muted {
+  margin-bottom: 8px;
+}
+
+.create-lot {
+  margin-top: 16px;
+}
+
+.create-lot-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.create-lot-image {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: var(--radius-small);
+  flex-shrink: 0;
+  background: var(--surface-muted);
+}
+
+@media (max-width: 480px) {
+  .create-lot-item {
+    flex-direction: column;
+  }
+  .create-lot-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.seller-lot .button {
+  margin-top: 8px;
+}
+
+.seller-lot-links {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-box {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #e8b8b2;
+  border-radius: var(--radius-small);
+  background: var(--error-soft);
+}
+
+.confirm-box p {
+  margin: 0 0 8px;
+}
+
+.button-danger {
+  background: var(--error);
+  color: #fff;
+}
+
+.button-danger:hover:not(:disabled) {
+  background: #861d15;
+  color: #fff;
+}

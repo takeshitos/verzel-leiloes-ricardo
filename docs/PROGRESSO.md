@@ -26,9 +26,11 @@ Etapa 11 concluída e publicada (29/10/2026): liquidação automática com audit
 
 Etapa 12 concluída localmente (29/10/2026): Socket.IO no mesmo servidor, sala pública por lote, sala privada por usuário decidida pela sessão, reconexão com snapshot HTTP e sala ao vivo mínima em `/lotes/:id`. 239 testes passam (224 da API, 15 do web). Commit `b8d5eea` no ar desde 15:06 UTC.
 
-Etapa 13 concluída localmente (29/10/2026): base visual, sessão real no app (login, cadastro, logout), navegação por papel, vitrine com três seções ao vivo e telas de leitura (carteira, participações, painel, auditoria, comprovante) ligadas à API. 242 testes passam (224 da API, 18 do web). Ainda sem commit.
+Etapa 13 concluída localmente (29/10/2026): base visual, sessão real no app (login, cadastro, logout), navegação por papel, vitrine com três seções ao vivo e telas de leitura (carteira, participações, painel, auditoria, comprovante) ligadas à API. 242 testes passam (224 da API, 18 do web). Commit `63c7028` no ar desde 16:16 UTC.
 
-Próxima ação: commit e push da etapa 13 (a pedido do candidato); depois, etapa 14 (painel do leiloeiro).
+Etapa 14 concluída localmente (29/10/2026): painel do leiloeiro com busca real no acervo, criação de lote (valores em R$ convertidos para centavos por texto, datas locais convertidas para UTC com o fuso visível), lista dos lotes dele com resultado e total recebido, e cancelamento com confirmação. 249 testes passam (224 da API, 25 do web). Ainda sem commit.
+
+Próxima ação: commit e push da etapa 14 (a pedido do candidato); depois, etapa 15 (fluxo do licitante).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -936,9 +938,63 @@ Ajuste feito durante a inspeção: o selo de conexão também dizia "Ao vivo", i
 | `npm run build` | Ok (JS 340 kB, 106 kB com gzip) |
 | `npm test` | **224 de 224** na API e **18 de 18** no web (3 novos de formatação de BRL e duração) |
 
+### Deploy da etapa 13
+
+Commit `63c7028` enviado às 16:15:29 UTC; novo frontend no ar às 16:16:39 UTC (o JavaScript servido passou a conter o texto novo). Verificado de fora, sem login:
+- vitrine com as três seções (1 ao vivo, agendados e encerrados vazios) e "Tempo real conectado";
+- `/carteira` sem login leva a `/entrar?next=/carteira`;
+- auditoria do lote do seed: ÍNTEGRO;
+- comprovante com token inexistente: "Comprovante não encontrado.";
+- rotas da SPA (`/`, `/entrar`, `/carteira`, `/painel`, `/participacoes`, auditoria, comprovante) respondem 200; health ok.
+
+Ainda não verificado em produção: telas com login (o candidato pode entrar com a própria conta).
+
 ### Pendências
 
 1. Etapa 14: busca no acervo, criação e cancelamento no painel.
 2. Etapa 15: depósito, formulário de lance, posição e indicadores definitivos na sala.
 3. Etapa 16: auditoria explicada e comprovante para imprimir e compartilhar.
 4. Nenhum lote agendado no banco local durante a inspeção: o card agendado só foi visto pelo estado vazio.
+
+## Etapa 14 — Painel do leiloeiro (29/10/2026, concluída localmente)
+
+Tela do leiloeiro ligada às rotas reais (`/api/catalog/search`, `POST /api/lots`, `POST /api/lots/:id/cancel`, `/api/seller/lots`, `/api/seller/summary`). Nenhuma mudança na API: as regras continuam no backend.
+
+### Arquivos
+
+- `apps/web/src/input-parsing.ts` (+ teste): `parseBrlToCents` (texto → centavos só com texto e inteiros: "1.234,56", "1234,56", "R$ 1.000", "1234.56"; recusa vírgula dupla, 3 casas, negativo, notação científica, zero e valores grandes demais) e `localInputToIso`/`toLocalInputValue`/`utcOffsetLabel` (hora local do formulário ↔ UTC).
+- `apps/web/src/seller/CatalogSearch.tsx`: busca no acervo com imagem, título, autoria, data e técnica; "Mais resultados" e "Fim dos resultados"; avisa quando o resultado veio do cache; com o museu fora do ar mostra "Busca indisponível agora" só nessa parte.
+- `apps/web/src/seller/CreateLotForm.tsx`: obra escolhida com fonte e licença, aviso de leilão simulado, lance inicial e incremento em R$ com prévia ("Será enviado como R$ 100,00"), início agora ou agendado, fim em `datetime-local` com o fuso do navegador e o horário em UTC visíveis. Validação de ajuda no navegador; os erros por campo da API (`details.fields`) aparecem em cada campo; envio protegido contra clique duplo.
+- `apps/web/src/seller/SellerLotList.tsx`: só os lotes do leiloeiro (a API filtra pela sessão): estado, lance atual e líder, resultado (arrematado por quem e quanto, ou sem lances), pendência de liquidação, links de comprovante e auditoria. Botão "Cancelar lote" só em lote ao vivo ou agendado sem lances, com confirmação na tela; recusas da API (`LOT_HAS_BIDS`, `LOT_ENDED`, `LOT_ALREADY_CANCELLED`) viram mensagens claras; a lista é relida do servidor depois.
+- `apps/web/src/pages/SellerPage.tsx`: resumo (total recebido só de vendas liquidadas, contagens), "Novo lote" e "Seus lotes". Acompanha as salas dos próprios lotes e a sala privada (`lot.sold`) para reler a lista sem recarregar.
+
+### Verificação no navegador (servidores locais 3100, 3101 e 3102 no banco `verzel_dev`; contas do seed só no localhost)
+
+| Cenário | Resultado |
+| --- | --- |
+| Login do leiloeiro | Vai para o Painel |
+| Busca real "harbor" | 63 obras com imagem, vindas da API do museu |
+| Valores inválidos ("dez reais", "1,234") | Erro em cada campo, nada enviado |
+| Criação: R$ 100,00, R$ 10, começar agora, fim 13:27 (America/Sao_Paulo) | "Lote criado"; no banco `starting_bid_cents` 10000, `min_increment_cents` 1000 e fim `16:27:00Z` (UTC) |
+| Lote novo na vitrine | Sim; o lote cancelado não aparece |
+| Cancelar lote sem lance (com confirmação) | "Lote cancelado. Ele saiu da vitrine." e estado Cancelado |
+| Cancelar com lance concorrente | Confirmação aberta; um lance entrou pela instância 3101 (a tela não foi avisada); ao confirmar, a API recusou e a tela mostrou "Não foi possível cancelar: o lote recebeu um lance..."; a lista foi relida com o lance e sem o botão |
+| Museu fora do ar (instância 3102 com `CMA_API_BASE_URL` apontando para uma porta sem resposta) | Só a busca mostra "Busca indisponível agora"; resumo e lotes seguem normais |
+| Resultado depois da liquidação | Lance real de R$ 100,00 do cliente1; após o fim, o painel mostrou "Arrematado por LIC-9E250C por R$ 100,00" e o total recebido foi de R$ 840,00 para R$ 940,00 (5 lotes vendidos) |
+| Licitante | Tela: "Área restrita" (etapa 13). API direta como cliente1: criar lote, cancelar e buscar no acervo → 403 `FORBIDDEN` |
+| 375 × 812 | Painel em uma coluna, sem rolagem horizontal |
+
+Ajustes durante a verificação: o formulário aparecia abaixo dos 12 resultados (agora ocupa o lugar deles e "Trocar obra" volta aos mesmos resultados); o erro antigo de um campo continuava visível depois de corrigido (agora some ao editar).
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+| `npm test` | **224 de 224** na API e **25 de 25** no web (7 novos de conversão de valores e datas) |
+
+### Limites e pendências
+
+- A criação de lote não usa chave de idempotência (a API não pede); o botão fica desativado durante o envio. Uma repetição por perda de resposta criaria outro lote.
+- Prettier aponta diferenças de estilo nos arquivos novos, como já acontecia em outros 70; o projeto não tem script de formatação e nada foi reformatado.
+- Etapa 15: depósito, formulário de lance e indicadores definitivos da sala.
