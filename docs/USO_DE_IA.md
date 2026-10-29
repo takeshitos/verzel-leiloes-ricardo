@@ -44,7 +44,7 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
 - **Commit:** `dae1242`, criado pela IA a pedido do candidato, com a linha de coautoria da IA.
 
-### Etapa 03 — Primeiro deploy (28/10/2026, em andamento)
+### Etapa 03 — Primeiro deploy (28/10/2026, concluída)
 
 - **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
 - **Tarefa solicitada:** executar a etapa 03; o candidato autorizou o push da `main` para o GitHub.
@@ -52,6 +52,8 @@ Para cada etapa, preencha com fatos: ferramenta usada, tarefa solicitada, arquiv
 - **Verificações executadas:** push e conferência do conteúdo público pela API do GitHub; leitura da documentação do Render (Blueprint) e do Neon (regiões); simulação do build do Render numa cópia limpa, com e sem `--include=dev`; servidor de produção na porta 10000. A IA não criou contas nem serviços e não acessou painéis do Render ou do Neon.
 - **Erro encontrado:** com `NODE_ENV=production`, o `npm ci` não instala as devDependencies e o build quebra. Corrigido com `--include=dev` no comando de build.
 - **Pedido do candidato:** usar as skills `frontend-design` e `Superdesign`. Elas não carregaram nesta sessão; a IA mostrou o cartão de ativação e registrou a preferência para as etapas de interface.
+- **Deploy:** o candidato criou o serviço no Render e informou a URL. A IA verificou a URL com `curl` e com o navegador embutido. A primeira navegação, numa aba antiga, foi recusada pelo navegador; em uma aba nova funcionou.
+- **Commit `80536a7`:** criado e enviado pela IA dentro do push autorizado da etapa 03.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
 
 ## Relato final

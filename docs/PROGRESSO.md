@@ -4,9 +4,9 @@ Estado atual: etapas 00, 01 e 02 concluídas. Existe a base executável (web Rea
 
 **Prazo: desafio recebido em 22/10/2026; entrega até 29/10/2026 (hora limite a confirmar pelo candidato).** O cronograma de 7 dias do guia não cabe no tempo restante. Em 28/10/2026 o candidato decidiu seguir a sequência normal dos prompts em vez do prompt auxiliar E.
 
-Etapa 03 em andamento: código no GitHub e configuração de deploy pronta; falta o candidato criar o serviço no Render (passo a passo em `docs/DEPLOY.md`) e informar a URL para a verificação pública.
+Etapa 03 concluída: esqueleto publicado em https://verzel-leiloes-ricardo.onrender.com/ e verificado de fora em 28/10/2026 (detalhes em `docs/DEPLOY.md`).
 
-Próxima ação: verificar a URL pública assim que ela existir. Sem depender disso, a etapa 04 (banco, migrações e seed locais) pode começar.
+Próxima ação: etapa 04 (banco, migrações e seed), com o PostgreSQL local para desenvolvimento e testes. Os projetos no Neon são necessários antes de publicar o banco.
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -220,7 +220,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 
 Commit `dae1242` feito a pedido do candidato em 28/10/2026.
 
-## Etapa 03 — Primeiro deploy (28/10/2026, em andamento)
+## Etapa 03 — Primeiro deploy (28/10/2026, concluída)
 
 Requisito relacionado: R18 (pendente até a URL pública ser verificada).
 
@@ -241,9 +241,25 @@ Requisito relacionado: R18 (pendente até a URL pública ser verificada).
 | Config em produção sem `HOST` | `host: 0.0.0.0` |
 | Servidor com `PORT=10000` | `/api/health` 200; `/`, `/sobre`, `/lotes/123/auditoria` 200 HTML; `/api/rota-inexistente` 404 JSON; encerramento ok |
 
+Commit `80536a7` (configuração de deploy) criado e enviado como parte do push autorizado para a etapa 03, porque o Render lê o `render.yaml` do repositório.
+
+### Verificação pública (após o candidato criar o serviço no Render)
+
+URL: https://verzel-leiloes-ricardo.onrender.com/ (verificada em 2026-10-29T01:24Z).
+
+| Verificação | Resultado |
+| --- | --- |
+| `GET /api/health` | 200 JSON |
+| `GET /`, `/sobre`, `/lotes/123/auditoria` | 200 HTML |
+| `GET /api/rota-inexistente` | 404 JSON `NOT_FOUND` |
+| `http://` | 301 para `https://` |
+| Navegador embutido | Página inicial com "Conectada. Horário do servidor: 28/10/2026, 22:24:17"; Sobre pelo menu e por acesso direto; rota inexistente com "Página não encontrada"; console sem erros |
+
+Critério da etapa atendido: o frontend fala com o backend por URL pública.
+
 ### Ainda não verificado
 
-URL pública, build real no Render com Node 24.22.1 e entrega do SIGTERM pelo Render. **Um build local não conta como deploy concluído.**
+Versão do Node e SIGTERM nos logs do Render (a IA não acessa o painel) e tempo de acordar depois de 15 minutos ocioso.
 
 ### Pedido do candidato durante a etapa
 

@@ -1,6 +1,6 @@
 # Deploy
 
-**Estado em 28/10/2026:** configuração pronta e simulada localmente. O serviço no Render **ainda não foi criado**, então não existe URL pública. R18 continua pendente até a URL ser aberta e verificada.
+**Estado em 28/10/2026:** esqueleto publicado e verificado em **https://verzel-leiloes-ricardo.onrender.com/**. O candidato criou o serviço no Render pelo Blueprint; a verificação foi feita de fora, com o commit `80536a7` em `main`. R18 fica parcial até o deploy final (etapa 21), quando a aplicação completa precisa estar publicada.
 
 ## Arquitetura publicada
 
@@ -80,17 +80,32 @@ Cópia limpa dos arquivos versionados num diretório temporário, com Node 26.13
 - Conexões WebSocket ativas contam como tráfego e mantêm o serviço acordado.
 - O compute do Neon suspende após 5 minutos ocioso e volta na primeira conexão.
 
-## Verificação pública (fazer quando houver URL)
+## Verificação pública
 
-- [ ] `GET /` abre a página inicial com "Status da API: Conectada".
-- [ ] `GET /api/health` responde 200 JSON.
-- [ ] `GET /sobre` (acesso direto) abre a página Sobre.
-- [ ] `GET /api/rota-inexistente` responde 404 JSON.
-- [ ] Log do Render mostra Node 24.22.1 e "API ouvindo em http://0.0.0.0:...".
-- [ ] Num redeploy, o log mostra "Recebido SIGTERM" e "Servidor encerrado".
+Feita em 2026-10-29T01:24Z (28/10/2026, 22:24 em Brasília) com `curl` e com o navegador embutido do app, sem sessão de login.
+
+| Verificação | Resultado |
+| --- | --- |
+| `GET /api/health` | 200 JSON, `uptimeSeconds: 260`, 0,61 s (serviço já acordado) |
+| `GET /` | 200 HTML; no navegador: "Status da API: Conectada. Horário do servidor: 28/10/2026, 22:24:17" |
+| `GET /sobre` (acesso direto e pelo menu) | 200 HTML; página Sobre renderizada |
+| `GET /lotes/123/auditoria` (rota profunda) | 200 HTML (SPA) |
+| Rota inexistente no navegador | "Página não encontrada" |
+| `GET /api/rota-inexistente` | 404 JSON `NOT_FOUND` |
+| Asset `/assets/index-BVEDv9yu.js` | 200 `text/javascript` |
+| `http://` | 301 para `https://` |
+| Console do navegador | Sem erros |
+
+- [x] `GET /` abre a página inicial com "Status da API: Conectada".
+- [x] `GET /api/health` responde 200 JSON.
+- [x] `GET /sobre` (acesso direto) abre a página Sobre.
+- [x] `GET /api/rota-inexistente` responde 404 JSON.
+- [ ] Log do Render mostra Node 24.22.1 e "API ouvindo em http://0.0.0.0:..." (a IA não tem acesso ao painel; conferência do candidato).
+- [ ] Num redeploy, o log mostra "Recebido SIGTERM" e "Servidor encerrado" (conferência do candidato).
+- [ ] Tempo de acordar após 15 minutos ocioso (não medido).
 
 ## Pendências
 
-1. Criar o serviço no Render (ação do candidato) e informar a URL.
-2. Verificar a URL pública (lista acima).
-3. Criar os projetos no Neon até a etapa 04.
+1. Conferir no log do Render a versão do Node e o SIGTERM num redeploy.
+2. Criar os projetos no Neon até a etapa 04.
+3. Deploy final e smoke test completo na etapa 21.
