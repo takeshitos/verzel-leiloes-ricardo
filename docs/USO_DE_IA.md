@@ -102,3 +102,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Ocorrência não reproduzida:** uma execução com um teste "durando" 920 s; repetida sozinha e completa, passou. Registrada como provável suspensão do processo.
 - **Falha de ferramenta:** a primeira tentativa de atualizar estes documentos por um comando de shell falhou por causa de aspas; refeita com um script em arquivo.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 08 — Carteira e depósitos (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 08.
+- **Arquivos gerados pela IA:** módulo `wallet` (regras centrais de bloqueio e saldo, serviço e rotas), idempotência genérica, utilitários de dinheiro e 37 testes.
+- **Verificações executadas:** typecheck, lint, testes com PostgreSQL real (inclusive requisições simultâneas), suíte completa e build.
+- **Erro encontrado pelos testes e corrigido:** respostas com as chaves do JSON em ordem diferente entre a primeira requisição e as repetidas (JSONB reordena). A IA confirmou que não houve depósito duplicado e passou a devolver sempre a resposta gravada.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

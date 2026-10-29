@@ -173,3 +173,20 @@ Verificação de fora, sem credenciais:
 | Imagem do lote no CDN (`GET` com `Range`) | 206 `image/jpeg` |
 
 Isto confirma, de fora, que o seed rodou em produção e que o lote é lido do banco.
+
+## Deploy da etapa 07 (gestão de lotes)
+
+Push de `d3985b7` às 02:58:54 UTC. Nova versão no ar por volta de 02:59:39 UTC (`GET /api/lots` passou de 404 para 200); `/api/health` ficou em 200.
+
+Verificação de fora, sem credenciais:
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/lots` (vitrine) | 200: 1 ao vivo (lote do seed, "Rocky, Wooded Landscape with a Dell and Weir", mínimo 50000 centavos, fim 2026-11-08T02:03:05Z, `VEN-4AF320`), 0 agendados, 0 encerrados; sem dados pessoais |
+| `POST /api/lots` sem login | 401 `UNAUTHENTICATED` |
+| `POST /api/lots/<lote do seed>/cancel` sem login | 401 |
+| O mesmo vindo de outro site | 403 `FORBIDDEN_ORIGIN` |
+| `GET /api/seller/summary` sem login | 401 |
+| Lote do seed depois das tentativas | Continua `live`, `settled: false`, 0 lances |
+
+Criação e cancelamento com login de leiloeiro foram testados localmente (testes automatizados e ponta a ponta com a API real do museu). Em produção ficam para o candidato ou para as telas da etapa 14.

@@ -14,7 +14,9 @@ Etapa 06 concluída localmente (28/10/2026): cliente real da Cleveland com timeo
 
 Etapa 07 concluída localmente (28/10/2026): criação de lote pelo snapshot, vitrine pública, cancelamento sob bloqueio e painel HTTP do vendedor. 83 testes passam (+1 pendente para a etapa 09). A liquidação **ainda não existe**. Commit e push feitos a pedido do candidato.
 
-Próxima ação: commit e push da etapa 07, se o candidato pedir; depois, etapa 08 (carteira e depósitos).
+Etapa 08 concluída localmente (29/10/2026): carteira do licitante, depósito simulado idempotente (inclusive com requisições simultâneas) e regras de bloqueio da carteira centralizadas. 120 testes passam (+1 pendente). Commit e push feitos a pedido do candidato.
+
+Próxima ação: commit e push da etapa 08, se o candidato pedir; depois, etapa 09 (lances transacionais).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -501,3 +503,68 @@ Casos cobertos pelos testes de lotes:
 1. `it.todo` em `lots.test.ts`: cancelamento contra o primeiro lance pelo serviço de lances real (etapa 09).
 2. Liquidação, resultado por lote e total recebido real (etapa 11).
 3. Telas da vitrine e do painel (etapas 13 e 14).
+
+### Deploy da etapa 07
+
+Commit `d3985b7` enviado a pedido do candidato; nova versão no ar por volta de 02:59:39 UTC. Verificado de fora, sem credenciais:
+- a vitrine pública mostra o lote do seed ao vivo, sem dados pessoais;
+- criar, cancelar e o painel sem login respondem 401;
+- cancelar vindo de outro site responde 403;
+- o lote do seed segue ao vivo.
+
+Detalhes em `docs/DEPLOY.md`.
+
+## Etapa 08 — Carteira e depósitos (29/10/2026, concluída localmente)
+
+Requisito relacionado: R07 (carteira, comprometido, disponível, depósito simulado).
+
+### Arquivos
+
+- `apps/api/src/modules/wallet/ledger.ts`: `lockWallets` (bloqueio em ordem de `user_id`) e `readBalance` (total, comprometido e disponível). Protocolo de bloqueio descrito no topo do arquivo.
+- `apps/api/src/modules/wallet/service.ts` e `routes.ts`: `GET /api/wallet` e `POST /api/wallet/deposits`, só para licitante.
+- `apps/api/src/shared/idempotency.ts`: `withIdempotency`, `requireIdempotencyKey` e `requestFingerprint` (reaproveitáveis pelo lance).
+- `apps/api/src/shared/money.ts`: limites, `centsSchema` e `formatBrl`. As rotas de lotes passaram a usar o mesmo `centsSchema`.
+- Testes: `apps/api/test/wallet.test.ts` (22) e `apps/api/test/money.test.ts` (15).
+
+### Exemplo do enunciado: R$ 1.000 e uma reserva de R$ 100
+
+| Momento | Total | Comprometido | Disponível |
+| --- | --- | --- | --- |
+| Depósito simulado de R$ 1.000,00 | 100000 | 0 | 100000 |
+| Lidera um lote com R$ 100,00 (reserva) | 100000 | 10000 | 90000 |
+
+- O **total** só muda com depósito e liquidação; reservar não debita.
+- O **comprometido** é a soma das reservas do usuário em **todos** os lotes; com outra reserva de R$ 250,00 em outro lote, ficaria 35000 comprometido e 65000 disponível.
+- O **disponível** é sempre total − comprometido, e nunca fica negativo, porque o lance (etapa 09) só reserva o que cabe no disponível, com a carteira bloqueada.
+- Os valores trafegam em centavos inteiros: 100000 = R$ 1.000,00.
+
+### Depósito e idempotência (para defender)
+
+1. O navegador manda o valor em centavos e um cabeçalho `Idempotency-Key` gerado para aquela ação.
+2. Numa única transação: grava a chave (se já existir, espera a outra requisição terminar), bloqueia a carteira, grava o lançamento `deposit` com `operation_key` única, soma no total e grava a resposta junto com a chave.
+3. Repetição com a mesma chave e o mesmo valor: devolve a mesma resposta, com o cabeçalho `Idempotent-Replayed: true`, sem depositar de novo. Com outro valor: 409.
+4. Limites: até R$ 100.000,00 por depósito e saldo total até R$ 10.000.000,00 (422 se passar). Até 20 depósitos por minuto por usuário.
+5. Nenhum evento em tempo real foi criado: a carteira privada via socket depende da autenticação do socket (etapa 12).
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Sem erros |
+| `vitest run test/wallet.test.ts test/money.test.ts` (1ª vez) | 36 de 37: falhou "8 requisições simultâneas com a mesma chave". **Não houve depósito duplicado**: a resposta original e as repetidas tinham as mesmas informações em ordem diferente de chaves (o JSONB reordena). Corrigido: a primeira resposta também passa a vir do registro gravado |
+| O mesmo grupo de testes 3 vezes seguidas | 5/5 em cada execução |
+| `npm test` | **120 passaram + 1 pendente**, 8 arquivos, 44 s |
+| `npm run build` | Ok |
+
+Casos cobertos:
+- **Consulta:** carteira nova zerada e marcada como simulada; exemplo de R$ 1.000 com reserva de R$ 100 (90000 disponível); reservas em dois lotes somadas; id de outro usuário na URL ou no corpo sem efeito; leiloeiro 403 e visitante 401.
+- **Depósito:** lançamento e total juntos, com total = soma dos lançamentos; 8 valores inválidos (zero, negativo, decimais, texto, "NaN", nulo, acima do limite, 1e20); corpo vazio e JSON com `Infinity`; chave ausente ou inválida; limite de saldo (422) sem gravar lançamento nem chave.
+- **Idempotência:** repetição sequencial; mesma chave com outro valor (409); chave por usuário; **8 requisições simultâneas com a mesma chave = 1 lançamento**; **8 simultâneas com chaves diferentes = 8 lançamentos, sem perder atualização**.
+- **Dinheiro:** `formatBrl` e `centsSchema`.
+
+### Pendências
+
+1. O lance (etapa 09) precisa usar `lockWallets`, `readBalance` e `withIdempotency`.
+2. Débito e crédito da liquidação (etapa 11) com `lockWallets`.
+3. Tela da carteira e conversão do valor digitado em reais para centavos por texto (etapas 13 e 15).
+4. Evento privado `wallet.updated` só depois da autenticação do socket (etapa 12).

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import { z } from 'zod';
+import { centsSchema, MAX_LOT_VALUE_CENTS } from '../../shared/money.js';
 import { parseBody } from '../../shared/validation.js';
 import { requireRole } from '../auth/middleware.js';
 import type { CatalogClient } from '../catalog/client.js';
@@ -8,15 +9,6 @@ import { requireLotOwner } from './ownership.js';
 import { listSellerLots, sellerSummary } from './queries.js';
 import { cancelLot, createLot } from './service.js';
 
-// Até R$ 100.000.000,00, em centavos inteiros (bem abaixo do limite seguro do JavaScript).
-const MAX_CENTS = 10_000_000_000;
-
-const centsSchema = (label: string) =>
-  z
-    .number({ error: `Informe ${label} em centavos (número inteiro).` })
-    .int(`${label} deve ser em centavos inteiros (sem casas decimais).`)
-    .positive(`${label} deve ser maior que zero.`)
-    .max(MAX_CENTS, `${label} pode ser no máximo R$ 100.000.000,00.`);
 
 // Data ISO 8601 com fuso explícito (Z ou -03:00). Guardada e devolvida em UTC.
 const dateSchema = (label: string) =>
@@ -28,8 +20,8 @@ const dateSchema = (label: string) =>
 const createLotSchema = z
   .strictObject({
     externalId: z.string({ error: 'Escolha uma obra do catálogo.' }).regex(/^\d{1,10}$/, 'Obra inválida.'),
-    startingBidCents: centsSchema('O lance inicial'),
-    minIncrementCents: centsSchema('O incremento mínimo'),
+    startingBidCents: centsSchema('O lance inicial', MAX_LOT_VALUE_CENTS),
+    minIncrementCents: centsSchema('O incremento mínimo', MAX_LOT_VALUE_CENTS),
     startsAt: dateSchema('Início'),
     endsAt: dateSchema('Fim'),
   })

@@ -113,7 +113,7 @@ Formato: `{ "error": { "code": "...", "message": "texto em português", "details
 
 | HTTP | Códigos |
 | --- | --- |
-| 400 | `VALIDATION_ERROR` (com `details.fields`, uma mensagem por campo) |
+| 400 | `VALIDATION_ERROR` (com `details.fields`, uma mensagem por campo), `IDEMPOTENCY_KEY_REQUIRED` |
 | 401 | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` |
 | 403 | `FORBIDDEN` (inclui leiloeiro ofertando e lote de outro dono), `FORBIDDEN_ORIGIN` (CSRF) |
 | 404 | `NOT_FOUND`, `CATALOG_ITEM_NOT_FOUND` |
@@ -121,7 +121,7 @@ Formato: `{ "error": { "code": "...", "message": "texto em português", "details
 | 413 | `PAYLOAD_TOO_LARGE` |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` (corpo que não é JSON) |
 | 429 | `TOO_MANY_REQUESTS` (com cabeçalho `Retry-After`) |
-| 422 | `LOT_NOT_STARTED`, `LOT_ENDED`, `LOT_CANCELLED`, `BID_BELOW_MINIMUM`, `ALREADY_LEADING`, `INSUFFICIENT_FUNDS`, `CATALOG_ITEM_WITHOUT_IMAGE` |
+| 422 | `LOT_NOT_STARTED`, `LOT_ENDED`, `LOT_CANCELLED`, `BID_BELOW_MINIMUM`, `ALREADY_LEADING`, `INSUFFICIENT_FUNDS`, `CATALOG_ITEM_WITHOUT_IMAGE`, `WALLET_LIMIT_EXCEEDED` |
 | 503 | `CATALOG_UNAVAILABLE` (timeout, 429 ou resposta inválida da API externa) |
 | 500 | `INTERNAL_ERROR` (sem stack trace na resposta) |
 
