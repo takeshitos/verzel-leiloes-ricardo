@@ -140,6 +140,13 @@ Emitidos só depois do `COMMIT`. Cada lote tem `version` crescente; o cliente de
 
 A sala privada é decidida no servidor, a partir do cookie de sessão no handshake; o cliente não escolhe o `user_id`.
 
+### Implementação da etapa 12 (diferenças da tabela acima)
+
+- `lot.updated` traz o resumo relido do banco: `version`, `status`, `settled`, `startsAt`, `endsAt`, `currentBidCents`, `nextMinimumBidCents`, `bidCount`, `leaderAlias`, `result`, `serverTime`. Não traz `auditStatus` (verificar a auditoria a cada evento seria caro); o status da âncora do lance vai em `bid.accepted` (`pending` ou `confirmed`), e o ÍNTEGRO continua sendo a verificação pública.
+- `bid.accepted` também traz `auditStatus` e `serverTime`; `lot.closed` traz `settledAt` e `finalAmountCents`.
+- Sala privada: `wallet.updated` com `asOf` (horário da leitura no banco, para descartar saldo fora de ordem), `bid.outbid`, `lot.won` (vencedor) e `lot.sold` (leiloeiro), os dois com o link do comprovante.
+- Conexão: `session.state` ao conectar e `session.ended` (revogada ou expirada). Cliente → servidor: só `lot.subscribe` (com confirmação) e `lot.unsubscribe`.
+
 ## 7. Integridade do histórico (R13)
 
 ### Modelo de ameaça
@@ -213,7 +220,7 @@ A implementação atual (`chainOnlyRecorder`) calcula a cadeia real e devolve se
 - [ ] Encerramento automático, idempotente, recuperável após reinício; sem lances, sem vencedor.
 - [x] Liquidação debita o total do vencedor, credita o vendedor, remove a reserva e gera comprovante (etapa 11, testado localmente).
 - [ ] Centavos inteiros em todo o caminho; nenhuma conta de dinheiro com ponto flutuante.
-- [ ] Eventos só depois do commit; nada de saldo em evento público.
+- [x] Eventos só depois do commit; nada de saldo em evento público (etapa 12, testado com clientes reais).
 - [ ] Respostas públicas sem email, nome real, senha, sessão ou saldo.
 - [ ] Vitrine, sala, auditoria e comprovante funcionam sem a API externa.
 - [ ] Auditoria nunca mostra íntegro quando a âncora está pendente ou indisponível.

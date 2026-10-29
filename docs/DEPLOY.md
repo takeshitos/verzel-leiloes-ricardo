@@ -264,3 +264,24 @@ Verificação de fora, sem credenciais:
 | `/api/health` | 200, `database: ok` |
 
 Ainda não verificado em produção: um lance real ancorado (exige login de licitante; comando no PROGRESSO).
+
+## Deploy da etapa 11 (liquidação e comprovantes)
+
+Push de `8b0b36b` às 14:20:15 UTC. Nova versão no ar às 14:21:30 UTC (`/api/me/participations` passou de 404 para 401). A migração `1793260000000_settlement-issues` roda no startup; o health respondeu `database: ok` com 23 s de uptime. Nenhuma variável nova: `SETTLEMENT_INTERVAL_MS` usa o padrão de 5 s.
+
+Verificação de fora, sem credenciais:
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/receipts/<43 caracteres desconhecidos>` | 404 JSON, "Comprovante não encontrado." |
+| `GET /api/receipts/curto` (formato inválido) | 404 com a mesma resposta |
+| `GET /api/me/participations` sem login | 401 `UNAUTHENTICATED` |
+| `/api/health` | 200, `database: ok` |
+| `/` | 200 |
+| `GET /api/lots` | lote do seed ao vivo, `settled: false`, termina em 08/11 |
+
+Ainda não verificado em produção: uma liquidação real. O lote do seed só termina em 08/11/2026; os lotes curtos de demonstração entram na etapa 21. No Render gratuito, o serviço dorme sem tráfego, e a liquidação acontece no ciclo do startup quando ele acorda.
+
+## Tempo real (etapa 12)
+
+O Socket.IO roda no mesmo serviço e na mesma porta (`/socket.io`), na mesma origem do site; não há variável nova. O Render aceita WebSocket no plano usado. A arquitetura é de **uma instância**: com várias, as salas precisariam de um adapter (ex.: Redis). Conexões abertas mantêm o serviço acordado; sem tráfego ele dorme e o cliente se recupera por HTTP ao voltar.

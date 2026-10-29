@@ -6,10 +6,12 @@ import { createRateLimiter, type RateLimiter } from '../../shared/rate-limit.js'
 import { clientIp } from '../../shared/request-guards.js';
 import { parseBody } from '../../shared/validation.js';
 import { requireAuth } from './middleware.js';
+import { publishSessionRevoked } from '../realtime/events.js';
 import { authenticate, registerUser } from './service.js';
 import {
   createSession,
   deleteSession,
+  hashSessionToken,
   sessionClearCookieOptions,
   sessionCookieName,
   sessionCookieOptions,
@@ -105,7 +107,11 @@ export function createAuthRouter({ pool, isProduction, clientIpHeader }: AuthRou
   // Logout revoga a sessão no banco (não basta apagar o cookie no navegador).
   router.post('/auth/logout', async (req, res) => {
     const token: unknown = req.cookies?.[cookieName];
-    if (typeof token === 'string') await deleteSession(pool, token);
+    if (typeof token === 'string') {
+      await deleteSession(pool, token);
+      // Conexões de tempo real dessa sessão perdem a sala privada na hora.
+      publishSessionRevoked({ tokenHash: hashSessionToken(token) });
+    }
     res.clearCookie(cookieName, clearOptions);
     res.status(204).end();
   });

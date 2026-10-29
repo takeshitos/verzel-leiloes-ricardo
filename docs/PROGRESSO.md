@@ -20,7 +20,13 @@ Etapa 09 concluída localmente (29/10/2026): lance transacional com bloqueios, i
 
 Etapa 10 concluída localmente (29/10/2026): checkpoint Ed25519 a cada lance, âncora independente só de inserção, reconciliador e verificação pública. 192 testes passam (27 de ataques e falhas). **R13 parcial** até a âncora e a chave estarem em produção; limites declarados em `docs/AUDITORIA.md`. Commit local feito a pedido do candidato, **sem push** (aguardando a configuração da produção).
 
-Próxima ação: o candidato gera a chave, cria a âncora no Neon e cadastra as variáveis no Render (`docs/DEPLOY.md`); depois commit e push da etapa 10; depois, etapa 11 (liquidação).
+Etapa 10 publicada: o candidato configurou chave, âncora e Render; commit `679e200` no ar.
+
+Etapa 11 concluída e publicada (29/10/2026): liquidação automática com auditoria ÍNTEGRA, comprovante por token e participações. 210 testes passam. Commit `8b0b36b` no ar.
+
+Etapa 12 concluída localmente (29/10/2026): Socket.IO no mesmo servidor, sala pública por lote, sala privada por usuário decidida pela sessão, reconexão com snapshot HTTP e sala ao vivo mínima em `/lotes/:id`. 239 testes passam (224 da API, 15 do web). Ainda sem commit.
+
+Próxima ação: commit e push da etapa 12 (a pedido do candidato); depois, etapa 13 (base visual e navegação).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -802,8 +808,83 @@ Defesas no próprio banco, se o código falhar: lote como chave primária em `se
 - **Lances antigos sem checkpoint** (anteriores à etapa 10) deixam o lote INDISPONÍVEL; ele não é liquidado e o motivo aparece para o leiloeiro. No banco local, o lote do seed tem 2 lances assim.
 - **Comprovante** nesta etapa é JSON; a página HTML vem na etapa 16 (PDF não foi exigido).
 
+### Deploy da etapa 11
+
+Commit `8b0b36b` enviado às 14:20:15 UTC; nova versão no ar às 14:21:30 UTC (`/api/me/participations` passou de 404 para 401). A migração de `settlement_issues` rodou no startup sem erro (o servidor não sobe se ela falhar). Nenhuma variável nova foi necessária. Verificado de fora:
+- comprovante com token desconhecido ou malformado: 404 em JSON, "Comprovante não encontrado.";
+- participações sem login: 401;
+- health: ok; página inicial: 200; lote do seed continua ao vivo, sem liquidação.
+
+Detalhes em `docs/DEPLOY.md`.
+
 ### Pendências
 
 1. Socket.IO (etapa 12) deve repassar `lot.closed`: a parte pública para a sala do lote; o link do comprovante só para o vencedor e o leiloeiro.
 2. Telas: painel do leiloeiro (14), participações (15) e comprovante (16).
 3. Ver uma liquidação real em produção: o lote do seed termina em cerca de 10 dias; a etapa 21 cria lotes curtos de demonstração.
+
+## Etapa 12 — Tempo real e reconexão (29/10/2026, concluída localmente)
+
+Socket.IO no mesmo servidor HTTP da API (mesma porta e origem). Ele só **projeta** o que já foi gravado: lance, depósito, cancelamento e liquidação continuam nas rotas e serviços transacionais. O HTTP é sempre a fonte da verdade; a tela se recupera por ele.
+
+### Arquivos
+
+- `apps/api/src/modules/realtime/socket.ts` (novo): servidor Socket.IO, conferência de origem, sessão pelo cookie no handshake, salas, projeção dos eventos e conferência periódica das sessões.
+- `apps/api/src/modules/realtime/events.ts`: eventos novos `lot.changed` (cancelamento), `wallet.changed` (depósito) e `session.revoked` (logout, só com o hash do token).
+- `apps/api/src/modules/lots/service.ts`, `wallet/service.ts`, `auth/routes.ts`: publicam esses eventos depois do COMMIT (depósito repetido por idempotência não publica).
+- `apps/api/src/modules/lots/queries.ts`: lote público agora expõe `version`.
+- `apps/api/src/server.ts`: liga o Socket.IO e fecha as conexões no desligamento.
+- `apps/api/test/realtime.test.ts` (novo): 14 testes com servidor e clientes reais.
+- `apps/web/src/realtime/` (novo): `lot-sync.ts` (regras puras de versão, lacuna, prorrogação e relógio), `socket.ts` (conexão única), `useLiveLot.ts`, `useMyWallet.ts`, `useConnectionStatus.ts`, `types.ts` e `lot-sync.test.ts` (15 testes).
+- `apps/web/src/pages/LotPage.tsx` (rota `/lotes/:id`), `components/Countdown.tsx`, `components/ConnectionBadge.tsx`, `format.ts` e estilos: sala ao vivo mínima. Visual definitivo e formulário de lance nas etapas 13 e 15.
+- Dependências: `socket.io` 4.8.4 (API), `socket.io-client` 4.8.4 (web e testes da API), `vitest` 5.0.5 (web). `npm test` na raiz roda os testes da API e do web.
+
+### Protocolo
+
+| Sala | Quem entra | Eventos |
+| --- | --- | --- |
+| `lot:{id}` (pública) | qualquer conexão, até visitante, pedindo `lot.subscribe` (o servidor confere que o lote existe; até 30 salas por conexão) | `bid.accepted` (seq, pseudônimo, valor, horário, status da âncora), `lot.extended` (novo fim), `lot.updated` (resumo relido do banco), `lot.closed` (resultado) |
+| `user:{id}` (privada) | só o servidor coloca, pelo cookie de sessão do handshake | `wallet.updated` (saldo + `asOf`), `bid.outbid`, `lot.won` e `lot.sold` (link do comprovante) |
+| conexão | — | `session.state` ao conectar; `session.ended` quando a sessão é revogada ou expira |
+
+- **Origem:** handshake com `Origin` de outro host é recusado (`allowRequest`). O WebSocket não passa por CORS, então essa conferência é necessária. Clientes sem navegador (sem `Origin`) passam, como nas rotas HTTP.
+- **Sessão:** logout tira a conexão da sala privada na hora; sessão expirada sai na conferência periódica (a cada 60 s). A conexão continua como visitante.
+- **Ordem:** todo evento sai depois do COMMIT. O lance é projetado depois do `afterCommit` da auditoria. `version` cresce a cada mudança do lote; `lot.updated` relê o banco, então a versão dele nunca é menor que a do evento que o gerou.
+- **Cliente:** busca `GET /api/lots/:id` e `/bids` ao abrir, ao (re)entrar na sala, ao voltar o foco para a aba, ao perceber lacuna (`seq` pulado ou `bidCount` maior que o histórico) e a cada 15 s enquanto o tempo real está fora. Descarta evento com versão menor. O cronômetro usa a diferença para o horário do servidor (meio da requisição) e recalcula quando o fim muda; ele não aceita nem encerra nada. No fim do prazo, a tela pergunta o novo status ao servidor; vencido sem liquidação, consulta a cada 10 s.
+- **Uma instância:** as salas vivem na memória do processo. Várias instâncias exigiriam um adapter do Socket.IO (ex.: Redis) e coordenação extra, fora do escopo.
+
+### O que os testes provam
+
+API (`realtime.test.ts`, servidor HTTP real em porta livre, clientes `socket.io-client` reais, PostgreSQL e âncora de teste reais; lances, depósitos e cancelamento pelas rotas HTTP):
+- dois clientes (visitante e licitante) recebem lance, prorrogação e resumo com o mesmo novo fim da resposta HTTP, sem email, ids, token ou saldo;
+- versões crescentes; cancelamento e encerramento chegam à sala; comprovante só para vencedor e leiloeiro;
+- carteira e aviso de superado só para o dono; depósito atualiza a carteira;
+- tentativa de entrar na sala alheia (eventos inventados, `user:<id>` e id de usuário como lote): no servidor o socket continua só na própria sala, e o saldo do outro não chega;
+- cookie forjado e sessão expirada entram como visitante; logout e expiração encerram a sala privada;
+- origem de outro site recusada;
+- lance aceito durante a desconexão: o evento se perde e o estado volta pelo HTTP ao reconectar; falha na projeção depois do COMMIT não desfaz o lance.
+
+Web (`lot-sync.test.ts`): evento antigo descartado, lacuna pede snapshot, prorrogação nunca volta o fim, resposta HTTP atrasada não apaga estado mais novo, diferença de relógio e saldo fora de ordem.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npx vitest run test/realtime.test.ts` | **14 de 14** (2 falhas iniciais eram do teste: status calculado pelo relógio real e restrição `sessions_expiry_after_creation`) |
+| `npm test` (raiz) | **224 de 224** na API (13 arquivos) e **15 de 15** no web |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok (o lint pegou 4 erros nas regras de efeito do React; corrigidos) |
+| Duas abas do navegador em `http://localhost:3100/lotes/<lote de 3 min>` | Lance do cliente1 pela API apareceu nas duas sem recarregar; lance do cliente2 com 1:54 restantes levou o fim de 11:44:24 para 11:44:30 nas duas, com o aviso "Prorrogado"; o job liquidou e as duas mostraram "Vencedor: LIC-670E1A por R$ 110,00" |
+| Sala privada no navegador (cliente2 logado na aba, lote de 8 min) | Lance próprio: reservado de R$ 550,00 para R$ 650,00; cliente1 cobriu: "Você foi superado neste lote" e reservado de volta a R$ 550,00. Logout numa aba tirou a carteira da outra na hora |
+| Queda e reconexão no navegador | Servidor da aba (3100) parado; um lance aceito por uma segunda instância (3101) no mesmo banco. A aba mostrou "sem conexão", erro na atualização e o estado antigo. Servidor religado: as abas reconectaram sozinhas e mostraram o lance perdido (R$ 120,00, 3 lances) e o saldo novo |
+
+### Limites e decisões para defender
+
+- O evento perdido nunca é reenviado: a recuperação é sempre o snapshot HTTP.
+- Ao parar uma tarefa em segundo plano, o processo Node filho do `npx tsx` continuou vivo nas portas 3100 e 3101; foram encerrados conferindo a linha de comando. Um processo igual (`tsx src/server.ts`, iniciado às 03:53) continua na porta 3000, provavelmente de uma sessão anterior. Não foi encerrado sem confirmação do candidato.
+- A sala ao vivo desta etapa é funcional e simples; posição do usuário, formulário de lance e visual ficam para as etapas 13 e 15 (R06 continua em andamento).
+
+### Pendências
+
+1. Commit e push; verificar em produção que `/socket.io` responde e que o Render mantém o WebSocket.
+2. Etapa 13: base visual e navegação (vitrine com links para `/lotes/:id`, login).
+3. Etapa 15: formulário de lance, posição do usuário e indicadores definitivos na sala.

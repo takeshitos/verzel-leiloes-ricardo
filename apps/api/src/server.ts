@@ -9,6 +9,7 @@ import { createAnchorStore, missingAnchor } from './modules/audit/anchor.js';
 import { createKeyring, type Keyring } from './modules/audit/keys.js';
 import { createAuditService } from './modules/audit/service.js';
 import { createCatalogClient } from './modules/catalog/client.js';
+import { attachRealtime } from './modules/realtime/socket.js';
 import { createSettlementJob } from './modules/settlement/job.js';
 import { loadConfig, loadLocalEnvFile, type AppConfig } from './shared/config.js';
 
@@ -81,8 +82,9 @@ const app = createApp({
   catalog,
   audit,
 });
-// Servidor HTTP explícito: o Socket.IO será ligado nele na etapa 12.
+// Servidor HTTP explícito: API, frontend e Socket.IO na mesma porta e na mesma origem.
 const server = createServer(app);
+const realtime = attachRealtime(server, { pool, isProduction: config.isProduction });
 
 server.on('error', (error) => {
   console.error(`Falha ao iniciar o servidor: ${error.message}`);
@@ -115,6 +117,7 @@ function shutdown(signal: string): void {
 
   stopReconciler();
   stopSettlement();
+  realtime.close(); // fecha os WebSockets; senão server.close esperaria por eles
   server.close((error) => {
     if (error) {
       console.error(`Erro ao encerrar: ${error.message}`);

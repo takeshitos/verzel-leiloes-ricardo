@@ -1,9 +1,10 @@
 import { EventEmitter } from 'node:events';
 
 /**
- * Eventos de domínio, emitidos SÓ DEPOIS do COMMIT (bid.accepted e lot.closed). A etapa 12 liga o Socket.IO aqui:
- * a parte pública vai para a sala do lote; a privada (ids) decide quem recebe saldo e aviso
- * de "você foi superado". Nenhum evento é a fonte da verdade: o banco é.
+ * Eventos de domínio, emitidos SÓ DEPOIS do COMMIT. O Socket.IO (realtime/socket.ts) escuta
+ * estes eventos e os projeta para as salas: a parte pública vai para a sala do lote; a privada
+ * (ids) só decide quem recebe saldo e avisos pessoais. Nenhum evento é a fonte da verdade:
+ * o banco é, e o cliente sempre pode recuperar o estado por HTTP.
  */
 
 export type BidAcceptedEvent = {
@@ -55,4 +56,40 @@ export function publishLotClosed(event: LotClosedEvent): void {
 export function onLotClosed(listener: (event: LotClosedEvent) => void): () => void {
   emitter.on('lot.closed', listener);
   return () => emitter.off('lot.closed', listener);
+}
+
+/** Lote alterado fora de lance e liquidação (ex.: cancelado). O Socket.IO relê o lote no banco. */
+export type LotChangedEvent = { lotId: string };
+
+export function publishLotChanged(event: LotChangedEvent): void {
+  emitter.emit('lot.changed', event);
+}
+
+export function onLotChanged(listener: (event: LotChangedEvent) => void): () => void {
+  emitter.on('lot.changed', listener);
+  return () => emitter.off('lot.changed', listener);
+}
+
+/** Carteira alterada fora de lance e liquidação (ex.: depósito). O Socket.IO relê o saldo no banco. */
+export type WalletChangedEvent = { userId: string };
+
+export function publishWalletChanged(event: WalletChangedEvent): void {
+  emitter.emit('wallet.changed', event);
+}
+
+export function onWalletChanged(listener: (event: WalletChangedEvent) => void): () => void {
+  emitter.on('wallet.changed', listener);
+  return () => emitter.off('wallet.changed', listener);
+}
+
+/** Sessão encerrada no logout. Só o hash do token circula; o token em si nunca sai da requisição. */
+export type SessionRevokedEvent = { tokenHash: string };
+
+export function publishSessionRevoked(event: SessionRevokedEvent): void {
+  emitter.emit('session.revoked', event);
+}
+
+export function onSessionRevoked(listener: (event: SessionRevokedEvent) => void): () => void {
+  emitter.on('session.revoked', listener);
+  return () => emitter.off('session.revoked', listener);
 }

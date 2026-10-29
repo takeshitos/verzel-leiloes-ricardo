@@ -99,3 +99,145 @@ a {
   color: var(--color-muted);
   font-size: 0.875rem;
 }
+
+/* ---------- Sala ao vivo (etapa 12; visual definitivo nas etapas 13 e 15) ---------- */
+
+.muted {
+  color: var(--color-muted);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+.lot-room-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lot-room-header h1 {
+  margin: 4px 0;
+}
+
+.lot-status {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.8rem;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.lot-room-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  margin: 16px 0 24px;
+}
+
+@media (max-width: 720px) {
+  .lot-room-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lot-room-image {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.lot-room-panel p {
+  margin: 4px 0;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.countdown-final .countdown-value {
+  color: var(--color-error);
+}
+
+.countdown-extended {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.lot-numbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+.lot-numbers dt {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.lot-numbers dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.lot-result {
+  font-weight: 600;
+}
+
+.my-wallet {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.bid-history {
+  padding-left: 24px;
+}
+
+.bid-history li {
+  padding: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.8rem;
+}
+
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+
+.connection-online .connection-dot {
+  background: var(--color-ok);
+}
+
+.connection-offline .connection-dot {
+  background: var(--color-error);
+}

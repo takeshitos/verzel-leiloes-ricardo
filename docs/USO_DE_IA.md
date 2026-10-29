@@ -141,3 +141,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** migrações nos bancos locais, testes com PostgreSQL e âncora reais (disputas com bloqueio segurado, falha simulada por gatilho no banco de teste), suíte completa, typecheck, lint, build e ponta a ponta local com o servidor.
 - **Erros encontrados e corrigidos:** índice duplicado na primeira versão da migração; lotes de teste curtos demais (o lance prorrogava o fim e o job não encontrava o lote).
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 12 — Tempo real e reconexão (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 12.
+- **Arquivos gerados pela IA:** módulo `realtime/socket.ts`, eventos novos (cancelamento, depósito, logout), `version` no lote público, cliente de tempo real no web (regras puras, hooks, sala `/lotes/:id`), 14 testes da API com clientes reais e 15 testes do web.
+- **Verificações executadas:** testes com servidor HTTP e clientes Socket.IO reais, suíte completa, typecheck, lint, build e verificação em duas abas do navegador embutido (lance, prorrogação, liquidação, carteira privada, logout e queda/reconexão com uma segunda instância).
+- **Erros encontrados e corrigidos:** dois testes mal montados (relógio do status e restrição da sessão); 4 erros de lint nas regras de efeito do React; o status de conexão mostrava "Conectando..." durante uma queda longa; o aviso de superado continuava depois de a pessoa voltar a liderar.
+- **Credenciais:** login de teste só no localhost, com as contas do seed; nada de produção.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

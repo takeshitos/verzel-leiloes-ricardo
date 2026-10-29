@@ -30,7 +30,7 @@ const PUBLIC_LOT_SELECT = `
          st.amount_cents AS final_amount_cents,
          s.title, s.creators, s.creation_date, s.technique, s.item_type, s.culture, s.measurements,
          s.image_url, s.image_width, s.image_height, s.source_url, s.license, s.external_id, s.fetched_at,
-         l.created_at
+         l.created_at, l.version
     FROM lots l
     JOIN item_snapshots s ON s.id = l.snapshot_id
     JOIN users seller ON seller.id = l.seller_id
@@ -67,6 +67,7 @@ type PublicLotRow = {
   external_id: string;
   fetched_at: Date;
   created_at: Date;
+  version: number;
 };
 
 /** Formato público do lote: só pseudônimos e dados do snapshot, nunca email ou ids de usuário. */
@@ -75,6 +76,9 @@ export type PublicLot = ReturnType<typeof toPublicLot>;
 function toPublicLot(row: PublicLotRow) {
   return {
     id: row.id,
+    // Cresce a cada mudança do lote (lance, cancelamento, liquidação). O tempo real usa para
+    // descartar atualização antiga e perceber quando precisa buscar o estado de novo.
+    version: row.version,
     status: row.status,
     settled: row.settled,
     startsAt: row.starts_at.toISOString(),

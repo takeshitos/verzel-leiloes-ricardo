@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 import { AppError } from '../../shared/errors.js';
 import { withIdempotency, type IdempotentResponse } from '../../shared/idempotency.js';
 import { formatBrl, MAX_WALLET_TOTAL_CENTS } from '../../shared/money.js';
+import { publishWalletChanged } from '../realtime/events.js';
 import { lockWallets, readBalance, type WalletBalance } from './ledger.js';
 
 export type WalletEntry = {
@@ -50,7 +51,7 @@ export async function deposit(
   amountCents: number,
   idempotencyKey: string,
 ): Promise<IdempotentResponse<DepositResponse>> {
-  return withIdempotency<DepositResponse>(
+  const result = await withIdempotency<DepositResponse>(
     pool,
     { userId, scope: 'wallet.deposit', key: idempotencyKey, request: { amountCents } },
     async (client) => {
@@ -84,4 +85,7 @@ export async function deposit(
       };
     },
   );
+  // Depois do COMMIT. Repetição idempotente não mudou nada e não avisa de novo.
+  if (!result.replayed) publishWalletChanged({ userId });
+  return result;
 }

@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes } from 'react-router';
 import { AboutPage } from './pages/AboutPage';
 import { HomePage } from './pages/HomePage';
+import { LotPage } from './pages/LotPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export function App() {
@@ -22,6 +23,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/sobre" element={<AboutPage />} />
+          <Route path="/lotes/:id" element={<LotPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

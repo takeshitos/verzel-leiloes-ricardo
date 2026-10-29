@@ -3,6 +3,7 @@ import { withTransaction } from '../../db/transaction.js';
 import { AppError } from '../../shared/errors.js';
 import type { CatalogClient } from '../catalog/client.js';
 import { fetchItemForLot, upsertSnapshot } from '../catalog/snapshots.js';
+import { publishLotChanged } from '../realtime/events.js';
 import { findPublicLot, type PublicLot } from './queries.js';
 
 const MINUTE_MS = 60_000;
@@ -107,6 +108,8 @@ export async function cancelLot(pool: Pool, sellerId: string, lotId: string): Pr
 
     await client.query('UPDATE lots SET cancelled_at = $2, version = version + 1 WHERE id = $1', [lotId, lot.now]);
   });
+  // Depois do COMMIT: quem está na sala vê o lote cancelado sem recarregar.
+  publishLotChanged({ lotId });
 
   const lot = await findPublicLot(pool, lotId);
   return lot!;
