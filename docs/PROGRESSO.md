@@ -42,7 +42,9 @@ Etapa 19 concluída localmente (29/10/2026): extras opcionais com limite — fil
 
 Etapa 20 concluída localmente (29/10/2026): README para o avaliador, reproduzido num clone limpo (onde apareceu e foi corrigido um defeito do `npm start`), e relato de IA consolidado com texto para o formulário. Commit `c2d3c02` no ar desde 22:29 UTC.
 
-Próxima ação: etapa 21 (deploy final e smoke test).
+Etapa 21 (29/10/2026): verificação pública sem login concluída (rotas profundas, 404 JSON, HTTPS e WSS, bundle sem segredos, GitHub público, configuração). Smoke test com login (`e2e/smoke.prod.ts`) executado pelo candidato: 1 passed em 4,4 min. Encerramento com o serviço dormindo documentado como não pontual. Ainda sem commit.
+
+Próxima ação: commit e push da etapa 21 (a pedido do candidato); depois, etapa 22 (revisão final por requisito).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1285,3 +1287,33 @@ Não reproduzidos no clone: `npm run dev` (já usado desde a etapa 02; no clone 
 ### Deploy da etapa 20
 
 Commit `c2d3c02` enviado às 22:28:07 UTC; o serviço reiniciou às 22:29:01 UTC (`uptimeSeconds` 22). Health ok, página inicial 200 e o `README.md` público no GitHub (200). A correção do `.env` não muda produção (lá `NODE_ENV=production` não lê arquivo).
+
+## Etapa 21 — Deploy final e verificação pública (29/10/2026)
+
+Hospedagem mantida (Render free + Neon); nada contratado, nenhum recurso criado, banco público não adulterado. Detalhes em `docs/DEPLOY.md` ("Deploy final e verificação pública").
+
+| Verificação (29/10/2026, 23:26 UTC, sem login) | Resultado |
+| --- | --- |
+| Versão | `main` no GitHub = `99c734c`; o Render faz deploy automático a cada commit na `main` (último reinício com código novo conferido: `c2d3c02`, 22:29 UTC; os commits seguintes só mudaram docs) |
+| Serviço dormindo | No primeiro acesso, `uptimeSeconds` 23: o serviço estava suspenso e acordou com a requisição |
+| `/api/health` | 200, `database: ok` |
+| Rotas profundas (`/`, `/entrar`, `/painel`, `/carteira`, `/participacoes`, `/lotes/<id>`, `/lotes/<id>/auditoria`, `/comprovantes/<x>`) | 200 `text/html` (refresh funciona) |
+| `/api/nao-existe` | 404 `application/json` "Rota da API não encontrada." |
+| HTTP → HTTPS | 301 para `https://` |
+| WSS | Cliente Socket.IO como visitante conectou por WebSocket seguro, entrou na sala do lote do seed; lote inexistente `NOT_FOUND`; outra origem recusada |
+| Segredos no bundle (`/assets/index-kS9KLzZk.js`) | Nenhum de: `AUDIT_SIGNING`, `PRIVATE KEY`, `postgres://`, `npg_`, `DATABASE_URL`, `VITE_`, senha de demonstração |
+| Vitrine | 1 ao vivo (lote do seed, até 08/11/2026 02:03 UTC), 1 encerrado |
+| Busca no museu sem login | 401 (só leiloeiro) |
+| Chave pública | `/api/audit/public-key` Ed25519 |
+| GitHub | Repositório público (API do GitHub, sem sessão), página 200 |
+| Configuração | `render.yaml`: build `npm ci --include=dev && npm run build`, start `node apps/api/dist/server.js`, Node 24.22.1 (`.node-version`), `TRUST_PROXY=1`, `CLIENT_IP_HEADER=cf-connecting-ip`, health check; em produção o servidor escuta em `0.0.0.0:$PORT`; cookie `__Host-sid` HttpOnly, Secure, SameSite=Lax (conferido pelo candidato na etapa 05); migrações e seed **idempotente** no startup (nada destrutivo); banco e âncora em dois projetos Neon persistentes; chave só no ambiente do Render, nunca regenerada |
+
+### Smoke test com login
+
+- **Smoke test com login** (três contas, busca real, criação de lote, depósito, disputa em dois contextos, encerramento, resumo do leiloeiro, comprovante e auditoria anônimos): automatizado em `e2e/smoke.prod.ts` (`npm run smoke:prod` com `SMOKE_PASSWORD`). A IA não o executou (exige login em produção). **Executado pelo candidato em 29/10/2026 (PowerShell, `npm.cmd run smoke:prod`): **1 passed em 4,4 min**. Lote `/lotes/10ac25ad-042e-48c9-adeb-47b1c1ff4808` ("Harbor of Boston, with the City in the Distance"), comprovante `LIQ-87F3689F22` de R$ 110,00 para LIC-C5B4DB, liquidado às 23:34:01 UTC. Conferido em seguida pela IA, sem login: `/api/receipts/<token>` 200 com esses dados e auditoria do lote ÍNTEGRO (2 lances, 2 assinados, 2 na âncora).** Partes desse fluxo já foram verificadas em produção nas etapas 14 (leiloeiro: busca real, criação, cancelamento, encerramento sem lances) e 15/16 (recusas e páginas públicas); o fluxo completo com lances foi verificado localmente (E2E `leilao.spec.ts`).
+- **Encerramento pontual**: no plano gratuito o processo dorme; um lote que vence sem visitantes é liquidado no próximo acesso, não no horário.
+
+### Arquivos
+
+- `e2e/producao.config.ts` e `e2e/smoke.prod.ts` (separados da suíte local; `npm run test:e2e` continua com 4 testes); `package.json` (`smoke:prod`).
+- `README.md`: comando do smoke e a explicação do encerramento com o serviço dormindo.

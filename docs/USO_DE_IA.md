@@ -251,3 +251,11 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** reprodução do README num clone limpo do repositório, com bancos próprios e chave nova (instalação, `.env`, migrações, seed, build, `npm start`, login, vitrine, auditoria, Socket.IO e `npm test`); depois, os bancos e o clone foram apagados.
 - **Erro encontrado e corrigido:** `npm start` na raiz não encontrava `apps/api/.env` (o servidor não subia); agora o `.env` é procurado pela pasta da API.
 - **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo (informado pelo candidato em 29/10/2026).
+
+### Etapa 21 — Deploy final e verificação pública (29/10/2026)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 21.
+- **Feito pela IA:** verificação pública sem login (rotas, 404 JSON, HTTPS, WSS, bundle sem segredos, GitHub público, configuração) e o smoke test com login em `e2e/smoke.prod.ts`, que a IA **não executou** (exige login em produção).
+- **Não feito:** nenhum recurso criado, nada contratado, nenhuma alteração no banco público.
+- **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo.

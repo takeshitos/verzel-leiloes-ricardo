@@ -5,7 +5,7 @@ Casa de leilões **fictícia** de obras de arte. Leiloeiros criam lotes com obra
 - **Aplicação publicada:** https://verzel-leiloes-ricardo.onrender.com/
 - **Repositório:** https://github.com/takeshitos/verzel-leiloes-ricardo
 
-> No plano gratuito do Render o serviço **dorme após 15 min sem acesso**. O primeiro acesso depois disso pode levar cerca de 1 minuto. Lotes vencidos durante o sono são liquidados assim que o servidor volta.
+> No plano gratuito do Render o serviço **dorme após 15 min sem acesso**. O primeiro acesso depois disso pode levar cerca de 1 minuto. O encerramento automático roda dentro do servidor: um lote que vence enquanto ele dorme **não é encerrado no horário**, e sim no próximo acesso (o job roda ao acordar). Durante uma disputa ativa há tráfego e o serviço fica acordado.
 
 ## Estado da entrega
 
@@ -136,6 +136,7 @@ Serve tudo em http://localhost:3000 (SPA, API e Socket.IO).
 | `npm test` | API (Vitest + Supertest com PostgreSQL e âncora de teste reais) e web |
 | `npm run test:e2e` | Build + Playwright no Chrome instalado, com a aplicação real nos bancos `_test` (~5 min; o lote termina de verdade) |
 | `npm run test:live -w apps/api` | 3 testes contra a API real do museu (precisa de internet) |
+| `SMOKE_PASSWORD=... npm run smoke:prod` | Smoke test contra a **URL pública** com as contas de demonstração (cria um lote curto e dá lances reais de demonstração; ~6 min). Sem a senha, é pulado |
 | `npm run typecheck`, `npm run lint` | Tipos (API, web e E2E) e ESLint |
 
 Não rode `npm test` e `npm run test:e2e` ao mesmo tempo: os dois limpam o banco de teste. Resultados medidos e o mapa de testes por requisito estão em `docs/TESTES.md`; testes de falha em `docs/TESTES_DE_FALHA.md`.

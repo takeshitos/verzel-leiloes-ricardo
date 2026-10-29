@@ -381,3 +381,45 @@ Push de `bc49166` às 21:49:14 UTC. No ar às 21:50:07 UTC (`/api/lots?status=in
 ## Deploy da etapa 20 (README)
 
 Push de `c2d3c02` às 22:28:07 UTC; o serviço reiniciou às 22:29:01 UTC. Health ok, `/` 200, `README.md` público no GitHub. A correção de `config.ts` (achar `apps/api/.env` pela pasta da API) não afeta produção, que não lê arquivo `.env`.
+
+## Deploy final e verificação pública (etapa 21)
+
+URL: https://verzel-leiloes-ricardo.onrender.com/ — Repositório: https://github.com/takeshitos/verzel-leiloes-ricardo
+
+Hospedagem mantida (Render free + Neon), sem serviço pago. Nenhum recurso novo foi criado nesta etapa e o banco público não foi adulterado.
+
+| Verificação (29/10/2026, 23:26 UTC, sem login) | Resultado |
+| --- | --- |
+| Versão | `main` no GitHub = `99c734c`; o Render faz deploy automático a cada commit na `main` (último reinício com código novo conferido: `c2d3c02`, 22:29 UTC; os commits seguintes só mudaram docs) |
+| Serviço dormindo | No primeiro acesso, `uptimeSeconds` 23: o serviço estava suspenso e acordou com a requisição |
+| `/api/health` | 200, `database: ok` |
+| Rotas profundas (`/`, `/entrar`, `/painel`, `/carteira`, `/participacoes`, `/lotes/<id>`, `/lotes/<id>/auditoria`, `/comprovantes/<x>`) | 200 `text/html` (refresh funciona) |
+| `/api/nao-existe` | 404 `application/json` "Rota da API não encontrada." |
+| HTTP → HTTPS | 301 para `https://` |
+| WSS | Cliente Socket.IO como visitante conectou por WebSocket seguro, entrou na sala do lote do seed; lote inexistente `NOT_FOUND`; outra origem recusada |
+| Segredos no bundle (`/assets/index-kS9KLzZk.js`) | Nenhum de: `AUDIT_SIGNING`, `PRIVATE KEY`, `postgres://`, `npg_`, `DATABASE_URL`, `VITE_`, senha de demonstração |
+| Vitrine | 1 ao vivo (lote do seed, até 08/11/2026 02:03 UTC), 1 encerrado |
+| Busca no museu sem login | 401 (só leiloeiro) |
+| Chave pública | `/api/audit/public-key` Ed25519 |
+| GitHub | Repositório público (API do GitHub, sem sessão), página 200 |
+| Configuração | `render.yaml`: build `npm ci --include=dev && npm run build`, start `node apps/api/dist/server.js`, Node 24.22.1 (`.node-version`), `TRUST_PROXY=1`, `CLIENT_IP_HEADER=cf-connecting-ip`, health check; em produção o servidor escuta em `0.0.0.0:$PORT`; cookie `__Host-sid` HttpOnly, Secure, SameSite=Lax (conferido pelo candidato na etapa 05); migrações e seed **idempotente** no startup (nada destrutivo); banco e âncora em dois projetos Neon persistentes; chave só no ambiente do Render, nunca regenerada |
+
+### Encerramento com o serviço dormindo
+
+O job de liquidação roda **dentro do processo**. No plano gratuito, sem tráfego por 15 min, o processo é suspenso e **nada roda**: um lote que vence nesse período **não é encerrado no horário**, e sim quando o serviço acordar (o job roda no startup). Isso **não equivale** a encerramento pontual: o resultado e o comprovante só aparecem depois do próximo acesso. Durante a disputa ativa há tráfego (Socket.IO) e o serviço fica acordado. Para encerramento pontual sem visitante seria preciso um plano sem suspensão (pago, não contratado) ou um ping externo.
+
+### Smoke test com login (pendente de execução pelo candidato)
+
+A IA não faz login em produção. O fluxo completo com as contas do seed está automatizado em `e2e/smoke.prod.ts` (Playwright no Chrome; não sobe servidor nem mexe em banco). Ele cria um lote de ~5 min, deposita R$ 100,00 em cada cliente, dá dois lances (100,00 e 110,00), espera o encerramento real e confere o painel do leiloeiro, o comprovante e a auditoria como visitante. Os dados ficam no histórico público como demonstração.
+
+```bash
+SMOKE_PASSWORD='senha-das-contas-de-demonstracao' npm run smoke:prod
+```
+
+No PowerShell: `$env:SMOKE_PASSWORD='...'; npm.cmd run smoke:prod`. Sem a variável, o teste é pulado (conferido: "1 skipped").
+
+**Estado:** Executado pelo candidato em 29/10/2026 (PowerShell, `npm.cmd run smoke:prod`): **1 passed em 4,4 min**. Lote `/lotes/10ac25ad-042e-48c9-adeb-47b1c1ff4808` ("Harbor of Boston, with the City in the Distance"), comprovante `LIQ-87F3689F22` de R$ 110,00 para LIC-C5B4DB, liquidado às 23:34:01 UTC. Conferido em seguida pela IA, sem login: `/api/receipts/<token>` 200 com esses dados e auditoria do lote ÍNTEGRO (2 lances, 2 assinados, 2 na âncora).
+
+### Lote aberto para a avaliação
+
+O seed mantém o lote "Rocky, Wooded Landscape with a Dell and Weir" ao vivo até 08/11/2026 02:03 UTC (23:03 de 07/11 em Brasília). Para um encerramento rápido durante a avaliação, crie um lote curto pelo Painel do leiloeiro (README, "Preparar lotes para a avaliação").

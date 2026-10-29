@@ -120,3 +120,7 @@ Cenário, cada pessoa no próprio contexto do navegador (cookies separados):
 | `npm test` | API: **239 de 239** (novo: filtros da vitrine em `lots.test.ts`). Web: **28 de 28** |
 | `npm run test:e2e` | **4 de 4** em 4,6 min |
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+
+## Smoke test de produção (etapa 21)
+
+`e2e/smoke.prod.ts` com `e2e/producao.config.ts` (`npm run smoke:prod`): fluxo completo pela URL pública com as contas de demonstração. Exige `SMOKE_PASSWORD`; sem ela é pulado. Não faz parte de `npm run test:e2e`. Executado pelo candidato em 29/10/2026: **1 passed em 4,4 min** (comprovante LIQ-87F3689F22, auditoria ÍNTEGRO).
