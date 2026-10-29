@@ -91,3 +91,14 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** erro de tipo num teste (`response.json()` devolve `unknown`). O teste real da imagem usava `HEAD` e estourou o tempo; a IA investigou com `curl`, confirmou que o CDN não responde a `HEAD` e trocou por `GET` com `Range`, sem afrouxar o objetivo do teste.
 - **Decisão de escopo:** `GET /api/lots/:id` foi antecipado da etapa 07 para provar que o lote funciona com o museu fora do ar.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 07 — Gestão de lotes (28/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 07.
+- **Arquivos gerados pela IA:** consultas, serviço e rotas de lotes; vitrine pública; painel do vendedor; 31 testes + 1 pendente.
+- **Verificações executadas:** typecheck, lint, suíte completa com PostgreSQL real, build e ponta a ponta local com a API real do museu.
+- **Erro encontrado pelos testes e corrigido:** soma de centavos voltando como texto (`sum()` de BIGINT é NUMERIC no PostgreSQL); corrigido com `::bigint`.
+- **Ocorrência não reproduzida:** uma execução com um teste "durando" 920 s; repetida sozinha e completa, passou. Registrada como provável suspensão do processo.
+- **Falha de ferramenta:** a primeira tentativa de atualizar estes documentos por um comando de shell falhou por causa de aspas; refeita com um script em arquivo.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

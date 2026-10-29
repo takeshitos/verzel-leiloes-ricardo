@@ -4,6 +4,8 @@ import type { Pool } from 'pg';
 // Por padrão o pg devolve BIGINT (OID 20) como string. Aqui convertemos para number,
 // mas só se o valor couber exatamente num inteiro do JavaScript. Centavos acima de
 // Number.MAX_SAFE_INTEGER (~90 trilhões de reais) seriam um erro, nunca um arredondamento.
+// Atenção: sum() de BIGINT devolve NUMERIC, que continua vindo como texto. Em somas de
+// centavos, use sum(...)::bigint no SQL.
 const BIGINT_OID = 20;
 pg.types.setTypeParser(BIGINT_OID, (value: string) => {
   const parsed = Number(value);

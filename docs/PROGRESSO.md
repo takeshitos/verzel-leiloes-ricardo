@@ -12,7 +12,9 @@ Etapa 05 concluída localmente (28/10/2026): cadastro, login, logout e `/me` com
 
 Etapa 06 concluída localmente (28/10/2026): cliente real da Cleveland com timeout, cache e falhas tratadas; busca e detalhe para o leiloeiro; snapshot gravado pelo servidor; detalhe público do lote lido só do banco. 52 testes + 3 contra a API real passam. Commit e push feitos a pedido do candidato.
 
-Próxima ação: commit e push da etapa 06, se o candidato pedir; depois, etapa 07 (gestão de lotes).
+Etapa 07 concluída localmente (28/10/2026): criação de lote pelo snapshot, vitrine pública, cancelamento sob bloqueio e painel HTTP do vendedor. 83 testes passam (+1 pendente para a etapa 09). A liquidação **ainda não existe**. Commit e push feitos a pedido do candidato.
+
+Próxima ação: commit e push da etapa 07, se o candidato pedir; depois, etapa 08 (carteira e depósitos).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -444,3 +446,58 @@ Casos cobertos pelos testes:
 1. Criar lote a partir do snapshot (etapa 07, `POST /api/lots` usa `fetchItemForLot` + `upsertSnapshot`).
 2. Vitrine, auditoria e comprovante também lendo só o banco (etapas 07, 11 e 16) e o teste de falha da etapa 18.
 3. Telas usarem `ArtworkImage` (etapas 13 a 15).
+
+### Deploy da etapa 06
+
+Commit `eeee068` enviado a pedido do candidato; nova versão no ar às 02:32:04 UTC. Verificado de fora, sem credenciais:
+- busca do catálogo sem login: 401;
+- lote inexistente: 404;
+- **lote do seed de produção: 200, ao vivo**, com obra, lance mínimo, `VEN-4AF320` e fonte CC0, sem dados pessoais;
+- placeholder local: 200.
+
+Detalhes em `docs/DEPLOY.md`.
+
+## Etapa 07 — Gestão de lotes (28/10/2026, concluída localmente)
+
+Requisitos relacionados: R03 (criação), R04 (vitrine), R05 (cancelamento) e R12 (painel do vendedor, sem liquidação ainda).
+
+### Arquivos
+
+- `apps/api/src/modules/lots/queries.ts`: estado calculado no SQL, formato público, vitrine, lotes do vendedor e resumo.
+- `apps/api/src/modules/lots/service.ts`: `createLot` (obra buscada no museu fora da transação, datas conferidas com o relógio do banco) e `cancelLot` (`FOR UPDATE` no lote antes de qualquer conferência).
+- `apps/api/src/modules/lots/routes.ts`: `POST /api/lots`, `POST /api/lots/:id/cancel`, `GET /api/seller/lots`, `GET /api/seller/summary`.
+- `apps/api/src/modules/lots/public-routes.ts`: `GET /api/lots` (vitrine) e `GET /api/lots/:id`.
+- `apps/api/test/lots.test.ts` (31 testes + 1 pendente).
+
+### Regras (para defender)
+
+- **Criação:** o leiloeiro envia só `externalId`, centavos e datas. Título, imagem e atributos vêm do museu; o dono vem da sessão. Campos extras são recusados.
+- **Datas:** formato ISO 8601 com fuso, guardadas em UTC. Início entre 5 min atrás e 90 dias à frente; duração de 2 min a 30 dias.
+- **Estado:** calculado na hora (`CASE` com `now()` no PostgreSQL). Não existe coluna de status para ficar desatualizada. "Encerrado aguardando liquidação" aparece como `status: "ended"` e `settled: false`.
+- **Vitrine:** ao vivo (fim mais próximo primeiro), agendados (início mais próximo) e encerrados (mais recentes); cancelados nunca aparecem.
+- **Cancelamento:** só o dono, só sem lances, só antes do fim. A conferência acontece depois de bloquear a linha do lote (`FOR UPDATE`), o mesmo bloqueio que o lance usará; o banco ainda recusa cancelamento com lance por uma restrição própria.
+- **Painel:** total recebido = soma dos créditos de liquidação na carteira do vendedor. Lances e reservas não contam como receita.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Sem erros |
+| `npx vitest run test/lots.test.ts` (1ª vez) | 29 passaram e 2 falharam: **defeito real**. `sum()` de BIGINT volta como NUMERIC, e o total recebido saía como texto (`"123450"`). Corrigido com `sum(...)::bigint`; regra anotada em `db/pool.ts` |
+| `npm test` (depois da correção) | Uma execução teve 1 teste "durando" 920 s e falhando. Não se repetiu: sozinho passou em 0,4 s, e a suíte completa repetida em seguida passou. Com o limite de 30 s por teste, a duração indica o processo parado (provável suspensão da máquina ou do Docker), não um bloqueio no código |
+| `npm test` (repetição) | **83 passaram + 1 pendente**, 6 arquivos, 30 s |
+| `npm run build` | Ok |
+| Ponta a ponta local (servidor compilado, API real do museu) | Criar lote com a obra 147016: 201 ao vivo; aparece na vitrine; cancelar: 200; some da vitrine; resumo do leiloeiro com total recebido 0 e 1 lote encerrado aguardando liquidação |
+
+Casos cobertos pelos testes de lotes:
+- **Criação:** dados da obra vindos do museu e dono da sessão; datas UTC com entrada em -03:00; título, imagem ou dono enviados pelo cliente recusados; 10 casos de valor ou formato inválido; 4 regras de data conferidas com o relógio do banco; obra inexistente (404), sem imagem (422) e museu fora (503) sem criar lote; licitante 403 e visitante 401.
+- **Vitrine e estado:** separação dos grupos sem cancelados e sem dados pessoais; estado mudando só pelo horário.
+- **Cancelamento:** sem lances (e repetido: 409); lote agendado; com lance (409, nada muda); lote encerrado (409); outro leiloeiro, licitante e lote inexistente.
+- **Disputa real com o bloqueio:** uma transação "lance" segura o `FOR UPDATE`; o cancelamento espera; o lance é confirmado; o cancelamento recusa com `LOT_HAS_BIDS`.
+- **Painel:** só os lotes do vendedor; total 0 com lance e reserva ativos; total = soma dos créditos de liquidação; licitante 403.
+
+### Pendências
+
+1. `it.todo` em `lots.test.ts`: cancelamento contra o primeiro lance pelo serviço de lances real (etapa 09).
+2. Liquidação, resultado por lote e total recebido real (etapa 11).
+3. Telas da vitrine e do painel (etapas 13 e 14).

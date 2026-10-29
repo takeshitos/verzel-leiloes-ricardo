@@ -157,3 +157,19 @@ Verificação de fora, **sem usar credenciais** (a IA não faz login em ambiente
 | `/` e `/sobre` | 200 |
 
 **Login com as contas de demonstração em produção:** conferido pelo candidato às 02:21 UTC, no próprio terminal (PowerShell, `Invoke-WebRequest`): `200`, `Set-Cookie: __Host-sid=<token>; Max-Age=604800; Path=/; ...; HttpOnly; Secure; SameSite=Lax` e `{"user":{"email":"cliente1@example.com","role":"bidder","publicAlias":"LIC-A465A1"}}`. O pseudônimo de produção é diferente do local, porque cada seed sorteia o seu.
+
+## Deploy da etapa 06 (catálogo e lote público)
+
+Push de `eeee068` às 02:30:53 UTC. Nova versão no ar às 02:32:04 UTC (`/api/catalog/search` sem login passou de 404 para 401); `/api/health` ficou em 200 durante a troca.
+
+Verificação de fora, sem credenciais:
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/catalog/search?q=landscape` sem login | 401 `UNAUTHENTICATED` (busca no museu só para leiloeiro) |
+| `GET /api/lots/<uuid inexistente>` e `/api/lots/abc` | 404 "Lote não encontrado." |
+| `GET /api/lots/7a350b42-e23a-4a0a-942d-9b808a1656c5` (lote do seed de produção, id visto no log) | 200: `status: live`, "Rocky, Wooded Landscape with a Dell and Weir", Thomas Gainsborough, lance mínimo 50000 centavos, 0 lances, vendedor `VEN-4AF320`, fim 2026-11-08T02:03:05Z, fonte Cleveland/CC0 com link. Sem email ou campo privado na resposta |
+| `/obra-sem-imagem.svg` | 200 `image/svg+xml` (placeholder local publicado) |
+| Imagem do lote no CDN (`GET` com `Range`) | 206 `image/jpeg` |
+
+Isto confirma, de fora, que o seed rodou em produção e que o lote é lido do banco.

@@ -117,7 +117,7 @@ Formato: `{ "error": { "code": "...", "message": "texto em português", "details
 | 401 | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` |
 | 403 | `FORBIDDEN` (inclui leiloeiro ofertando e lote de outro dono), `FORBIDDEN_ORIGIN` (CSRF) |
 | 404 | `NOT_FOUND`, `CATALOG_ITEM_NOT_FOUND` |
-| 409 | `EMAIL_ALREADY_USED`, `LOT_HAS_BIDS`, `IDEMPOTENCY_KEY_REUSED` |
+| 409 | `EMAIL_ALREADY_USED`, `LOT_HAS_BIDS`, `LOT_ALREADY_CANCELLED`, `LOT_ENDED` (ao cancelar), `IDEMPOTENCY_KEY_REUSED` |
 | 413 | `PAYLOAD_TOO_LARGE` |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` (corpo que não é JSON) |
 | 429 | `TOO_MANY_REQUESTS` (com cabeçalho `Retry-After`) |
