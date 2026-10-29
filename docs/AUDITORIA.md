@@ -44,7 +44,7 @@ Não existe transação atômica entre dois bancos. O protocolo torna a janela e
    - Linha diferente: **conflito**. Não sobrescreve e mantém `pending`; a verificação mostra adulteração.
    - Âncora fora do ar ou lenta (timeout de 3 s): mantém `pending`.
 3. **Reconciliador** (no startup e a cada 30 s): para cada checkpoint `pending`, confere a assinatura com a chave pública e confere que a cadeia atual do banco, até aquela contagem, ainda gera o `last_hash` assinado. Só então grava na âncora. **Nunca assina de novo**: só reenvia assinaturas criadas na hora do lance. Checkpoint que não confere não é ancorado.
-4. **O lance é aceito antes da âncora**: ele é financeiramente válido logo após o commit, mas a resposta diz `audit.status: "pending"`. A confirmação definitiva aparece na verificação pública. Lote com checkpoint pendente **não pode ser liquidado** (etapa 11) até a reconciliação.
+4. **O lance é aceito antes da âncora**: ele é financeiramente válido logo após o commit, mas a resposta diz `audit.status: "pending"`. A confirmação definitiva aparece na verificação pública. Lote com checkpoint pendente **não pode ser liquidado** até a reconciliação. Implementado na etapa 11: a liquidação verifica o lote antes de pagar e só segue com ÍNTEGRO; pendente, indisponível ou adulterado ficam registrados em `settlement_issues` com o motivo.
 
 ## 5. Matriz de falhas
 
@@ -126,4 +126,4 @@ Testes em `apps/api/test/audit.test.ts` (27), contra o banco `verzel_test` e a �
 
 Prova de que os testes detectam falha: com a checagem "a âncora tem mais lances que o banco" desligada de propósito, os 3 testes de remoção e rollback falharam; depois o código foi restaurado.
 
-**Estado de R13:** implementado e testado localmente, **atendido dentro do modelo de ameaça da seção 2, com os limites da seção 8**. Em produção, depende de cadastrar a chave e a âncora no Render (`docs/DEPLOY.md`). Até lá, R13 fica **parcial**.
+**Estado de R13:** implementado e testado localmente, **atendido dentro do modelo de ameaça da seção 2, com os limites da seção 8**. Em produção, a chave e a âncora foram configuradas em 29/10/2026 e a API de auditoria responde (`docs/DEPLOY.md`). Falta a página pública (etapa 16).

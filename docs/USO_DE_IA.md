@@ -132,3 +132,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Segredos:** a chave local de desenvolvimento foi gravada direto no `apps/api/.env` (ignorado pelo git) sem ser exibida. A chave de produção será gerada pelo candidato.
 - **Limite declarado:** R13 fica parcial até a configuração em produção; ataques que ainda passam listados em `docs/AUDITORIA.md`.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 11 — Liquidação e comprovantes (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 11.
+- **Arquivos gerados pela IA:** módulo `settlement` (serviço, job e rotas), migração `settlement_issues`, consultas de participações e do painel do leiloeiro, evento `lot.closed`, defesa extra no lance e 18 testes.
+- **Verificações executadas:** migrações nos bancos locais, testes com PostgreSQL e âncora reais (disputas com bloqueio segurado, falha simulada por gatilho no banco de teste), suíte completa, typecheck, lint, build e ponta a ponta local com o servidor.
+- **Erros encontrados e corrigidos:** índice duplicado na primeira versão da migração; lotes de teste curtos demais (o lance prorrogava o fim e o job não encontrava o lote).
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

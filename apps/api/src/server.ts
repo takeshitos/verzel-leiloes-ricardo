@@ -9,6 +9,7 @@ import { createAnchorStore, missingAnchor } from './modules/audit/anchor.js';
 import { createKeyring, type Keyring } from './modules/audit/keys.js';
 import { createAuditService } from './modules/audit/service.js';
 import { createCatalogClient } from './modules/catalog/client.js';
+import { createSettlementJob } from './modules/settlement/job.js';
 import { loadConfig, loadLocalEnvFile, type AppConfig } from './shared/config.js';
 
 loadLocalEnvFile();
@@ -68,6 +69,8 @@ if (!config.anchorDatabaseUrl) {
   console.warn('[auditoria] ANCHOR_DATABASE_URL não configurada: a verificação ficará PENDENTE/INDISPONÍVEL.');
 }
 const audit = createAuditService({ pool, anchor, keyring });
+// Encerramento automático: liquida lotes vencidos com auditoria ÍNTEGRA (relógio do banco).
+const settlementJob = createSettlementJob({ pool, audit });
 
 const app = createApp({
   webDistDir,
@@ -87,10 +90,13 @@ server.on('error', (error) => {
 });
 
 let stopReconciler: () => void = () => {};
+let stopSettlement: () => void = () => {};
 server.listen(config.port, config.host, () => {
   console.log(`API ouvindo em http://${config.host}:${config.port} (${config.nodeEnv})`);
   // Reconcilia checkpoints pendentes agora (recuperação após reinício) e periodicamente.
   stopReconciler = audit.startReconciler(config.auditReconcileIntervalMs);
+  // Liquida agora o que venceu com o servidor parado (recuperação) e depois a cada ciclo.
+  stopSettlement = settlementJob.start(config.settlementIntervalMs);
 });
 
 // Encerramento limpo: para de aceitar conexões, espera as atuais e fecha os pools (banco e âncora).
@@ -108,6 +114,7 @@ function shutdown(signal: string): void {
   forceExit.unref();
 
   stopReconciler();
+  stopSettlement();
   server.close((error) => {
     if (error) {
       console.error(`Erro ao encerrar: ${error.message}`);

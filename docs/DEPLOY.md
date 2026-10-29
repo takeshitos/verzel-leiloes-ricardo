@@ -38,6 +38,7 @@ Front e API ficam na mesma origem, sem CORS. Banco principal e âncora de audito
 | `RUN_MIGRATIONS_ON_START` / `RUN_SEED_ON_START` | `render.yaml` (`true`) | Etapa 04 | Aplica migrações pendentes e o seed idempotente antes de aceitar conexões. Variáveis novas de um Blueprint existente podem precisar de "Manual Sync" no painel |
 | `ANCHOR_DATABASE_URL` | Painel do Render (segredo) | Etapa 10 | Projeto Neon da âncora, com usuário só de INSERT/SELECT |
 | `AUDIT_SIGNING_PRIVATE_KEY` | Painel do Render (segredo) | Etapa 10 | Chave Ed25519 gerada uma vez e guardada offline; nunca regenerar no deploy |
+| `SETTLEMENT_INTERVAL_MS` | não definir | Etapa 11 | Opcional. Intervalo do job de encerramento; padrão 5000 ms. O job também roda no startup |
 
 Segredos nunca vão para o repositório, para variáveis `VITE_*`, para logs ou para a conversa com a IA.
 
@@ -78,7 +79,8 @@ Cópia limpa dos arquivos versionados num diretório temporário, com Node 26.13
 
 ## Comportamentos conhecidos do plano gratuito
 
-- O serviço dorme após 15 minutos sem tráfego; a primeira visita depois disso leva cerca de 1 minuto. Durante o sono, o job de encerramento de lotes não roda: os lotes vencidos são liquidados quando o serviço acorda (a partir da etapa 11).
+- O serviço dorme após 15 minutos sem tráfego; a primeira visita depois disso leva cerca de 1 minuto. Durante o sono, o job de encerramento de lotes não roda: os lotes vencidos são liquidados quando o serviço acorda (ciclo do startup, implementado na etapa 11).
+- Com o serviço acordado, o job consulta o banco a cada 5 s e o reconciliador da auditoria a cada 30 s; por isso o Neon não suspende enquanto o Render está acordado. Os dois dormem juntos depois de 15 min sem tráfego.
 - Conexões WebSocket ativas contam como tráfego e mantêm o serviço acordado.
 - O compute do Neon suspende após 5 minutos ocioso e volta na primeira conexão.
 
@@ -247,3 +249,18 @@ Sem estas variáveis o novo deploy não sobe: a configuração exige a chave, e 
 **Endurecimento opcional:** depois do primeiro deploy, criar no projeto da âncora um usuário só com `INSERT` e `SELECT` em `anchor_entries` e `SELECT` em `pgmigrations`, e trocar `ANCHOR_DATABASE_URL` para ele. Com o usuário dono, o gatilho já impede `UPDATE`/`DELETE` pela aplicação, mas quem tiver essa credencial poderia remover o gatilho; esse atacante está fora do modelo (`docs/AUDITORIA.md`, seção 2).
 
 Nunca regenerar a chave em deploys: os checkpoints antigos deixariam de ser verificáveis.
+
+## Deploy da etapa 10 (auditoria)
+
+O candidato gerou a chave com `audit:keygen` (no PowerShell foi preciso usar `npm.cmd`, por causa da política de execução de scripts), criou o projeto Neon da âncora e cadastrou `AUDIT_SIGNING_PRIVATE_KEY` e `ANCHOR_DATABASE_URL` no Render. Push de `679e200` às 06:34:09 UTC. Nova versão no ar às 06:35:02 UTC (`/api/audit/public-key` passou de 404 para 200). Em produção o servidor só sobe com a chave e a âncora configuradas.
+
+Verificação de fora, sem credenciais:
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/audit/public-key` | 200, Ed25519, versão 1, PEM público; nada privado na resposta |
+| `GET /api/lots/7a350b42-…/audit` | 200 **ÍNTEGRO**, 0 lances, "Lote sem lances, e a âncora também não registra nenhum"; `Cache-Control: no-store`. Esse resultado exige a âncora alcançável (sem ela seria INDISPONÍVEL) |
+| Auditoria de lote inexistente | 404 |
+| `/api/health` | 200, `database: ok` |
+
+Ainda não verificado em produção: um lance real ancorado (exige login de licitante; comando no PROGRESSO).

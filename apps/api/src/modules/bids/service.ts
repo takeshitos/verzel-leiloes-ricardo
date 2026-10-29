@@ -91,6 +91,11 @@ export async function placeBid(
       );
       const lot = lotResult.rows[0];
       if (!lot) throw new AppError(404, 'NOT_FOUND', 'Lote não encontrado.');
+      // Defesa extra: lote liquidado nunca aceita lance, seja qual for o relógio (etapa 11).
+      const settled = await client.query('SELECT 1 FROM settlements WHERE lot_id = $1', [lot.id]);
+      if (settled.rowCount) {
+        throw new AppError(422, 'LOT_ENDED', 'O leilão deste lote já terminou.', { endsAt: lot.ends_at.toISOString() });
+      }
 
       const leader = lot.leader_bid_id
         ? (

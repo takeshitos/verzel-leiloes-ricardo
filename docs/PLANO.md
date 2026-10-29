@@ -68,7 +68,7 @@ Recusa = `ROLLBACK`: nada muda em histórico, saldo, reserva ou fim.
 
 **Cancelamento:** bloqueia o lote; recusa se `bid_count > 0` ou se não for o dono.
 
-**Liquidação:** seleciona lotes vencidos com `FOR UPDATE SKIP LOCKED`; bloqueia carteiras do vencedor e do vendedor em ordem; relê `ends_at` com `clock_timestamp()`; exige auditoria confirmada e íntegra; debita o vencedor, credita o vendedor, remove a reserva, grava o settlement e o comprovante. As restrições únicas (`settlements.lot_id` e `operation_key`) impedem duplicação mesmo com dois executores ou job repetido.
+**Liquidação:** seleciona lotes vencidos com `FOR UPDATE SKIP LOCKED`; bloqueia carteiras do vencedor e do vendedor em ordem; relê `ends_at` com `clock_timestamp()`; exige auditoria confirmada e íntegra; debita o vencedor, credita o vendedor, remove a reserva, grava o settlement e o comprovante. As restrições únicas (`settlements.lot_id` e `operation_key`) impedem duplicação mesmo com dois executores ou job repetido. **Implementado na etapa 11 com um ajuste:** a seleção não usa `SKIP LOCKED`, porque a auditoria (que consulta a âncora) roda antes do bloqueio; cada lote é bloqueado com `FOR UPDATE` comum e o segundo executor encontra o lote já liquidado (ver DECISOES).
 
 **Idempotência de lance e depósito:** cabeçalho `Idempotency-Key` (UUID gerado no navegador). Mesma chave com o mesmo conteúdo devolve a resposta guardada; com conteúdo diferente, `409 IDEMPOTENCY_KEY_REUSED`.
 
@@ -211,7 +211,7 @@ A implementação atual (`chainOnlyRecorder`) calcula a cadeia real e devolve se
 - [ ] Recusa não muda nada.
 - [ ] Prorrogação: até 120 s restantes, novo fim = aceitação + 120 s.
 - [ ] Encerramento automático, idempotente, recuperável após reinício; sem lances, sem vencedor.
-- [ ] Liquidação debita o total do vencedor, credita o vendedor, remove a reserva e gera comprovante.
+- [x] Liquidação debita o total do vencedor, credita o vendedor, remove a reserva e gera comprovante (etapa 11, testado localmente).
 - [ ] Centavos inteiros em todo o caminho; nenhuma conta de dinheiro com ponto flutuante.
 - [ ] Eventos só depois do commit; nada de saldo em evento público.
 - [ ] Respostas públicas sem email, nome real, senha, sessão ou saldo.

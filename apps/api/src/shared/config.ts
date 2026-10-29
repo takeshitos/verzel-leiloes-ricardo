@@ -60,6 +60,8 @@ const envSchema = z.object({
     .optional(),
   ANCHOR_TIMEOUT_MS: z.coerce.number().int().min(200).max(30_000).default(3_000),
   AUDIT_RECONCILE_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
+  // Job de encerramento automático: procura lotes vencidos e liquida (etapa 11).
+  SETTLEMENT_INTERVAL_MS: z.coerce.number().int().min(1_000).max(600_000).default(5_000),
 }).superRefine((env, context) => {
   if (env.NODE_ENV === 'production' && !env.ANCHOR_DATABASE_URL) {
     context.addIssue({ code: 'custom', path: ['ANCHOR_DATABASE_URL'], message: 'obrigatória em produção (âncora da auditoria)' });
@@ -83,6 +85,7 @@ export type AppConfig = {
   anchorDatabaseUrl?: string;
   anchorTimeoutMs: number;
   auditReconcileIntervalMs: number;
+  settlementIntervalMs: number;
 };
 
 /**
@@ -131,5 +134,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     anchorDatabaseUrl: data.ANCHOR_DATABASE_URL,
     anchorTimeoutMs: data.ANCHOR_TIMEOUT_MS,
     auditReconcileIntervalMs: data.AUDIT_RECONCILE_INTERVAL_MS,
+    settlementIntervalMs: data.SETTLEMENT_INTERVAL_MS,
   };
 }

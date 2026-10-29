@@ -709,5 +709,101 @@ O objetivo é detectar mudanças feitas por quem tem acesso ao banco. Assinatura
 ### Pendências
 
 1. **Configuração em produção** (ação do candidato, antes do push): chave, projeto Neon da âncora e variáveis no Render (`docs/DEPLOY.md`).
-2. A liquidação (etapa 11) precisa exigir auditoria ÍNTEGRA antes de pagar.
+2. ~~A liquidação (etapa 11) precisa exigir auditoria ÍNTEGRA antes de pagar.~~ Feito na etapa 11.
 3. Página pública da auditoria (etapa 16).
+
+### Deploy da etapa 10
+
+O candidato configurou a chave, a âncora (Neon) e as variáveis no Render. Commit `679e200` enviado; nova versão no ar às 06:35:02 UTC. Verificado de fora:
+- chave pública Ed25519 publicada;
+- auditoria do lote do seed: **ÍNTEGRO**, o que só acontece com a âncora alcançável;
+- lote inexistente: 404;
+- health: ok.
+
+Detalhes em `docs/DEPLOY.md`.
+
+Confirmação opcional de ponta a ponta em produção, feita pelo candidato. Cria um lance real de R$ 500,00 do cliente1 no lote do seed e depois mostra a auditoria:
+
+```powershell
+$B='https://verzel-leiloes-ricardo.onrender.com'; $L='7a350b42-e23a-4a0a-942d-9b808a1656c5'; Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$B/api/auth/login" -ContentType 'application/json' -Headers @{ Origin=$B } -Body '{"email":"cliente1@example.com","password":"leilao-demo-2026"}' -SessionVariable s | Out-Null; $r = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$B/api/lots/$L/bids" -ContentType 'application/json' -Headers @{ Origin=$B; 'Idempotency-Key'=[guid]::NewGuid().ToString() } -Body '{"amountCents":50000}' -WebSession $s; $r.StatusCode; (Invoke-RestMethod "$B/api/lots/$L/audit").audit | Select-Object statusLabel, bidCount, signedCount, anchoredCount, reason
+```
+
+Esperado: `201` e depois `ÍNTEGRO`, 1 lance, 1 assinado, 1 ancorado.
+
+## Etapa 11 — Liquidação automática e comprovantes (29/10/2026, concluída localmente)
+
+O backend agora encerra sozinho os lotes vencidos. Com vencedor: debita o vencedor, credita o leiloeiro e gera um comprovante público por token. Sem lances: fecha sem vencedor e sem cobrança. A liquidação só paga com a auditoria ÍNTEGRA.
+
+### Arquivos
+
+- `apps/api/migrations/1793260000000_settlement-issues.sql`: tabela `settlement_issues` (lote vencido não liquidado e o motivo) e índice único da referência do comprovante.
+- `apps/api/src/modules/settlement/service.ts`: `settleLot` (auditoria e transação), `recordSettlementIssue` e formato do comprovante.
+- `apps/api/src/modules/settlement/job.ts`: job de encerramento (startup e a cada 5 s).
+- `apps/api/src/modules/settlement/routes.ts`: `GET /api/receipts/:token` (público) e `GET /api/me/participations` (licitante).
+- `apps/api/src/modules/lots/queries.ts`: participações (posição e resultado); lotes do leiloeiro com link do comprovante e motivo de pendência; `settlementBlocked` no resumo.
+- `apps/api/src/modules/bids/service.ts`: lote liquidado recusa lance (defesa extra).
+- `apps/api/src/modules/realtime/events.ts`: evento `lot.closed`.
+- `apps/api/src/server.ts`, `src/shared/config.ts`, `.env.example`: job ligado no startup e parado no desligamento; `SETTLEMENT_INTERVAL_MS` (padrão 5000).
+- `apps/api/test/settlement.test.ts`: 18 testes. `test/helpers.ts` também limpa a tabela nova.
+
+### A liquidação, em ordem
+
+1. **Auditoria, fora da transação** (consulta a âncora, que é I/O externo). Só ÍNTEGRO segue. ADULTERADO, PENDENTE ou INDISPONÍVEL: nada é pago e o motivo vai para `settlement_issues`.
+2. **Transação.** Bloqueia o lote e depois as carteiras do vencedor e do vendedor, em ordem de `user_id` (o mesmo protocolo do lance). Lê o relógio do banco depois dos bloqueios.
+3. **Nada a fazer** se o lote já está liquidado ou cancelado, ou se o relógio ainda é anterior ao fim (o último lance pode ter prorrogado). Se o lote bloqueado não é o mesmo que a auditoria aprovou (entrou outro lance no meio), tenta de novo no próximo ciclo.
+4. **Com vencedor:** remove a reserva, debita o total do vencedor, credita o vendedor, grava os dois lançamentos (`settlement:<lote>:debit` e `:credit`), a liquidação e o comprovante. **Sem lances:** só a liquidação.
+5. Apaga a pendência, sobe a versão do lote e faz COMMIT. Só então publica `lot.closed`.
+
+Defesas no próprio banco, se o código falhar: lote como chave primária em `settlements` e `receipts`; `operation_key` única; total da carteira nunca negativo; token único com pelo menos 32 caracteres; referência única.
+
+### Exemplo do guia (teste automatizado "exemplo do guia")
+
+| Momento | A (total / comprometido / disponível) | B | Leiloeiro (total) |
+| --- | --- | --- | --- |
+| Depósitos de R$ 1.000 | 1.000 / 0 / 1.000 | 1.000 / 0 / 1.000 | 0 |
+| A lidera com R$ 100 | 1.000 / 100 / 900 | 1.000 / 0 / 1.000 | 0 |
+| B cobre com R$ 120 | 1.000 / 0 / 1.000 | 1.000 / 120 / 880 | 0 |
+| Liquidação | 1.000 / 0 / 1.000 | 880 / 0 / 880 | 120 |
+
+### O que os 18 testes provam (PostgreSQL e âncora de teste reais, relógio injetado)
+
+- **Fechamento normal:** totais do exemplo do guia, os 2 lançamentos, a liquidação, o comprovante, o lote público e o resumo do leiloeiro (R$ 120 recebidos). Evento publicado uma vez.
+- **Sem lances:** fecha sem vencedor, sem cobrança e sem comprovante.
+- **Fim exclusivo:** 1 ms antes do fim não liquida; exatamente no fim liquida. **Lote cancelado:** não liquida.
+- **Repetição:** rodar o job de novo ou chamar a liquidação outra vez não muda nada.
+- **Dois executores ao mesmo tempo** (como dois servidores), parados no mesmo bloqueio: uma única liquidação.
+- **Último lance antes da liquidação:** o lance entra 1 ms antes do fim e prorroga; a liquidação, na fila logo atrás, encontra o novo fim e não fecha; depois do novo fim, o novo líder vence.
+- **Liquidação antes do último lance:** o lote fecha e o lance é recusado (`LOT_ENDED`) sem mudar nada. Mesmo com um relógio "antes do fim", lote liquidado não aceita lance.
+- **Falha parcial:** um gatilho só no banco de teste derruba o INSERT do comprovante (a última escrita). Tudo é desfeito; fica a pendência `failed` com motivo genérico. Um novo executor ("reinício") liquida uma vez e apaga a pendência.
+- **Startup:** lote que venceu com o servidor parado é liquidado pela execução imediata do job, com intervalo de 10 min.
+- **Auditoria:** histórico ADULTERADO não é liquidado (motivo visível ao leiloeiro, tentativas contadas); âncora fora do ar (INDISPONÍVEL) espera e liquida quando volta; checkpoint ainda não ancorado (PENDENTE) espera a reconciliação.
+- **Comprovante:** abre sem login; sem email, ids de usuário, saldo ou sessão; snapshot imutável (mudar a obra depois não muda o comprovante); token inválido ou desconhecido recebe 404 sem detalhes; a API pública do lote não expõe o token.
+- **Participações:** posição e resultado ao vivo (liderando, superado), aguardando liquidação e depois (venceu, perdeu); link do comprovante só para o vencedor e para o leiloeiro; só licitante logado.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run db:migrate` e `db:migrate:test` | Migração `1793260000000_settlement-issues` aplicada nos dois bancos locais |
+| `npx vitest run test/settlement.test.ts` | **18 de 18** |
+| `npm test` | **210 de 210**, 12 arquivos |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+| Ponta a ponta local (`tsx src/server.ts` com `verzel_dev` e `verzel_anchor`) | Lote de 2 min criado com `db:demo-lot`; lance real do cliente1 (R$ 500,00) pela API prorrogou o fim. O job liquidou **2,7 s depois do fim**, sem tela aberta: carteira do cliente1 9.500 / 0 / 9.500 com o lançamento `settlement_debit`; participação `won` com link; comprovante 200 sem login (`no-store`, `noindex`, referência `LIQ-…`, auditoria `intact`, nenhum email); resumo do leiloeiro com R$ 500,00 recebidos e 1 lote vendido. No startup, o job também liquidou um lote antigo do banco local, vencido sem lances (recuperação após o servidor parado) |
+
+### Ajustes durante a etapa
+
+- A primeira versão da migração (ainda vazia, só nos bancos locais) foi desfeita e refeita para incluir falhas inesperadas e a referência única; um índice duplicado do esquema inicial foi retirado.
+- Os testes começaram com lotes de 60 s, e o lance real (com menos de 2 min restantes) prorrogava o fim. O auxiliar passou a criar lotes de 10 min.
+
+### Limites e decisões para defender
+
+- **Atraso:** o job roda a cada 5 s. No Render gratuito, enquanto o serviço dorme, nada roda; ao acordar, o ciclo do startup liquida o que venceu.
+- **Auditoria pendente:** se a âncora estava fora do ar no lance, a liquidação espera o reconciliador (a cada 30 s).
+- **Lances antigos sem checkpoint** (anteriores à etapa 10) deixam o lote INDISPONÍVEL; ele não é liquidado e o motivo aparece para o leiloeiro. No banco local, o lote do seed tem 2 lances assim.
+- **Comprovante** nesta etapa é JSON; a página HTML vem na etapa 16 (PDF não foi exigido).
+
+### Pendências
+
+1. Socket.IO (etapa 12) deve repassar `lot.closed`: a parte pública para a sala do lote; o link do comprovante só para o vencedor e o leiloeiro.
+2. Telas: painel do leiloeiro (14), participações (15) e comprovante (16).
+3. Ver uma liquidação real em produção: o lote do seed termina em cerca de 10 dias; a etapa 21 cria lotes curtos de demonstração.

@@ -22,6 +22,7 @@ export function createTestPool(maxConnections = 5): Pool {
 }
 
 const ALL_TABLES = [
+  'settlement_issues',
   'audit_checkpoints',
   'receipts',
   'settlements',
