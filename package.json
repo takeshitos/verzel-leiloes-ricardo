@@ -1,0 +1,30 @@
+{
+  "name": "verzel-leiloes-ricardo",
+  "private": true,
+  "type": "module",
+  "description": "Casa de leilões fictícia para o teste técnico Elite Dev da Verzel",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=24.11.0 <27"
+  },
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors blue,green --kill-others-on-fail \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w apps/web && npm run build -w apps/api",
+    "start": "node apps/api/dist/server.js",
+    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "concurrently": "10.0.6",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.13.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
+  }
+}

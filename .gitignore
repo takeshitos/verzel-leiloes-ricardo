@@ -1,0 +1,28 @@
+# Dependências e builds
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Variáveis de ambiente (só os arquivos .env.example vão para o git)
+.env
+.env.*
+!.env.example
+
+# Logs e arquivos do sistema
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Configuração local de ferramentas
+.claude/
+.vscode/
+.idea/
+
+# Material do kit que não vai para o repositório público (decisão do candidato em 28/10/2026)
+docs/desafio-original.pdf
+GUIA_COMPLETO_VERZEL.md
+docs/prompts/

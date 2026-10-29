@@ -1,0 +1,11 @@
+# Arquivos de texto ficam com fim de linha LF no repositório e na cópia local,
+# mesmo com core.autocrlf=true no Windows. Evita scripts quebrados no Linux do deploy.
+* text=auto eol=lf
+
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff2 binary
