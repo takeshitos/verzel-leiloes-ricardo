@@ -1,8 +1,33 @@
 # Registro do uso de IA
 
+## Resumo consolidado (29/10/2026, etapa 20)
+
+**Planejamento.** Antes do código, um assistente de IA analisou o PDF do desafio e preparou um kit com requisitos, decisões propostas, cronograma, critérios de validação e uma sequência de prompts (etapas 00 a 23) para o Claude Code. As decisões desse kit foram tratadas como propostas até serem implementadas e verificadas.
+
+**Implementação.** Todas as etapas (00 a 20) foram executadas com o **Claude Code no app desktop, modelo Claude Opus 5.5**, uma etapa por vez, a partir dos prompts do kit. A IA escreveu o código, os testes e a documentação, rodou os comandos e verificou no navegador embutido. O candidato decidiu os pontos abertos (catálogo de Cleveland, Docker, Neon, extras), autorizou cada commit e push, criou as contas e serviços externos (GitHub, Render, Neon), gerou e cadastrou a chave de auditoria de produção e fez os logins em produção quando foi preciso. A IA não criou contas, não acessou painéis do Render ou do Neon e não digitou senha em produção.
+
+**Arquivos.** Praticamente todo o conteúdo de `apps/api`, `apps/web`, `e2e`, `render.yaml`, `docker-compose.yml`, `README.md` e `docs/` foi gerado pela IA; o detalhe por etapa está abaixo.
+
+**Defeitos encontrados pela própria verificação e corrigidos** (detalhes em `docs/PROGRESSO.md`):
+- build do Render sem devDependencies (`npm ci --include=dev`, etapa 03);
+- perda de microssegundos ao regravar o fim do lote, que daria erro 500 no lance (etapa 09);
+- índice duplicado numa migração (etapa 11) e lotes de teste curtos demais (prorrogação);
+- regras de efeito do React apontadas pelo lint e avisos de interface antigos ou contraditórios (etapas 12 a 15);
+- lance já gravado respondendo 500 quando a confirmação na âncora falhava depois do commit (etapa 18);
+- "sem resposta" tratada como recusa no cancelamento e na criação de lote (etapa 18);
+- `npm start` na raiz não encontrava `apps/api/.env` (etapa 20, achado ao reproduzir o README num clone limpo).
+
+**Limites do trabalho com IA registrados.** As skills de design pedidas (`frontend-design` e `Superdesign`) não estavam disponíveis; a interface foi feita com CSS próprio. Uma tentativa de contornar o bloqueio de imagens da AIC foi recusada pela política da sessão e o catálogo foi trocado.
+
+**O que o candidato leu, revisou ou ajustou:** _a preencher pelo candidato_ (não registrado pela IA).
+
+### Texto curto para o formulário (só fatos; completar o campo pendente)
+
+> Usei o Claude Code (modelo Claude Opus 5.5) para planejar e implementar o projeto etapa por etapa, a partir de um roteiro de prompts preparado com IA a partir do PDF. A IA escreveu o código, os testes (Vitest com PostgreSQL real e Playwright) e a documentação, e verificou cada etapa com testes, typecheck, build e navegador; os defeitos que ela encontrou e corrigiu estão listados em docs/USO_DE_IA.md. Eu tomei as decisões abertas, criei as contas e o deploy (Render e Neon), gerei a chave de auditoria de produção e autorizei cada commit e push. Revisei pessoalmente: **[a completar pelo candidato]**.
+
 ## Planejamento inicial
 
-Um assistente de IA analisou o PDF fornecido e preparou este kit com requisitos, decisões propostas, cronograma, critérios de validação e prompts para Claude Code. A aplicação ainda não foi implementada neste kit. Nenhuma revisão de código pelo candidato ou execução de teste da futura aplicação é presumida aqui.
+Um assistente de IA analisou o PDF fornecido e preparou este kit com requisitos, decisões propostas, cronograma, critérios de validação e prompts para Claude Code. Este parágrafo foi escrito antes da implementação; o resumo acima descreve o que aconteceu depois.
 
 ## Registro durante a implementação
 
@@ -216,4 +241,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Arquivos gerados pela IA:** filtro parametrizado da vitrine (API, teste e tela), tema escuro por tokens, botão de tema e script de tema no `index.html`.
 - **Verificações executadas:** teste da API do filtro, suíte completa, E2E, typecheck, lint, build e verificação manual no navegador (filtros, vazios, URL, persistência e contraste do tema).
 - **Erros encontrados e corrigidos:** uma linha da vitrine quebrou ao gerar o arquivo pelo shell (crases interpretadas); corrigida e conferida pelo typecheck.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 20 — README e relato de IA (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 20.
+- **Arquivos gerados pela IA:** `README.md`, o resumo consolidado e o texto para o formulário neste arquivo, e a correção de `apps/api/src/shared/config.ts`.
+- **Verificações executadas:** reprodução do README num clone limpo do repositório, com bancos próprios e chave nova (instalação, `.env`, migrações, seed, build, `npm start`, login, vitrine, auditoria, Socket.IO e `npm test`); depois, os bancos e o clone foram apagados.
+- **Erro encontrado e corrigido:** `npm start` na raiz não encontrava `apps/api/.env` (o servidor não subia); agora o `.env` é procurado pela pasta da API.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

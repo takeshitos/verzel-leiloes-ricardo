@@ -38,9 +38,11 @@ Etapa 17 concluída localmente (29/10/2026): mapa dos testes por requisito em `d
 
 Etapa 18 concluída localmente (29/10/2026): rodada de falhas em ambiente isolado registrada em `docs/TESTES_DE_FALHA.md`. Dois defeitos corrigidos com regressão (500 para lance já gravado quando a confirmação pós-commit falhava; mensagens de "sem resposta" no cancelamento e na criação de lote). 238 testes da API, 28 do web e 4 E2E passam. Commit `080b692` no ar desde 21:33 UTC.
 
-Etapa 19 concluída localmente (29/10/2026): extras opcionais com limite — filtro da vitrine por título/autoria e estado (consulta parametrizada) e tema claro/escuro com escolha salva. Cancelamento com estorno ficou de fora (exige decisão do candidato). 239 testes da API, 28 do web e 4 E2E passam. Ainda sem commit.
+Etapa 19 concluída localmente (29/10/2026): extras opcionais com limite — filtro da vitrine por título/autoria e estado (consulta parametrizada) e tema claro/escuro com escolha salva. Cancelamento com estorno ficou de fora (exige decisão do candidato). 239 testes da API, 28 do web e 4 E2E passam. Commit `bc49166` no ar desde 21:50 UTC.
 
-Próxima ação: commit e push da etapa 19 (a pedido do candidato); depois, etapa 20 (README e relato de IA).
+Etapa 20 concluída localmente (29/10/2026): README para o avaliador, reproduzido num clone limpo (onde apareceu e foi corrigido um defeito do `npm start`), e relato de IA consolidado com texto para o formulário. Ainda sem commit.
+
+Próxima ação: commit e push da etapa 20 (a pedido do candidato); depois, etapa 21 (deploy final e smoke test).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1244,3 +1246,38 @@ Antes dos extras, conferi as obrigações: fluxo principal, deploy e integridade
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
 
 Não foram criados testes que só copiam propriedades do CSS.
+
+### Deploy da etapa 19
+
+Commit `bc49166` enviado às 21:49:14 UTC; nova versão no ar às 21:50:07 UTC (`/api/lots?status=invalido` passou de 200 para 400). Verificado em produção: `?q=rocky` traz o lote do seed; `?q=zzz` devolve os três grupos vazios; o `index.html` servido tem o script que aplica o tema salvo.
+
+## Etapa 20 — README e relato de IA (29/10/2026, concluída localmente)
+
+### O que foi feito
+
+- **`README.md`** (novo, para quem nunca viu o projeto): objetivo e simulação; links (produção e repositório); tabela "Estado da entrega" com os pontos parciais e os comportamentos que podem surpreender, logo no início; contas de demonstração; roteiro do avaliador (visitante, leiloeiro, dois licitantes em janelas separadas, prorrogação, encerramento, participações); stack com versões; instalação por clone; banco com e sem Compose; `.env`; chave de auditoria; migrações; seed; dev; build/start; testes; lote de demonstração; regras (centavos, reservas em vários lotes, bloqueios, intervalo, interpretação da prorrogação, liquidação idempotente, snapshot, reconexão, pseudônimos); integridade (o que cobre e o que não, onde ficam chave e âncora, recuperação; detalhes em `docs/AUDITORIA.md`); estrutura dos módulos; deploy; preparação de lotes para a avaliação; índice da documentação.
+- **`docs/USO_DE_IA.md`**: resumo consolidado no topo (planejamento, tarefas da IA, papel do candidato, defeitos encontrados e corrigidos, limites), texto curto para o formulário e o campo "o que o candidato revisou" deixado para o candidato.
+
+### Reprodução do README num clone limpo
+
+Procedimento isolado: `git clone` do repositório (commit `bc49166`) numa pasta temporária, seguindo só o README, sem copiar nada da pasta de trabalho. Bancos com nomes próprios (`verzel_readme`, `verzel_readme_test`, `verzel_anchor_readme`, `verzel_anchor_readme_test`) no PostgreSQL do Compose já em execução (um segundo `docker compose up` brigaria pela porta 5433) e chave de auditoria nova gerada pelo `audit:keygen`.
+
+| Passo do README | Resultado |
+| --- | --- |
+| `npm ci` | Ok (o npm só avisa que não rodou o script de instalação do esbuild; o build funcionou) |
+| `.env` pela opção B e chave do `audit:keygen` | Ok |
+| `db:migrate`, `db:migrate:anchor`, `db:seed` | Bancos criados sozinhos, 2 migrações + 1 da âncora, 3 contas, 2 depósitos, 1 lote ao vivo |
+| `npm run build` | Ok |
+| `npm start` | **Falhou**: "Configuração inválida: DATABASE_URL obrigatória". Na raiz, o servidor procurava `.env` na pasta atual. **Corrigido** em `apps/api/src/shared/config.ts` (o `.env` é achado pela pasta da API); com a correção, subiu |
+| Depois da correção | `/api/health` ok; `/` e `/painel` 200; login do `cliente1@example.com` 200; vitrine com o lote do seed; auditoria ÍNTEGRO; Socket.IO respondendo |
+| `npm test` | Bancos de teste criados e migrados sozinhos; API **239 de 239**, web **28 de 28** |
+
+Não reproduzidos no clone: `npm run dev` (já usado desde a etapa 02; no clone a porta da API foi trocada para não conflitar) e `npm run test:e2e` (rodado na pasta de trabalho na etapa 19, 4 de 4). Depois da reprodução, os quatro bancos e o clone foram apagados.
+
+### Comandos e resultados na pasta de trabalho (depois da correção)
+
+| Comando | Resultado |
+| --- | --- |
+| `npm test` | API **239 de 239**; web **28 de 28** |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+| `PORT=3700 npm start` na raiz | Sobe ("API ouvindo em http://127.0.0.1:3700") e `/api/health` ok |

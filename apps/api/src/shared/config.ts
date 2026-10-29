@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 // Variáveis de ambiente aceitas pela API. A validação roda no startup:
@@ -89,10 +90,17 @@ export type AppConfig = {
 };
 
 /**
- * Em desenvolvimento, carrega apps/api/.env (se existir) para process.env.
- * Em produção as variáveis vêm do painel da hospedagem, nunca de arquivo.
+ * apps/api/.env, achado pela posição deste arquivo (src/shared ou dist/shared), e não pela
+ * pasta atual: assim "npm start" na raiz do repositório também encontra o .env da API.
  */
-export function loadLocalEnvFile(filePath = '.env'): void {
+const API_ENV_FILE = fileURLToPath(new URL('../../.env', import.meta.url));
+
+/**
+ * Em desenvolvimento, carrega apps/api/.env (se existir) para process.env. Variáveis já
+ * definidas no ambiente têm prioridade. Em produção as variáveis vêm do painel da hospedagem,
+ * nunca de arquivo.
+ */
+export function loadLocalEnvFile(filePath = API_ENV_FILE): void {
   if (process.env.NODE_ENV !== 'production' && existsSync(filePath)) {
     process.loadEnvFile(filePath);
   }

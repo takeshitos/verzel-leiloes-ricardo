@@ -373,3 +373,7 @@ Push de `d26efe7` às 18:01:21 UTC: só testes, `docs/TESTES.md` e `@playwright/
 ## Deploy da etapa 18 (falhas e recuperação)
 
 Push de `080b692` às 21:32:47 UTC. Novo frontend no ar às 21:33:43 UTC (bundle `/assets/index-CjycqQq1.js`). Verificado: `/api/health` 200 com `database: ok`; lance sem login 401; auditoria do lote do seed ÍNTEGRO. Os testes de falha da etapa rodaram só em ambiente isolado, nunca em produção.
+
+## Deploy da etapa 19 (extras)
+
+Push de `bc49166` às 21:49:14 UTC. No ar às 21:50:07 UTC (`/api/lots?status=invalido` passou a responder 400). Verificado: `?q=rocky` traz o lote do seed; `?q=zzz` devolve os grupos vazios; o `index.html` tem o script do tema.
