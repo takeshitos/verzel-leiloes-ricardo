@@ -14,7 +14,11 @@
     "db:seed": "tsx src/db/seed.ts",
     "db:seed:test": "tsx src/db/seed.ts --test",
     "db:demo-lot": "tsx src/db/demo-lot.ts",
-    "db:migration:create": "node-pg-migrate create --migrations-dir migrations --migration-file-language sql"
+    "db:migration:create": "node-pg-migrate create --migrations-dir migrations --migration-file-language sql",
+    "db:migrate:anchor": "tsx src/db/migrate.ts --anchor",
+    "db:migrate:anchor:test": "tsx src/db/migrate.ts --anchor --test",
+    "audit:keygen": "tsx src/modules/audit/keygen.ts",
+    "audit:check": "tsx src/modules/audit/check.ts"
   },
   "dependencies": {
     "cookie-parser": "1.4.7",

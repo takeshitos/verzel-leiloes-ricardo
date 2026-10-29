@@ -585,6 +585,7 @@ describe('eventos depois do commit', () => {
 
     expect(seen).toHaveLength(1);
     expect(seen[0].visibleInDatabase).toBe(true);
-    expect(seen[0].event).toMatchObject({ lotId, seq: 1, amountCents: 10_000, extended: true, auditStatus: 'pending' });
+    // Com a âncora de teste no ar, o checkpoint é confirmado depois do commit e antes do evento.
+    expect(seen[0].event).toMatchObject({ lotId, seq: 1, amountCents: 10_000, extended: true, auditStatus: 'confirmed' });
   });
 });

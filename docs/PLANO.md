@@ -187,6 +187,10 @@ A sala privada é decidida no servidor, a partir do cookie de sessão no handsha
 
 A liquidação só ocorre com o lote **ÍNTEGRO** e o último checkpoint confirmado. Lote adulterado não é liquidado e mostra o motivo.
 
+### Implementação da etapa 10
+
+O protocolo acima foi implementado como descrito; a especificação final e os resultados estão em `docs/AUDITORIA.md`. A verificação responde `status` (`intact`, `tampered`, `pending`, `unavailable`), `statusLabel` (ÍNTEGRO, ADULTERADO, VERIFICAÇÃO PENDENTE, VERIFICAÇÃO INDISPONÍVEL) e `reason`.
+
 ### Contrato implementado na etapa 09
 
 `apps/api/src/modules/audit/recorder.ts` define `IntegrityRecorder`:

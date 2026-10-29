@@ -3,7 +3,7 @@ import type { Pool } from 'pg';
 import type { TransactionClient } from '../../db/transaction.js';
 import { AppError } from '../../shared/errors.js';
 import { withIdempotency } from '../../shared/idempotency.js';
-import { chainOnlyRecorder, type AuditStatus, type IntegrityRecorder } from '../audit/recorder.js';
+import type { AnchorStatus, IntegrityRecorder } from '../audit/recorder.js';
 import { publishBidAccepted, type BidAcceptedEvent } from '../realtime/events.js';
 import { lockWallets, readBalance, type WalletBalance } from '../wallet/ledger.js';
 import { extendedEnd, minimumNextBid, validateBid } from './rules.js';
@@ -21,7 +21,7 @@ export type BidResponse = {
     leaderAlias: string;
   };
   wallet: WalletBalance;
-  audit: { status: AuditStatus };
+  audit: { status: AnchorStatus };
 };
 
 type LockedLot = {
@@ -48,8 +48,9 @@ export const databaseClock: Clock = async (client) => {
 };
 
 export type PlaceBidOptions = {
+  /** Componente de integridade (cadeia, checkpoint assinado e âncora). Obrigatório. */
+  integrity: IntegrityRecorder;
   clock?: Clock;
-  integrity?: IntegrityRecorder;
 };
 
 /**
@@ -66,10 +67,10 @@ export type PlaceBidOptions = {
 export async function placeBid(
   pool: Pool,
   params: { lotId: string; bidderId: string; amountCents: number; idempotencyKey: string },
-  options: PlaceBidOptions = {},
+  options: PlaceBidOptions,
 ): Promise<{ status: number; body: BidResponse; replayed: boolean }> {
   const clock = options.clock ?? databaseClock;
-  const integrity = options.integrity ?? chainOnlyRecorder;
+  const integrity = options.integrity;
   let event: BidAcceptedEvent | undefined;
 
   const result = await withIdempotency<BidResponse>(

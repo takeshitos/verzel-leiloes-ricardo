@@ -21,7 +21,9 @@
     "db:migrate:test": "npm run db:migrate:test -w apps/api",
     "db:seed": "npm run db:seed -w apps/api",
     "db:seed:test": "npm run db:seed:test -w apps/api",
-    "db:demo-lot": "npm run db:demo-lot -w apps/api --"
+    "db:demo-lot": "npm run db:demo-lot -w apps/api --",
+    "db:migrate:anchor": "npm run db:migrate:anchor -w apps/api",
+    "db:migrate:anchor:test": "npm run db:migrate:anchor:test -w apps/api"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

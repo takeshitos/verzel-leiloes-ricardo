@@ -12,6 +12,8 @@ import { createPublicLotsRouter } from './modules/lots/public-routes.js';
 import { createLotsRouter } from './modules/lots/routes.js';
 import { createWalletRouter } from './modules/wallet/routes.js';
 import { createBidsRouter } from './modules/bids/routes.js';
+import { createAuditRouter } from './modules/audit/routes.js';
+import type { AuditService } from './modules/audit/service.js';
 import { apiNotFound, errorBody, errorHandler } from './shared/errors.js';
 import { requireJsonBody, requireSameOrigin } from './shared/request-guards.js';
 
@@ -28,9 +30,11 @@ export type AppOptions = {
   clientIpHeader?: string;
   /** Cliente da API do museu (Cleveland). Só usado na busca do leiloeiro e ao criar lote. */
   catalog: CatalogClient;
+  /** Auditoria: checkpoint assinado, âncora e verificação pública. */
+  audit: AuditService;
 };
 
-export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clientIpHeader, catalog }: AppOptions) {
+export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clientIpHeader, catalog, audit }: AppOptions) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -52,7 +56,8 @@ export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clie
   app.use('/api', createPublicLotsRouter(pool));
   app.use('/api', createLotsRouter({ pool, catalog }));
   app.use('/api', createWalletRouter(pool));
-  app.use('/api', createBidsRouter(pool));
+  app.use('/api', createBidsRouter(pool, { integrity: audit.recorder }));
+  app.use('/api', createAuditRouter(audit));
   app.use('/api', apiNotFound);
 
   // 2. Frontend (produção): arquivos estáticos e qualquer rota da SPA devolvendo index.html.

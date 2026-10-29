@@ -121,3 +121,14 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** perda de microssegundos ao regravar o fim do lote (erro 500 que também atingiria o seed em produção); testes de corrida que não disparavam as requisições; bloqueio de teste não liberado em falha.
 - **Limite declarado:** R13 continua pendente; a cadeia de hashes sozinha não protege contra quem edita o banco.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 10 — Integridade e âncora (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 10.
+- **Arquivos gerados pela IA:** `docs/AUDITORIA.md` (antes do código), migração da âncora, módulo `audit` completo, configuração, comandos e 27 testes de ataques e falhas.
+- **Verificações executadas:** testes de adulteração e das janelas banco/âncora nos bancos isolados de teste, prova de que os testes falham com uma checagem desligada, suíte completa, build, ponta a ponta local e verificação global.
+- **Erros encontrados e corrigidos:** regex quebrado por escape do shell na configuração; barras invertidas indevidas no Markdown (o primeiro conserto com `sed` piorou o arquivo, que foi recuperado por script); três scripts de ataque mal montados (barrados pelas restrições do banco).
+- **Segredos:** a chave local de desenvolvimento foi gravada direto no `apps/api/.env` (ignorado pelo git) sem ser exibida. A chave de produção será gerada pelo candidato.
+- **Limite declarado:** R13 fica parcial até a configuração em produção; ataques que ainda passam listados em `docs/AUDITORIA.md`.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

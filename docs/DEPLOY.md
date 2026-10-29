@@ -206,3 +206,44 @@ Verificação de fora, sem credenciais:
 | `/api/health` e `/api/lots` | 200 |
 
 Depósito com login de licitante foi testado localmente (testes automatizados com PostgreSQL real, inclusive requisições simultâneas). Em produção, fica para o candidato ou para a tela da carteira (etapa 15).
+
+## Deploy da etapa 09 (lances)
+
+Push de `58adfdf` às 06:02:20 UTC. Nova versão no ar por volta de 06:03:06 UTC (`GET /api/lots/<lote do seed>/bids` passou de 404 para 200).
+
+Verificação de fora, sem credenciais:
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/lots/7a350b42-…/bids` | 200 `{"bids":[]}` |
+| `POST /api/lots/7a350b42-…/bids` sem login | 401 |
+| O mesmo vindo de outro site | 403 `FORBIDDEN_ORIGIN` |
+| O mesmo como formulário | 415 |
+| Histórico de lote inexistente | 404 |
+| `GET /api/lots/7a350b42-…` | `live`, 0 lances, mínimo 50000, fim 2026-11-08T02:03:05Z |
+| `/api/health` | 200, `database: ok` |
+
+O lote do seed em produção foi criado antes da correção de microssegundos. Um lance real nele (com login de licitante) confirmaria a correção em produção; localmente ela foi confirmada no lote equivalente. Fica para o candidato (comando no PROGRESSO).
+
+## Configuração da auditoria em produção (etapa 10) — fazer ANTES do push
+
+Sem estas variáveis o novo deploy não sobe: a configuração exige a chave, e a âncora em produção. A versão anterior continua no ar.
+
+1. **Gerar a chave** (uma única vez), no seu terminal, na pasta do projeto:
+
+   ```bash
+   npm run audit:keygen -w apps/api
+   ```
+
+   Guarde a chave privada num gerenciador de senhas. Não cole na conversa nem em arquivo versionado.
+2. **Criar a âncora no Neon:** novo projeto `verzel-leiloes-ancora`, região AWS US East 1 (N. Virginia), conexão **direta** (sem `-pooler`), terminando a URL em `sslmode=verify-full` (como no banco principal).
+3. **Render → Environment**, adicionar:
+   - `AUDIT_SIGNING_PRIVATE_KEY` = a chave privada gerada no passo 1;
+   - `AUDIT_KEY_VERSION` = `1` (se não vier do `render.yaml`);
+   - `ANCHOR_DATABASE_URL` = a string do projeto da âncora.
+4. Fazer o push. No startup, com `RUN_MIGRATIONS_ON_START=true`, o servidor cria a tabela da âncora.
+5. Conferir: `GET /api/audit/public-key` responde com a chave pública, e `GET /api/lots/<lote>/audit` responde ÍNTEGRO para o lote do seed (sem lances).
+
+**Endurecimento opcional:** depois do primeiro deploy, criar no projeto da âncora um usuário só com `INSERT` e `SELECT` em `anchor_entries` e `SELECT` em `pgmigrations`, e trocar `ANCHOR_DATABASE_URL` para ele. Com o usuário dono, o gatilho já impede `UPDATE`/`DELETE` pela aplicação, mas quem tiver essa credencial poderia remover o gatilho; esse atacante está fora do modelo (`docs/AUDITORIA.md`, seção 2).
+
+Nunca regenerar a chave em deploys: os checkpoints antigos deixariam de ser verificáveis.

@@ -5,6 +5,9 @@ import { createApp } from './app.js';
 import { runMigrations } from './db/migrations.js';
 import { createPool } from './db/pool.js';
 import { runSeed } from './db/seed-data.js';
+import { createAnchorStore, missingAnchor } from './modules/audit/anchor.js';
+import { createKeyring, type Keyring } from './modules/audit/keys.js';
+import { createAuditService } from './modules/audit/service.js';
 import { createCatalogClient } from './modules/catalog/client.js';
 import { loadConfig, loadLocalEnvFile, type AppConfig } from './shared/config.js';
 
@@ -18,11 +21,21 @@ try {
   process.exit(1);
 }
 
+// Chave de assinatura da auditoria: inválida = o servidor não sobe (nunca aceita lance sem assinar).
+let keyring: Keyring;
+try {
+  keyring = createKeyring(config.auditKeys);
+} catch (error) {
+  console.error(`Chave de auditoria inválida: ${describeError(error)}`);
+  process.exit(1);
+}
+
 // Em produção (Render) as migrações e o seed idempotente rodam antes de aceitar conexões.
-// Em desenvolvimento use npm run db:migrate e npm run db:seed.
+// Em desenvolvimento use npm run db:migrate, db:migrate:anchor e db:seed.
 if (config.runMigrationsOnStart) {
   try {
     await runMigrations(config.databaseUrl);
+    if (config.anchorDatabaseUrl) await runMigrations(config.anchorDatabaseUrl, 'anchor');
   } catch (error) {
     console.error(`Falha nas migrações: ${describeError(error)}`);
     process.exit(1);
@@ -47,6 +60,15 @@ const webDistDir = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
 const catalog = createCatalogClient({ baseUrl: config.catalogBaseUrl, timeoutMs: config.catalogTimeoutMs });
 
+// Âncora independente (outro PostgreSQL). Sem ela, a auditoria fica pendente/indisponível.
+const anchor = config.anchorDatabaseUrl
+  ? createAnchorStore({ databaseUrl: config.anchorDatabaseUrl, timeoutMs: config.anchorTimeoutMs })
+  : missingAnchor;
+if (!config.anchorDatabaseUrl) {
+  console.warn('[auditoria] ANCHOR_DATABASE_URL não configurada: a verificação ficará PENDENTE/INDISPONÍVEL.');
+}
+const audit = createAuditService({ pool, anchor, keyring });
+
 const app = createApp({
   webDistDir,
   pool,
@@ -54,6 +76,7 @@ const app = createApp({
   trustProxyHops: config.trustProxyHops,
   clientIpHeader: config.clientIpHeader,
   catalog,
+  audit,
 });
 // Servidor HTTP explícito: o Socket.IO será ligado nele na etapa 12.
 const server = createServer(app);
@@ -63,11 +86,14 @@ server.on('error', (error) => {
   process.exit(1);
 });
 
+let stopReconciler: () => void = () => {};
 server.listen(config.port, config.host, () => {
   console.log(`API ouvindo em http://${config.host}:${config.port} (${config.nodeEnv})`);
+  // Reconcilia checkpoints pendentes agora (recuperação após reinício) e periodicamente.
+  stopReconciler = audit.startReconciler(config.auditReconcileIntervalMs);
 });
 
-// Encerramento limpo: para de aceitar conexões, espera as atuais e fecha o pool do banco.
+// Encerramento limpo: para de aceitar conexões, espera as atuais e fecha os pools (banco e âncora).
 let shuttingDown = false;
 
 function shutdown(signal: string): void {
@@ -81,13 +107,13 @@ function shutdown(signal: string): void {
   }, 10_000);
   forceExit.unref();
 
+  stopReconciler();
   server.close((error) => {
     if (error) {
       console.error(`Erro ao encerrar: ${error.message}`);
       process.exit(1);
     }
-    pool
-      .end()
+    Promise.all([pool.end(), anchor.close()])
       .then(() => {
         console.log('Servidor encerrado.');
         process.exit(0);

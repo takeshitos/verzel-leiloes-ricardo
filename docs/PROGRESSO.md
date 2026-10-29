@@ -18,7 +18,9 @@ Etapa 08 concluída localmente (29/10/2026): carteira do licitante, depósito si
 
 Etapa 09 concluída localmente (29/10/2026): lance transacional com bloqueios, idempotência, prorrogação, cadeia de hashes real e eventos pós-commit. 165 testes passam. **Ainda faltam** encerramento/liquidação (etapa 11) e auditoria com checkpoint assinado e âncora (etapa 10); R13 continua pendente. Commit e push feitos a pedido do candidato.
 
-Próxima ação: commit e push da etapa 09, se o candidato pedir; depois, etapa 10 (integridade e âncora).
+Etapa 10 concluída localmente (29/10/2026): checkpoint Ed25519 a cada lance, âncora independente só de inserção, reconciliador e verificação pública. 192 testes passam (27 de ataques e falhas). **R13 parcial** até a âncora e a chave estarem em produção; limites declarados em `docs/AUDITORIA.md`. Commit local feito a pedido do candidato, **sem push** (aguardando a configuração da produção).
+
+Próxima ação: o candidato gera a chave, cria a âncora no Neon e cadastra as variáveis no Render (`docs/DEPLOY.md`); depois commit e push da etapa 10; depois, etapa 11 (liquidação).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -643,3 +645,69 @@ Nos testes, uma transação externa segura o bloqueio e só libera quando `pg_st
 2. **Encerramento e liquidação (etapa 11):** nada debita o vencedor ainda.
 3. **Tempo real (etapa 12):** o evento existe, mas ninguém escuta.
 4. As recusas de negócio não são guardadas na idempotência: repetir a mesma chave depois de uma recusa reavalia o lance (seguro, porque a recusa não mudou nada).
+
+### Deploy da etapa 09
+
+Commit `58adfdf` enviado a pedido do candidato; nova versão no ar por volta de 06:03:06 UTC. Verificado de fora, sem credenciais:
+- histórico público de lances: 200;
+- lance sem login: 401; vindo de outro site: 403; como formulário: 415;
+- lote inexistente: 404;
+- lote do seed ao vivo.
+
+Confirmação opcional em produção, feita pelo candidato. Cria um lance real de R$ 500,00 do cliente1 no lote do seed:
+
+```powershell
+$B='https://verzel-leiloes-ricardo.onrender.com'; Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$B/api/auth/login" -ContentType 'application/json' -Headers @{ Origin=$B } -Body '{"email":"cliente1@example.com","password":"leilao-demo-2026"}' -SessionVariable s | Out-Null; $r = Invoke-WebRequest -UseBasicParsing -Method Post -Uri "$B/api/lots/7a350b42-e23a-4a0a-942d-9b808a1656c5/bids" -ContentType 'application/json' -Headers @{ Origin=$B; 'Idempotency-Key'=[guid]::NewGuid().ToString() } -Body '{"amountCents":50000}' -WebSession $s; $r.StatusCode; $r.Content
+```
+
+Esperado: `201` e um JSON com `bid.amountCents: 50000` e `wallet.committedCents: 50000`.
+
+## Etapa 10 — Integridade do histórico e âncora (29/10/2026, concluída localmente)
+
+Requisitos relacionados: R13 (auditoria) e R14 (sem dados pessoais na auditoria).
+
+### Antes do código
+
+`docs/AUDITORIA.md` foi escrito primeiro: modelo de ameaça, técnica e por que não blockchain, protocolo entre banco e âncora, matriz de falhas, regras de cada estado, operação e limites.
+
+### Arquivos
+
+- `apps/api/migrations-anchor/1793250000000_anchor-entries.sql`: tabela da âncora com gatilho que recusa `UPDATE`, `DELETE` e `TRUNCATE`.
+- `apps/api/src/modules/audit/`: `keys.ts` (Ed25519, troca de chave), `anchor.ts` (adaptador com timeout), `verify.ts` (verificação pura), `service.ts` (checkpoint na transação, âncora pós-commit, reconciliador, verificação global), `routes.ts` (`GET /api/lots/:id/audit`, `GET /api/audit/public-key`), `keygen.ts`, `check.ts`.
+- `recorder.ts`: o contrato da etapa 09 agora é implementado de verdade; o serviço de lance **exige** o componente de integridade.
+- `config.ts`: `AUDIT_SIGNING_PRIVATE_KEY` (obrigatória), `AUDIT_KEY_VERSION`, `AUDIT_PREVIOUS_PUBLIC_KEYS`, `ANCHOR_DATABASE_URL` (obrigatória em produção), `ANCHOR_TIMEOUT_MS`, `AUDIT_RECONCILE_INTERVAL_MS`.
+- `server.ts`: migrações da âncora no startup, reconciliador no startup e a cada 30 s, encerramento fecha a âncora.
+- Comandos: `db:migrate:anchor`, `db:migrate:anchor:test`, `audit:keygen`, `audit:check`.
+- Testes: `test/audit.test.ts` (27); helpers com chave gerada na hora, âncora de teste e âncora "fora do ar".
+- `apps/api/.env` local: chave de desenvolvimento gerada direto no arquivo (valor não exibido) e URLs das âncoras locais. `render.yaml` e `.env.example` atualizados.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run db:migrate:anchor` / `:test` | Criou `verzel_anchor` e `verzel_anchor_test` e aplicou a migração; repetido: nada pendente |
+| `UPDATE`, `DELETE` e `TRUNCATE` na âncora (psql) | Recusados: "anchor_entries é somente inserção" |
+| `vitest run test/audit.test.ts` (1ª vez) | 24 de 27: as 3 falhas eram nos **scripts de ataque** (as restrições do banco recusaram ataques mal montados; um deles perdia microssegundos ao restaurar o término). Corrigidos os ataques, sem mexer na verificação |
+| O mesmo depois | **27 de 27** |
+| Checagem da âncora desligada de propósito | 3 testes falharam (remoção da cauda, histórico inteiro, rollback); código restaurado |
+| `npm test` | **192 de 192**, 11 arquivos, 80 s |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+| Ponta a ponta local (servidor compilado, `verzel_dev` + `verzel_anchor`) | Lote do seed com 2 lances da etapa 09: VERIFICAÇÃO INDISPONÍVEL ("registrados antes da auditoria"); lote novo: ÍNTEGRO sem lances e ÍNTEGRO com 2 lances (2 assinados, 2 ancorados); chave pública publicada |
+| `npm run audit:check -w apps/api` | 3 ÍNTEGRO, 1 INDISPONÍVEL; nenhum lote da âncora ausente no banco |
+
+### Limites (o que ainda passa), também em `docs/AUDITORIA.md` §8
+
+1. Remover um lance **ainda não ancorado** (janela entre o commit e a âncora) junto com o checkpoint dele.
+2. Inserir o primeiro lance falso num lote sem nenhuma evidência: aparece INDISPONÍVEL, não ADULTERADO.
+3. Apagar o lote inteiro só é detectado pela verificação global (`audit:check`).
+4. Quem controla o servidor (chave e credencial da âncora) está fora do modelo.
+
+### Por que não blockchain
+
+O objetivo é detectar mudanças feitas por quem tem acesso ao banco. Assinatura digital (só o servidor assina) mais uma cópia independente só de inserção (o banco principal não consegue apagar) resolvem isso. Consenso distribuído não acrescentaria garantia contra esse atacante.
+
+### Pendências
+
+1. **Configuração em produção** (ação do candidato, antes do push): chave, projeto Neon da âncora e variáveis no Render (`docs/DEPLOY.md`).
+2. A liquidação (etapa 11) precisa exigir auditoria ÍNTEGRA antes de pagar.
+3. Página pública da auditoria (etapa 16).

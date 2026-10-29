@@ -15,7 +15,7 @@ const bidSchema = z.strictObject({
   amountCents: centsSchema('O valor do lance', MAX_WALLET_TOTAL_CENTS),
 });
 
-export function createBidsRouter(pool: Pool, options: PlaceBidOptions = {}) {
+export function createBidsRouter(pool: Pool, options: PlaceBidOptions) {
   const router = Router();
   const bidsPerUser = createRateLimiter({ windowMs: 60_000, max: 60 });
 

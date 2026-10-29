@@ -35,5 +35,13 @@ services:
       # (Environment); o valor nunca entra neste arquivo.
       - key: DATABASE_URL
         sync: false
+      # Auditoria (etapa 10, docs/AUDITORIA.md). Segredos: cadastrar no painel (Environment).
+      # Chave Ed25519 gerada UMA vez com npm run audit:keygen -w apps/api; nunca regenerar no deploy.
+      - key: AUDIT_SIGNING_PRIVATE_KEY
+        sync: false
+      - key: AUDIT_KEY_VERSION
+        value: "1"
+      # Âncora independente: string de conexão do SEGUNDO projeto Neon (verzel-leiloes-ancora).
+      - key: ANCHOR_DATABASE_URL
+        sync: false
       # A versão do Node vem do arquivo .node-version na raiz do repositório.
-      # Segredos da auditoria (âncora e chave) entram no painel na etapa 10.

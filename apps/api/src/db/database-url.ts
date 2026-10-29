@@ -22,9 +22,11 @@ export function isLocalDatabase(databaseUrl: string): boolean {
  * Lê a URL do banco do ambiente.
  * Com `test: true`, usa TEST_DATABASE_URL e exige que o nome do banco termine em "_test",
  * para que comandos de teste nunca apontem para o banco de desenvolvimento ou produção.
+ * Com `anchor: true`, usa o banco da âncora de auditoria (ANCHOR_DATABASE_URL / TEST_ANCHOR_DATABASE_URL).
  */
-export function resolveDatabaseUrl({ test }: { test: boolean }): string {
-  const variable = test ? 'TEST_DATABASE_URL' : 'DATABASE_URL';
+export function resolveDatabaseUrl({ test, anchor = false }: { test: boolean; anchor?: boolean }): string {
+  const base = anchor ? 'ANCHOR_DATABASE_URL' : 'DATABASE_URL';
+  const variable = test ? `TEST_${base}` : base;
   const databaseUrl = process.env[variable];
 
   if (!databaseUrl) {
@@ -34,7 +36,7 @@ export function resolveDatabaseUrl({ test }: { test: boolean }): string {
     throw new Error(`${variable} deve começar com postgres:// ou postgresql://.`);
   }
   if (test && !databaseNameOf(databaseUrl).endsWith('_test')) {
-    throw new Error('TEST_DATABASE_URL precisa apontar para um banco cujo nome termina em "_test".');
+    throw new Error(`${variable} precisa apontar para um banco cujo nome termina em "_test".`);
   }
   return databaseUrl;
 }

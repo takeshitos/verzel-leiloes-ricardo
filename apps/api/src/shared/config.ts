@@ -34,6 +34,36 @@ const envSchema = z.object({
     .string()
     .regex(/^[a-z0-9-]+$/i, 'use só o nome do cabeçalho, ex.: cf-connecting-ip')
     .optional(),
+  // Auditoria (docs/AUDITORIA.md). Chave privada Ed25519 em base64 (DER PKCS#8), gerada uma vez
+  // com npm run audit:keygen. Segredo: só no servidor, nunca no repositório ou no frontend.
+  AUDIT_SIGNING_PRIVATE_KEY: z
+    .string({ error: 'obrigatória (gere com npm run audit:keygen -w apps/api)' })
+    .regex(/^[A-Za-z0-9+/]+=*$/, 'deve estar em base64 numa linha só'),
+  AUDIT_KEY_VERSION: z.coerce.number().int().min(1).default(1),
+  // Chaves públicas de versões anteriores, para a troca de chave: {"1":"<base64 SPKI>"}.
+  AUDIT_PREVIOUS_PUBLIC_KEYS: z
+    .string()
+    .optional()
+    .transform((value, context) => {
+      if (!value) return {};
+      try {
+        return JSON.parse(value) as Record<number, string>;
+      } catch {
+        context.addIssue({ code: 'custom', message: 'deve ser um JSON como {"1":"<base64>"}' });
+        return z.NEVER;
+      }
+    }),
+  // Âncora independente: OUTRO PostgreSQL, com credencial própria. Obrigatória em produção.
+  ANCHOR_DATABASE_URL: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'deve começar com postgres:// ou postgresql://')
+    .optional(),
+  ANCHOR_TIMEOUT_MS: z.coerce.number().int().min(200).max(30_000).default(3_000),
+  AUDIT_RECONCILE_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
+}).superRefine((env, context) => {
+  if (env.NODE_ENV === 'production' && !env.ANCHOR_DATABASE_URL) {
+    context.addIssue({ code: 'custom', path: ['ANCHOR_DATABASE_URL'], message: 'obrigatória em produção (âncora da auditoria)' });
+  }
 });
 
 export type AppConfig = {
@@ -49,6 +79,10 @@ export type AppConfig = {
   clientIpHeader?: string;
   catalogBaseUrl: string;
   catalogTimeoutMs: number;
+  auditKeys: { privateKeyBase64: string; keyVersion: number; previousPublicKeys: Record<number, string> };
+  anchorDatabaseUrl?: string;
+  anchorTimeoutMs: number;
+  auditReconcileIntervalMs: number;
 };
 
 /**
@@ -89,5 +123,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     clientIpHeader: data.CLIENT_IP_HEADER?.toLowerCase(),
     catalogBaseUrl: data.CMA_API_BASE_URL,
     catalogTimeoutMs: data.CATALOG_TIMEOUT_MS,
+    auditKeys: {
+      privateKeyBase64: data.AUDIT_SIGNING_PRIVATE_KEY,
+      keyVersion: data.AUDIT_KEY_VERSION,
+      previousPublicKeys: data.AUDIT_PREVIOUS_PUBLIC_KEYS,
+    },
+    anchorDatabaseUrl: data.ANCHOR_DATABASE_URL,
+    anchorTimeoutMs: data.ANCHOR_TIMEOUT_MS,
+    auditReconcileIntervalMs: data.AUDIT_RECONCILE_INTERVAL_MS,
   };
 }
