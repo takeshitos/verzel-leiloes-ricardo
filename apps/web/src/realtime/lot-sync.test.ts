@@ -7,6 +7,8 @@ import {
   clockOffsetMs,
   emptyLiveState,
   isNewerWallet,
+  myPosition,
+  myStanding,
   remainingMs,
   type LiveState,
 } from './lot-sync';
@@ -188,5 +190,37 @@ describe('relógio e carteira', () => {
     expect(isNewerWallet(null, '2026-10-29T12:00:00.000Z')).toBe(true);
     expect(isNewerWallet('2026-10-29T12:00:01.000Z', '2026-10-29T12:00:00.000Z')).toBe(false);
     expect(isNewerWallet('2026-10-29T12:00:00.000Z', '2026-10-29T12:00:01.000Z')).toBe(true);
+  });
+});
+
+describe('posição e situação do usuário', () => {
+  const history: PublicBid[] = [
+    { seq: 4, alias: 'LIC-A', amountCents: 14_000, acceptedAt: '2026-10-29T11:04:00.000Z' },
+    { seq: 3, alias: 'LIC-B', amountCents: 13_000, acceptedAt: '2026-10-29T11:03:00.000Z' },
+    { seq: 2, alias: 'LIC-A', amountCents: 12_000, acceptedAt: '2026-10-29T11:02:00.000Z' },
+    { seq: 1, alias: 'LIC-C', amountCents: 10_000, acceptedAt: '2026-10-29T11:01:00.000Z' },
+  ];
+
+  it('posição pelo melhor lance de cada participante', () => {
+    expect(myPosition(history, 'LIC-A')).toEqual({ position: 1, participants: 3 });
+    expect(myPosition(history, 'LIC-B')).toEqual({ position: 2, participants: 3 });
+    expect(myPosition(history, 'LIC-C')).toEqual({ position: 3, participants: 3 });
+  });
+
+  it('quem nunca ofertou não tem posição', () => {
+    expect(myPosition(history, 'LIC-Z')).toBeNull();
+    expect(myPosition(history, null)).toBeNull();
+    expect(myPosition([], 'LIC-A')).toBeNull();
+  });
+
+  it('ganhando, superado, aguardando, venceu e perdeu vêm do estado do servidor', () => {
+    const live = lot({ leaderAlias: 'LIC-A', bidCount: 4 });
+    expect(myStanding(live, history, 'LIC-A')).toBe('leading');
+    expect(myStanding(live, history, 'LIC-B')).toBe('outbid');
+    expect(myStanding(live, history, 'LIC-Z')).toBe('none');
+    expect(myStanding(lot({ status: 'ended', leaderAlias: 'LIC-A' }), history, 'LIC-A')).toBe('awaiting');
+    const settled = lot({ status: 'ended', settled: true, result: { winnerAlias: 'LIC-A', finalAmountCents: 14_000 } });
+    expect(myStanding(settled, history, 'LIC-A')).toBe('won');
+    expect(myStanding(settled, history, 'LIC-B')).toBe('lost');
   });
 });

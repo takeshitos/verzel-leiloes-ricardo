@@ -1,17 +1,28 @@
 import { Link, useParams } from 'react-router';
+import { useApi } from '../api/useApi';
 import { useAuth } from '../auth/useAuth';
+import { BidForm } from '../bidder/BidForm';
 import { ArtworkImage } from '../components/ArtworkImage';
 import { ConnectionBadge } from '../components/ConnectionBadge';
 import { Countdown } from '../components/Countdown';
 import { LotStatusPill } from '../components/LotStatusPill';
-import { EmptyState, ErrorState, Loading, Notice, PendingFeature } from '../components/ui';
+import { EmptyState, ErrorState, Loading, Notice } from '../components/ui';
 import { browserTimeZone, formatBrl, formatDateTime } from '../format';
+import { myPosition, myStanding, type MyStanding } from '../realtime/lot-sync';
 import { useLiveLot } from '../realtime/useLiveLot';
 import { useMyWallet } from '../realtime/useMyWallet';
 
+const STANDING: Partial<Record<MyStanding, { label: string; tone: string }>> = {
+  leading: { label: 'Você está ganhando', tone: 'ok' },
+  outbid: { label: 'Você foi superado', tone: 'warning' },
+  awaiting: { label: 'Encerrado: aguardando liquidação', tone: 'neutral' },
+  won: { label: 'Você arrematou este lote', tone: 'ok' },
+  lost: { label: 'Você não venceu este lote', tone: 'neutral' },
+};
+
 /**
- * Sala do lote em tempo real. Mostra o estado do servidor e o atualiza sem recarregar.
- * Formulário de lance, posição do usuário e indicadores definitivos entram na etapa 15.
+ * Sala do lote em tempo real: estado do servidor, cronômetro, histórico, posição do usuário,
+ * "você está ganhando" / "você foi superado" e o formulário de lance.
  */
 export function LotPage() {
   const { id = '' } = useParams();
@@ -22,15 +33,20 @@ export function LotPage() {
 function LotRoom({ lotId }: { lotId: string }) {
   const { user } = useAuth();
   const { lot, bids, offsetMs, connection, error, resync } = useLiveLot(lotId);
-  const { wallet, alias, notices } = useMyWallet();
+  const { wallet, alias } = useMyWallet();
+  // Situação do usuário: sempre derivada do estado do servidor (corrige-se sozinha ao reconectar).
+  const standing = lot ? myStanding(lot, bids, alias) : 'none';
+  const position = lot?.status === 'live' ? myPosition(bids, alias) : null;
+  // O link do comprovante só existe para o vencedor; a API de participações o devolve.
+  const participations = useApi<{ participations: { lot: { id: string }; receiptToken: string | null }[] }>(
+    standing === 'won' ? '/me/participations' : null,
+  );
+  const receiptToken = participations.data?.participations.find((item) => item.lot.id === lotId)?.receiptToken ?? null;
 
   if (!lot) {
     return error ? <ErrorState message={error.message} onRetry={error.status === 404 ? undefined : resync} /> : <Loading label="Carregando o lote..." />;
   }
 
-  const leadingNow = alias !== null && lot.leaderAlias === alias;
-  // "Superado" deixa de valer quando a pessoa volta a liderar.
-  const myNotices = notices.filter((notice) => notice.lotId === lot.id && !(notice.kind === 'outbid' && leadingNow));
   const details = [
     lot.item.creationDate,
     lot.item.technique,
@@ -128,23 +144,44 @@ function LotRoom({ lotId }: { lotId: string }) {
               </dl>
             )}
 
-            {wallet && (
+            {user?.role === 'bidder' && alias && (
               <div className="my-wallet">
-                <p>
+                <p className="my-standing">
                   <strong>Você ({alias})</strong>
-                  {lot.status === 'live' && leadingNow && <span className="badge badge-ok">Você está ganhando</span>}
+                  {STANDING[standing] && (
+                    <span className={`badge badge-${STANDING[standing]!.tone}`} role="status">
+                      {STANDING[standing]!.label}
+                    </span>
+                  )}
                 </p>
-                <p className="small">
-                  Disponível: {formatBrl(wallet.availableCents)} · Reservado: {formatBrl(wallet.committedCents)}
-                </p>
-                {myNotices.map((notice) => (
-                  <p key={notice.id} className={notice.kind === 'won' ? 'badge badge-ok' : 'badge badge-warning'} role="status">
-                    {notice.kind === 'won' ? 'Você arrematou este lote.' : 'Você foi superado neste lote.'}
+                {position && (
+                  <p className="small">
+                    Sua posição: {position.position}º de {position.participants}{' '}
+                    {position.participants === 1 ? 'participante' : 'participantes'} (pelo melhor lance de cada um)
                   </p>
-                ))}
+                )}
+                {standing === 'none' && lot.status === 'live' && <p className="small muted">Você ainda não ofertou neste lote.</p>}
+                {wallet && (
+                  <p className="small">
+                    Disponível: {formatBrl(wallet.availableCents)} · Reservado: {formatBrl(wallet.committedCents)} ·{' '}
+                    <Link to="/carteira">Carteira</Link>
+                  </p>
+                )}
+                {standing === 'won' && (
+                  <p className="small">
+                    {receiptToken ? (
+                      <Link to={`/comprovantes/${receiptToken}`}>Ver o comprovante do arremate</Link>
+                    ) : (
+                      'O comprovante aparece em Participações assim que for gerado.'
+                    )}
+                  </p>
+                )}
               </div>
             )}
 
+            {lot.status === 'live' && user?.role === 'bidder' && alias && (
+              <BidForm lot={lot} bids={bids} alias={alias} availableCents={wallet?.availableCents ?? null} resync={resync} />
+            )}
             {lot.status === 'live' && !user && (
               <p className="small">
                 <Link to={`/entrar?next=/lotes/${lot.id}`}>Entre como licitante</Link> para participar.
@@ -152,9 +189,6 @@ function LotRoom({ lotId }: { lotId: string }) {
             )}
             {lot.status === 'live' && user?.role === 'seller' && (
               <p className="muted small">Leiloeiros acompanham a disputa, mas não dão lances.</p>
-            )}
-            {lot.status === 'live' && user?.role === 'bidder' && (
-              <PendingFeature step="etapa 15">O formulário de lance desta sala entra no fluxo do licitante.</PendingFeature>
             )}
           </div>
 

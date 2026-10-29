@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { useApi } from '../api/useApi';
-import { EmptyState, ErrorState, Loading, PageHeader, PendingFeature } from '../components/ui';
+import { DepositForm } from '../bidder/DepositForm';
+import { EmptyState, ErrorState, Loading, PageHeader } from '../components/ui';
 import { formatBrl, formatDateTime } from '../format';
 import { getSocket } from '../realtime/socket';
 
@@ -14,7 +15,7 @@ const ENTRY_LABEL: Record<Entry['kind'], string> = {
   settlement_credit: 'Recebimento de venda',
 };
 
-/** Carteira do licitante (dados do servidor). Depósito pela tela entra na etapa 15. */
+/** Carteira do licitante: total, reservado e disponível sempre lidos do servidor; depósito simulado. */
 export function WalletPage() {
   const { data, error, loading, reload } = useApi<{ wallet: WalletView }>('/wallet');
 
@@ -55,9 +56,13 @@ export function WalletPage() {
             </div>
           </div>
 
-          <PendingFeature step="etapa 15">
-            O depósito simulado pela tela entra no fluxo do licitante. A API de depósito já existe e é idempotente.
-          </PendingFeature>
+          <p className="muted small explain">
+            <strong>Como funciona a reserva:</strong> quando você lidera um lote, o valor do seu lance sai do disponível e
+            fica reservado. Se alguém cobrir, a reserva volta na hora. Se você vencer, o valor reservado é debitado do total
+            no encerramento. Assim você nunca oferta mais do que tem, mesmo disputando vários lotes.
+          </p>
+
+          <DepositForm onDone={reload} />
 
           <section className="section">
             <h2>Últimos lançamentos</h2>

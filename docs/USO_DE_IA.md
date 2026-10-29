@@ -171,3 +171,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Erros encontrados e corrigidos:** formulário longe da vista; erro de campo que não sumia depois de corrigido; tipo errado da origem do cache (`live`, não `network`).
 - **Credenciais:** só as contas de teste do seed, no localhost.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 15 — Fluxo do licitante (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 15.
+- **Arquivos gerados pela IA:** chave de idempotência por intenção, formulário de depósito, formulário de lance, posição e situação do usuário (com testes), área pessoal da sala, botão de copiar link e ajustes na carteira e nas participações.
+- **Verificações executadas:** typecheck, lint, build, suíte completa, cenário A/B do guia em duas sessões reais no navegador embutido (depósito com clique duplo, reserva, recusas, superação, liberação, encerramento, carteiras e leiloeiro) e resposta perdida com o servidor parado.
+- **Erros encontrados e corrigidos:** aviso de recusa antigo continuava ao lado do indicador "Você foi superado" (agora some quando o lote muda de versão).
+- **Credenciais:** só as contas de teste do seed, no localhost.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

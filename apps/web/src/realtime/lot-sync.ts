@@ -96,6 +96,33 @@ export function remainingMs(endsAt: string, offsetMs: number, nowMs: number): nu
   return Math.max(0, Date.parse(endsAt) - (nowMs + offsetMs));
 }
 
+/**
+ * Posição do usuário pelo MELHOR lance aceito de cada participante (os lances só sobem, então
+ * não há empate). Quem nunca ofertou não tem posição: devolve null.
+ */
+export function myPosition(bids: PublicBid[], alias: string | null): { position: number; participants: number } | null {
+  if (!alias) return null;
+  const best = new Map<string, number>();
+  for (const bid of bids) best.set(bid.alias, Math.max(best.get(bid.alias) ?? 0, bid.amountCents));
+  const mine = best.get(alias);
+  if (mine === undefined) return null;
+  const ahead = [...best.values()].filter((amount) => amount > mine).length;
+  return { position: ahead + 1, participants: best.size };
+}
+
+export type MyStanding = 'none' | 'leading' | 'outbid' | 'won' | 'lost' | 'awaiting';
+
+/**
+ * Situação do usuário no lote, calculada SÓ a partir do estado do servidor (líder, resultado e
+ * histórico). Depois de reconectar, o snapshot HTTP traz o estado final e o indicador se corrige.
+ */
+export function myStanding(lot: PublicLot, bids: PublicBid[], alias: string | null): MyStanding {
+  if (!alias || !bids.some((bid) => bid.alias === alias)) return 'none';
+  if (lot.result) return lot.result.winnerAlias === alias ? 'won' : 'lost';
+  if (lot.status === 'ended') return 'awaiting';
+  return lot.leaderAlias === alias ? 'leading' : 'outbid';
+}
+
 /** Saldo mais antigo que o já mostrado (chegou fora de ordem) é descartado. */
 export function isNewerWallet(currentAsOf: string | null, incomingAsOf: string): boolean {
   return currentAsOf === null || Date.parse(incomingAsOf) >= Date.parse(currentAsOf);

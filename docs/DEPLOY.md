@@ -318,3 +318,23 @@ Push de `63c7028` às 16:15:29 UTC. Novo frontend no ar às 16:16:39 UTC (o bund
 | `/api/health` | 200, `database: ok` |
 
 Ainda não verificado em produção: telas com login.
+
+## Deploy da etapa 14 (painel do leiloeiro)
+
+Push de `e6a097f` às 16:42:00 UTC. Novo frontend no ar às 16:43:01 UTC (bundle `/assets/index-CYIz9qnd.js` com o texto novo "Será enviado como"). Nenhuma variável nova.
+
+| Verificação (sem login) | Resultado |
+| --- | --- |
+| `/painel` | Redireciona para `/entrar?next=/painel` |
+| `GET /api/catalog/search?q=harbor` | 401 `UNAUTHENTICATED` |
+| `POST /api/lots` | 401 `UNAUTHENTICATED` |
+| `POST /api/lots/<seed>/cancel` | 401 `UNAUTHENTICATED` |
+| `/api/health` | 200, `database: ok` |
+
+Teste em produção com login de leiloeiro (29/10/2026, autorizado pelo candidato; ele mesmo fez o login no navegador do app, a IA não digitou a senha):
+- busca real "harbor": 63 obras;
+- lote criado pela tela (R$ 100,00, incremento R$ 10, começar agora, fim 13:50 de Brasília): no servidor `startingBidCents` 10000, `minIncrementCents` 1000 e fim `2026-10-29T16:50:00.000Z`;
+- segundo lote criado e cancelado com a confirmação da tela: "Lote cancelado. Ele saiu da vitrine."; `GET /api/lots` não o mostra mais;
+- o primeiro lote terminou sem lances e o painel mudou sozinho, sem recarregar, para "Encerrado sem lances (sem vencedor)" (liquidação automática + tempo real em produção); total recebido R$ 0,00.
+
+Ainda não verificado em produção: recusa de cancelamento com lance concorrente e liquidação com vencedor (exigem login de licitante).

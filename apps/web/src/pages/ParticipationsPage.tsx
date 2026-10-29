@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { useApi } from '../api/useApi';
 import { ArtworkImage } from '../components/ArtworkImage';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 import { LotStatusPill } from '../components/LotStatusPill';
 import { EmptyState, ErrorState, Loading, PageHeader } from '../components/ui';
 import { formatBrl, formatDateTime } from '../format';
@@ -82,7 +83,8 @@ export function ParticipationsPage() {
                   </p>
                   {item.receiptToken && (
                     <p className="small">
-                      <Link to={`/comprovantes/${item.receiptToken}`}>Ver comprovante</Link>
+                      <Link to={`/comprovantes/${item.receiptToken}`}>Ver comprovante</Link> ·{' '}
+                      <CopyLinkButton path={`/comprovantes/${item.receiptToken}`} label="Copiar link para compartilhar" />
                     </p>
                   )}
                 </div>

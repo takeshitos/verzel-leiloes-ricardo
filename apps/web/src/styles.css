@@ -1310,3 +1310,75 @@ a:hover {
   background: #861d15;
   color: #fff;
 }
+
+/* ---------- Fluxo do licitante (etapa 15) ---------- */
+
+.inline-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inline-form .field {
+  flex: 1 1 200px;
+}
+
+.inline-form .button {
+  margin-top: 30px;
+}
+
+@media (max-width: 480px) {
+  .inline-form .button {
+    margin-top: 0;
+    width: 100%;
+  }
+}
+
+.deposit-form {
+  margin: 16px 0;
+}
+
+.deposit-form h2 {
+  margin: 0;
+}
+
+.explain {
+  max-width: 80ch;
+}
+
+.bid-form {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bid-form h3 {
+  margin: 0;
+}
+
+.link-button {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.link-button.small {
+  font-size: 0.875rem;
+}
+
+.my-standing .badge {
+  margin-left: 8px;
+}
+
+.copy-link code {
+  word-break: break-all;
+}

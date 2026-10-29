@@ -28,9 +28,11 @@ Etapa 12 concluída localmente (29/10/2026): Socket.IO no mesmo servidor, sala p
 
 Etapa 13 concluída localmente (29/10/2026): base visual, sessão real no app (login, cadastro, logout), navegação por papel, vitrine com três seções ao vivo e telas de leitura (carteira, participações, painel, auditoria, comprovante) ligadas à API. 242 testes passam (224 da API, 18 do web). Commit `63c7028` no ar desde 16:16 UTC.
 
-Etapa 14 concluída localmente (29/10/2026): painel do leiloeiro com busca real no acervo, criação de lote (valores em R$ convertidos para centavos por texto, datas locais convertidas para UTC com o fuso visível), lista dos lotes dele com resultado e total recebido, e cancelamento com confirmação. 249 testes passam (224 da API, 25 do web). Ainda sem commit.
+Etapa 14 concluída localmente (29/10/2026): painel do leiloeiro com busca real no acervo, criação de lote (valores em R$ convertidos para centavos por texto, datas locais convertidas para UTC com o fuso visível), lista dos lotes dele com resultado e total recebido, e cancelamento com confirmação. 249 testes passam (224 da API, 25 do web). Commit `e6a097f` no ar desde 16:43 UTC.
 
-Próxima ação: commit e push da etapa 14 (a pedido do candidato); depois, etapa 15 (fluxo do licitante).
+Etapa 15 concluída localmente (29/10/2026): depósito simulado e lance pela tela com chave de idempotência por intenção, posição e "você está ganhando / foi superado" calculados do estado do servidor, mensagens para cada recusa, resposta perdida tratada sem reenvio automático, comprovante com link para compartilhar. Cenário A/B do guia feito em duas sessões reais. 252 testes passam (224 da API, 28 do web). Ainda sem commit.
+
+Próxima ação: commit e push da etapa 15 (a pedido do candidato); depois, etapa 16 (auditoria e comprovante públicos).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -993,8 +995,71 @@ Ajustes durante a verificação: o formulário aparecia abaixo dos 12 resultados
 | `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
 | `npm test` | **224 de 224** na API e **25 de 25** no web (7 novos de conversão de valores e datas) |
 
+### Deploy da etapa 14
+
+Commit `e6a097f` enviado às 16:42:00 UTC; novo frontend no ar às 16:43:01 UTC (o JavaScript servido passou a conter o texto novo do formulário). Verificado de fora, sem login:
+- `/painel` leva a `/entrar?next=/painel`;
+- busca no acervo, criação e cancelamento chamados direto sem sessão: 401 `UNAUTHENTICATED`;
+- health: ok.
+
+Teste em produção com login de leiloeiro (29/10/2026, autorizado pelo candidato; ele mesmo fez o login no navegador do app, a IA não digitou a senha):
+- busca real "harbor": 63 obras;
+- lote criado pela tela (R$ 100,00, incremento R$ 10, começar agora, fim 13:50 de Brasília): no servidor `startingBidCents` 10000, `minIncrementCents` 1000 e fim `2026-10-29T16:50:00.000Z`;
+- segundo lote criado e cancelado com a confirmação da tela: "Lote cancelado. Ele saiu da vitrine."; `GET /api/lots` não o mostra mais;
+- o primeiro lote terminou sem lances e o painel mudou sozinho, sem recarregar, para "Encerrado sem lances (sem vencedor)" (liquidação automática + tempo real em produção); total recebido R$ 0,00.
+
+Ainda não verificado em produção: recusa de cancelamento com lance concorrente e liquidação com vencedor (exigem login de licitante).
+
 ### Limites e pendências
 
 - A criação de lote não usa chave de idempotência (a API não pede); o botão fica desativado durante o envio. Uma repetição por perda de resposta criaria outro lote.
 - Prettier aponta diferenças de estilo nos arquivos novos, como já acontecia em outros 70; o projeto não tem script de formatação e nada foi reformatado.
 - Etapa 15: depósito, formulário de lance e indicadores definitivos da sala.
+
+## Etapa 15 — Fluxo do licitante (29/10/2026, concluída localmente)
+
+Carteira, depósito, sala de disputa e participações ligados às rotas e salas reais. Nenhuma mudança na API.
+
+### Arquivos
+
+- `apps/web/src/api/intent.ts`: `useIntentKey` (uma chave de idempotência por intenção; mesma chave para o mesmo pedido depois de resposta perdida, chave nova depois de resposta definitiva) e `isUncertain` (rede ou 5xx: não se sabe se gravou).
+- `apps/web/src/bidder/DepositForm.tsx`: depósito simulado; botão travado durante o envio; resposta perdida vira "Depósito sem confirmação" com "Reenviar o mesmo pedido" (mesma chave); o saldo é sempre relido do servidor.
+- `apps/web/src/bidder/BidForm.tsx`: valor em R$ convertido para centavos por texto; o campo acompanha o próximo mínimo do servidor até a pessoa digitar; recusas com título e a mensagem da API (abaixo do mínimo, saldo insuficiente, já está ganhando, não iniciado, encerrado, cancelado, sem permissão, sessão expirada, muitos lances); sucesso mostra o horário aceito e que o registro na auditoria ainda está pendente, avisando que liderar não é vitória; resposta perdida confere o histórico e oferece reenviar o mesmo pedido, sem reenvio automático. Avisos antigos somem quando o lote muda de versão.
+- `apps/web/src/realtime/lot-sync.ts` (+ testes): `myPosition` (melhor lance aceito de cada participante; quem nunca ofertou não tem posição) e `myStanding` (ganhando, superado, aguardando, venceu, perdeu), sempre a partir do estado do servidor.
+- `apps/web/src/pages/LotPage.tsx`: área pessoal com indicador, posição, saldo e, para o vencedor, o link do comprovante; formulário de lance só para licitante logado.
+- `apps/web/src/pages/WalletPage.tsx`: explicação curta da reserva e o formulário de depósito.
+- `apps/web/src/components/CopyLinkButton.tsx` e `pages/ParticipationsPage.tsx`: "Copiar link para compartilhar" do comprovante; se a área de transferência for negada, mostra o link para copiar à mão.
+- `apps/web/src/realtime/useMyWallet.ts`: sem avisos por evento (o indicador vem do estado).
+
+### Cenário A/B do guia (duas sessões reais: A = cliente1 em `localhost:3100`, B = cliente2 em `127.0.0.1:3100`; cookies separados por host)
+
+| Passo | A (cliente1) | B (cliente2) | Leiloeiro |
+| --- | --- | --- | --- |
+| Início | 9.350,00 / 0 / 9.350,00 | 9.660,00 / 550,00 / 9.110,00 (550 = lance antigo no lote do seed local) | 990,00 recebidos, 6 vendidos |
+| Depósito de R$ 1.000,00 pela tela (A com clique duplo) | 10.350,00 / 0 / 10.350,00 — um único lançamento | 10.660,00 / 550,00 / 10.110,00 | — |
+| A dá R$ 100,00 | "Você está ganhando", 1º de 1; reserva 100,00, disponível 10.250,00 | Viu R$ 100,00 e mínimo R$ 110,00 sem recarregar | — |
+| A tenta de novo | "Você já está ganhando" (recusa da API) | — | — |
+| B tenta R$ 100,00 | — | "Abaixo do mínimo — O lance mínimo agora é R$ 110,00"; campo volta para 110,00 | — |
+| B cobre com R$ 120,00 | "Você foi superado", 2º de 2; reserva liberada na hora: 10.350,00 / 0 / 10.350,00 | "Você está ganhando", 1º de 2; reservado 670,00 | — |
+| Fim e liquidação (sem recarregar) | "Você não venceu este lote" | "Você arrematou este lote" + link do comprovante; reservado 550,00 | — |
+| Depois de recarregar (nova conexão) e pela API | 10.350,00 / 0 / 10.350,00 (só o depósito mudou) | 10.540,00 / 550,00 / 9.990,00 (−120,00 `settlement_debit`) | 1.110,00 recebidos (+120,00), 7 vendidos; lote com vencedor e comprovante |
+
+Participações de B: o lote aparece como "Você arrematou", posição 1 de 2, com "Ver comprovante" e "Copiar link para compartilhar".
+
+### Resposta perdida
+
+Sala aberta como A num lote novo; servidor parado; "Dar lance" → "Lance sem confirmação" (sem reenvio automático) e o selo "Sem tempo real". Servidor religado; a aba reconectou; "Reenviar o mesmo pedido" (mesma chave) → aceito; o histórico tem **um** lance.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` / `npm run build` | Ok |
+| `npm test` | **224 de 224** na API e **28 de 28** no web (3 novos: posição e situação do usuário) |
+
+### Limites
+
+- O caso "o lance entrou mas a resposta se perdeu" não foi forçado no navegador (exigiria derrubar a conexão depois do COMMIT). A repetição com a mesma chave devolvendo a resposta guardada está coberta pelos testes de idempotência da API (etapas 08 e 09).
+- O navegador embutido negou a área de transferência; o "Copiar link" caiu no modo manual, que mostra o link.
+- O formulário de lance aparece também para quem já lidera; a API recusa com "Você já está ganhando".
+- Ficaram no banco local os lotes e lances deste teste.
