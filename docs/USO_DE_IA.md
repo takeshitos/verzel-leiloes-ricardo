@@ -111,3 +111,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, testes com PostgreSQL real (inclusive requisições simultâneas), suíte completa e build.
 - **Erro encontrado pelos testes e corrigido:** respostas com as chaves do JSON em ordem diferente entre a primeira requisição e as repetidas (JSONB reordena). A IA confirmou que não houve depósito duplicado e passou a devolver sempre a resposta gravada.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 09 — Lances transacionais (29/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 09.
+- **Arquivos gerados pela IA:** regras e serviço de lance, rotas, cadeia de hashes e contrato de integridade, eventos pós-commit e 45 testes.
+- **Verificações executadas:** typecheck, lint, testes com PostgreSQL real e disputas reais (bloqueio segurado e conferência no `pg_stat_activity`), suíte completa, build e ponta a ponta local.
+- **Erros encontrados e corrigidos:** perda de microssegundos ao regravar o fim do lote (erro 500 que também atingiria o seed em produção); testes de corrida que não disparavam as requisições; bloqueio de teste não liberado em falha.
+- **Limite declarado:** R13 continua pendente; a cadeia de hashes sozinha não protege contra quem edita o banco.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

@@ -16,7 +16,9 @@ Etapa 07 concluída localmente (28/10/2026): criação de lote pelo snapshot, vi
 
 Etapa 08 concluída localmente (29/10/2026): carteira do licitante, depósito simulado idempotente (inclusive com requisições simultâneas) e regras de bloqueio da carteira centralizadas. 120 testes passam (+1 pendente). Commit e push feitos a pedido do candidato.
 
-Próxima ação: commit e push da etapa 08, se o candidato pedir; depois, etapa 09 (lances transacionais).
+Etapa 09 concluída localmente (29/10/2026): lance transacional com bloqueios, idempotência, prorrogação, cadeia de hashes real e eventos pós-commit. 165 testes passam. **Ainda faltam** encerramento/liquidação (etapa 11) e auditoria com checkpoint assinado e âncora (etapa 10); R13 continua pendente. Commit e push feitos a pedido do candidato.
+
+Próxima ação: commit e push da etapa 09, se o candidato pedir; depois, etapa 10 (integridade e âncora).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -568,3 +570,76 @@ Casos cobertos:
 2. Débito e crédito da liquidação (etapa 11) com `lockWallets`.
 3. Tela da carteira e conversão do valor digitado em reais para centavos por texto (etapas 13 e 15).
 4. Evento privado `wallet.updated` só depois da autenticação do socket (etapa 12).
+
+### Deploy da etapa 08
+
+Commit `63d97a7` enviado a pedido do candidato; nova versão no ar por volta de 03:21:44 UTC. Verificado de fora, sem credenciais:
+- carteira e depósito sem login: 401;
+- depósito vindo de outro site: 403;
+- depósito como formulário: 415;
+- health e vitrine: 200.
+
+Detalhes em `docs/DEPLOY.md`.
+
+## Etapa 09 — Lances transacionais (29/10/2026, concluída localmente)
+
+Requisitos relacionados: R07 (reserva e liberação), R08 (regras de lance) e R09 (prorrogação). Base para R13 (cadeia de hashes) sem concluí-lo.
+
+### Arquivos
+
+- `apps/api/src/modules/bids/rules.ts`: regras puras (`validateBid`, `minimumNextBid`, `extendedEnd`).
+- `apps/api/src/modules/bids/service.ts`: `placeBid`, a transação completa.
+- `apps/api/src/modules/bids/routes.ts`: `POST /api/lots/:id/bids` (só licitante, `Idempotency-Key`) e `GET /api/lots/:id/bids` (histórico público).
+- `apps/api/src/modules/audit/chain.ts` (cadeia v1) e `recorder.ts` (contrato para a etapa 10).
+- `apps/api/src/modules/realtime/events.ts`: evento `bid.accepted` publicado depois do commit (a etapa 12 liga o Socket.IO).
+- `lots/queries.ts`: `leaderAlias` no formato público. `db/seed-data.ts`: horários em milissegundos.
+- Testes: `test/bid-rules.test.ts` (16) e `test/bids.test.ts` (29). O `it.todo` da etapa 07 virou teste real.
+
+### A transação do lance (ordem)
+
+1. Grava a chave de idempotência (repetição simultânea espera aqui).
+2. `SELECT ... FROM lots ... FOR UPDATE` e leitura do líder anterior.
+3. `lockWallets`: carteiras do licitante e do líder anterior, em ordem de `user_id`.
+4. Relógio do banco **depois** dos bloqueios; releitura do saldo (`readBalance`).
+5. Validação: cancelado, não iniciado, encerrado (fim exclusivo), líder, mínimo, saldo. Recusa = `ROLLBACK`; nada muda.
+6. Grava o lance (seq, alias, valor, horário, `bidder_ref`, `prev_hash`, `hash`); a reserva do lote passa ao novo líder (a do anterior é liberada); atualiza líder, contagem, versão e fim (`GREATEST`).
+7. `COMMIT`; depois, `afterCommit` da auditoria e o evento.
+
+### Resultado permitido em cada disputa (todas testadas com disputa real)
+
+Nos testes, uma transação externa segura o bloqueio e só libera quando `pg_stat_activity` mostra todas as requisições paradas esperando. Isso prova conexões separadas disputando o mesmo bloqueio, não execução em série numa conexão só.
+
+| Disputa | Resultado permitido | Por quê |
+| --- | --- | --- |
+| Duas ofertas iguais (= inicial) | Uma 201 e a outra 422 `BID_BELOW_MINIMUM` (3 rodadas) | O bloqueio do lote serializa; a segunda já vê o novo mínimo |
+| Ofertas diferentes (R$ 100 e R$ 150) | (as duas aceitas, líder R$ 150) **ou** (R$ 150 aceita e R$ 100 recusada); nunca líder menor (4 rodadas) | A ordem de chegada ao bloqueio decide; os valores aceitos são sempre crescentes |
+| Mesmo cliente, dois lotes, saldo para um | Um 201 e o outro 422 `INSUFFICIENT_FUNDS`; disponível nunca negativo (3 rodadas) | A carteira é bloqueada; o segundo relê as reservas do primeiro |
+| Líder mandando dois lances juntos | Só um entra; o outro `ALREADY_LEADING` ou abaixo do mínimo | O segundo já encontra o próprio licitante como líder |
+| 4 pedidos com a mesma chave | 1 lance; 4 respostas idênticas | Índice único da chave de idempotência |
+| Lances cruzados em dois lotes | Os dois aceitos, sem deadlock | Carteiras sempre bloqueadas em ordem de `user_id` |
+| Lance enviado antes do fim, bloqueio liberado depois do fim | 422 `LOT_ENDED`, nada muda | O relógio é lido depois do bloqueio |
+| O mesmo, liberado antes do fim | 201 e prorrogação | Faltavam menos de 120 s |
+| Cancelamento × primeiro lance | Sempre exatamente um vence (4 rodadas) | Os dois bloqueiam a linha do lote |
+
+### Defeitos encontrados e corrigidos
+
+1. **Microssegundos (defeito real de produção):** o PostgreSQL guarda microssegundos e o JavaScript só milissegundos. Sem prorrogação, o serviço regravava o fim lido no JS, alguns µs menor que o original. O banco recusou (`lots_end_never_before_original`) e o lance dava 500; isso aconteceria com o lote do seed em produção. Corrigido com `GREATEST(ends_at, $4)` no SQL e horários do seed em milissegundos. Teste de regressão incluído.
+2. **Testes que não disputavam de verdade:** o `supertest` só envia a requisição quando alguém a aguarda, então a "corrida" não acontecia, e o bloqueio de teste não era liberado quando a espera falhava (os testes seguintes travavam). Corrigido com `Promise.resolve(...)` e `try/finally`.
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Sem erros (1 erro de tipo em `req.params` corrigido) |
+| `vitest run test/bid-rules.test.ts test/bids.test.ts` (1ª vez) | Vários 500 e timeouts: os dois defeitos acima |
+| O mesmo após as correções | **45 de 45** |
+| `npm test` | **165 de 165**, 10 arquivos, 61 s |
+| `npm run build` | Ok |
+| Ponta a ponta local no lote do seed (fim `01:44:50.003005`, microssegundos) | cliente1 R$ 500 (201, R$ 500 comprometidos); cliente2 cobre com R$ 550 (201); a reserva do cliente1 volta a 0; cliente2 cobrindo a si mesmo: 422 `ALREADY_LEADING`; histórico público só com pseudônimos |
+
+### Pendências (o produto ainda não está pronto)
+
+1. **Auditoria (etapa 10):** checkpoint assinado, âncora independente, verificação e testes de adulteração. Hoje todo lance sai com `audit.status: "pending"`.
+2. **Encerramento e liquidação (etapa 11):** nada debita o vencedor ainda.
+3. **Tempo real (etapa 12):** o evento existe, mas ninguém escuta.
+4. As recusas de negócio não são guardadas na idempotência: repetir a mesma chave depois de uma recusa reavalia o lance (seguro, porque a recusa não mudou nada).

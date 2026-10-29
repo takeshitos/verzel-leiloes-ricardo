@@ -12,9 +12,9 @@ export function loadTestEnv(): void {
 }
 
 /** Pool para o banco de TESTE. resolveDatabaseUrl recusa banco cujo nome não termina em _test. */
-export function createTestPool(): Pool {
+export function createTestPool(maxConnections = 5): Pool {
   loadTestEnv();
-  return createPool({ databaseUrl: resolveDatabaseUrl({ test: true }), maxConnections: 5 });
+  return createPool({ databaseUrl: resolveDatabaseUrl({ test: true }), maxConnections });
 }
 
 const ALL_TABLES = [

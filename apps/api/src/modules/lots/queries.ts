@@ -22,6 +22,7 @@ const PUBLIC_LOT_SELECT = `
          ${LOT_STATUS_SQL} AS status,
          l.starts_at, l.ends_at, l.starting_bid_cents, l.min_increment_cents, l.bid_count,
          leader.amount_cents AS current_bid_cents,
+         leader.public_alias AS leader_alias,
          seller.public_alias AS seller_alias,
          (st.lot_id IS NOT NULL) AS settled,
          winner.public_alias AS winner_alias,
@@ -44,6 +45,7 @@ type PublicLotRow = {
   min_increment_cents: number;
   bid_count: number;
   current_bid_cents: number | null;
+  leader_alias: string | null;
   seller_alias: string;
   settled: boolean;
   winner_alias: string | null;
@@ -80,6 +82,7 @@ function toPublicLot(row: PublicLotRow) {
     nextMinimumBidCents:
       row.current_bid_cents === null ? row.starting_bid_cents : row.current_bid_cents + row.min_increment_cents,
     bidCount: row.bid_count,
+    leaderAlias: row.leader_alias,
     sellerAlias: row.seller_alias,
     result: row.settled ? { winnerAlias: row.winner_alias, finalAmountCents: row.final_amount_cents } : null,
     item: {

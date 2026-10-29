@@ -53,16 +53,17 @@ type DemoLotInput = {
 
 /**
  * Cria um lote ao vivo (começou há 1 minuto) se ainda não existir lote com essa seed_key.
- * As datas usam o relógio do PostgreSQL, o mesmo que valida os lances.
+ * As datas usam o relógio do PostgreSQL, o mesmo que valida os lances, em milissegundos
+ * (precisão que o JavaScript representa sem perda).
  */
 async function createLotIfMissing(client: TransactionClient, lot: DemoLotInput) {
   const inserted = await client.query<{ id: string; ends_at: Date }>(
     `INSERT INTO lots (seller_id, snapshot_id, starting_bid_cents, min_increment_cents,
                        starts_at, original_ends_at, ends_at, seed_key)
      SELECT $1, $2, $3, $4,
-            clock_timestamp() - interval '1 minute',
-            clock_timestamp() + $5::int * interval '1 minute',
-            clock_timestamp() + $5::int * interval '1 minute',
+            date_trunc('milliseconds', clock_timestamp()) - interval '1 minute',
+            date_trunc('milliseconds', clock_timestamp()) + $5::int * interval '1 minute',
+            date_trunc('milliseconds', clock_timestamp()) + $5::int * interval '1 minute',
             $6
      ON CONFLICT (seed_key) DO NOTHING
      RETURNING id, ends_at`,

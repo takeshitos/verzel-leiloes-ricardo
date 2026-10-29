@@ -190,3 +190,19 @@ Verificação de fora, sem credenciais:
 | Lote do seed depois das tentativas | Continua `live`, `settled: false`, 0 lances |
 
 Criação e cancelamento com login de leiloeiro foram testados localmente (testes automatizados e ponta a ponta com a API real do museu). Em produção ficam para o candidato ou para as telas da etapa 14.
+
+## Deploy da etapa 08 (carteira e depósitos)
+
+Push de `63d97a7` às 03:20:28 UTC. Nova versão no ar por volta de 03:21:44 UTC (`GET /api/wallet` passou de 404 para 401); `/api/health` ficou em 200.
+
+Verificação de fora, sem credenciais:
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/wallet` sem login | 401 `UNAUTHENTICATED` |
+| `POST /api/wallet/deposits` sem login | 401 |
+| Depósito vindo de outro site | 403 `FORBIDDEN_ORIGIN` |
+| Depósito como formulário | 415 `UNSUPPORTED_MEDIA_TYPE` |
+| `/api/health` e `/api/lots` | 200 |
+
+Depósito com login de licitante foi testado localmente (testes automatizados com PostgreSQL real, inclusive requisições simultâneas). Em produção, fica para o candidato ou para a tela da carteira (etapa 15).

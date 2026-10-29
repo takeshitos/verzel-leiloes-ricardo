@@ -11,6 +11,7 @@ import { createHealthRouter } from './modules/health/routes.js';
 import { createPublicLotsRouter } from './modules/lots/public-routes.js';
 import { createLotsRouter } from './modules/lots/routes.js';
 import { createWalletRouter } from './modules/wallet/routes.js';
+import { createBidsRouter } from './modules/bids/routes.js';
 import { apiNotFound, errorBody, errorHandler } from './shared/errors.js';
 import { requireJsonBody, requireSameOrigin } from './shared/request-guards.js';
 
@@ -51,6 +52,7 @@ export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clie
   app.use('/api', createPublicLotsRouter(pool));
   app.use('/api', createLotsRouter({ pool, catalog }));
   app.use('/api', createWalletRouter(pool));
+  app.use('/api', createBidsRouter(pool));
   app.use('/api', apiNotFound);
 
   // 2. Frontend (produção): arquivos estáticos e qualquer rota da SPA devolvendo index.html.

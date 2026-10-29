@@ -290,10 +290,8 @@ describe('cancelar lote', () => {
     expect((await pool.query('SELECT cancelled_at FROM lots WHERE id = $1', [id])).rows[0].cancelled_at).toBeNull();
   });
 
-  // Completar na etapa 09, com o serviço de lances real: disparar POST /api/lots/:id/bids e
-  // POST /api/lots/:id/cancel ao mesmo tempo, várias vezes, e verificar que sempre há
-  // exatamente um vencedor (lote cancelado sem lances OU lote com lance e não cancelado).
-  it.todo('cancelamento e primeiro lance simultâneos pelo serviço de lances real: só um vence');
+  // A versão com o serviço de lances real está em bids.test.ts:
+  // "cancelamento e primeiro lance simultâneos: sempre exatamente um vence".
 });
 
 describe('painel do leiloeiro', () => {

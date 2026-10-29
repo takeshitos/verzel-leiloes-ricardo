@@ -187,6 +187,15 @@ A sala privada é decidida no servidor, a partir do cookie de sessão no handsha
 
 A liquidação só ocorre com o lote **ÍNTEGRO** e o último checkpoint confirmado. Lote adulterado não é liquidado e mostra o motivo.
 
+### Contrato implementado na etapa 09
+
+`apps/api/src/modules/audit/recorder.ts` define `IntegrityRecorder`:
+- `prepareBid`: calcula `bidder_ref`, `prev_hash` e `hash` dentro da transação;
+- `afterBidInserted`: na etapa 10, grava o checkpoint assinado como `pending`;
+- `afterCommit`: na etapa 10, grava na âncora e devolve `confirmed`.
+
+A implementação atual (`chainOnlyRecorder`) calcula a cadeia real e devolve sempre `pending`. Os eventos (`modules/realtime/events.ts`) são publicados depois do commit e de `afterCommit`; repetição idempotente não republica.
+
 ## 8. Checklist das regras
 
 - [ ] Leiloeiro não oferta; licitante não cria lote; só o dono cancela, e só sem lances (backend).
