@@ -138,3 +138,22 @@ Migrações e seed em produção: **verificados pelo log**. Conexão: verificada
 1. Conferir no log de build do Render a versão do Node (24.22.1).
 2. Projeto Neon da âncora (etapa 10).
 3. Deploy final e smoke test completo na etapa 21.
+
+## Deploy da etapa 05 (autenticação)
+
+Push de `fa28393` às 02:16:42 UTC. A nova versão respondeu às 02:17:46 UTC (`/api/auth/me` passou de 404 para 401); `/api/health` ficou em 200 durante a troca.
+
+Verificação de fora, **sem usar credenciais** (a IA não faz login em ambiente de produção):
+
+| Requisição | Resultado |
+| --- | --- |
+| `GET /api/health` | 200, `database: ok` |
+| `GET /api/auth/me` sem cookie | 401 `UNAUTHENTICATED` |
+| `POST /api/auth/login` com `{}` | 400 `VALIDATION_ERROR` com mensagem por campo |
+| `POST /api/auth/register` com papel `admin` | 400; `role`: "Escolha o papel: seller (leiloeiro) ou bidder (licitante)." |
+| `POST /api/auth/logout` com `Origin` de outro site | 403 `FORBIDDEN_ORIGIN` |
+| `POST /api/auth/login` como formulário | 415 `UNSUPPORTED_MEDIA_TYPE` |
+| `POST /api/auth/logout` da mesma origem | 204 e `Set-Cookie: __Host-sid=; ... HttpOnly; Secure; SameSite=Lax`: a checagem de origem funciona atrás do proxy, com o modo produção ativo |
+| `/` e `/sobre` | 200 |
+
+**Login com as contas de demonstração em produção:** conferido pelo candidato às 02:21 UTC, no próprio terminal (PowerShell, `Invoke-WebRequest`): `200`, `Set-Cookie: __Host-sid=<token>; Max-Age=604800; Path=/; ...; HttpOnly; Secure; SameSite=Lax` e `{"user":{"email":"cliente1@example.com","role":"bidder","publicAlias":"LIC-A465A1"}}`. O pseudônimo de produção é diferente do local, porque cada seed sorteia o seu.

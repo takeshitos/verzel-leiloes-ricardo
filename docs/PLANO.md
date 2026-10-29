@@ -116,12 +116,12 @@ Formato: `{ "error": { "code": "...", "message": "texto em português", "details
 | 400 | `VALIDATION_ERROR` (com `details.fields`, uma mensagem por campo) |
 | 401 | `UNAUTHENTICATED`, `INVALID_CREDENTIALS` |
 | 403 | `FORBIDDEN` (inclui leiloeiro ofertando e lote de outro dono), `FORBIDDEN_ORIGIN` (CSRF) |
-| 404 | `NOT_FOUND` |
+| 404 | `NOT_FOUND`, `CATALOG_ITEM_NOT_FOUND` |
 | 409 | `EMAIL_ALREADY_USED`, `LOT_HAS_BIDS`, `IDEMPOTENCY_KEY_REUSED` |
 | 413 | `PAYLOAD_TOO_LARGE` |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` (corpo que não é JSON) |
 | 429 | `TOO_MANY_REQUESTS` (com cabeçalho `Retry-After`) |
-| 422 | `LOT_NOT_STARTED`, `LOT_ENDED`, `LOT_CANCELLED`, `BID_BELOW_MINIMUM`, `ALREADY_LEADING`, `INSUFFICIENT_FUNDS` |
+| 422 | `LOT_NOT_STARTED`, `LOT_ENDED`, `LOT_CANCELLED`, `BID_BELOW_MINIMUM`, `ALREADY_LEADING`, `INSUFFICIENT_FUNDS`, `CATALOG_ITEM_WITHOUT_IMAGE` |
 | 503 | `CATALOG_UNAVAILABLE` (timeout, 429 ou resposta inválida da API externa) |
 | 500 | `INTERNAL_ERROR` (sem stack trace na resposta) |
 

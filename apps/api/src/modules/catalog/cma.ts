@@ -3,7 +3,8 @@ import { z } from 'zod';
 // Formato (parcial) de uma obra da Cleveland Museum of Art Open Access API.
 // Validado com zod porque vem de fora: não confiamos no formato sem conferir.
 const cmaImageSchema = z.object({
-  url: z.url(),
+  // Conferida depois (https + host do CDN oficial); URL estranha vira "sem imagem".
+  url: z.string(),
   // A API devolve largura e altura como texto (ex.: "1166").
   width: z.union([z.string(), z.number()]).optional(),
   height: z.union([z.string(), z.number()]).optional(),
@@ -57,6 +58,21 @@ function emptyToNull(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
+// Únicos endereços aceitos vindos da API. Qualquer outro vira null: o navegador
+// nunca recebe uma URL arbitrária que tenha vindo de fora.
+const IMAGE_HOST = 'openaccess-cdn.clevelandart.org';
+const SOURCE_HOSTS = new Set(['clevelandart.org', 'www.clevelandart.org']);
+
+function safeHttpsUrl(value: string | null | undefined, allowedHosts: Set<string>): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && allowedHosts.has(url.hostname) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Converte uma obra da Cleveland em snapshot local.
  * Só aceita obras CC0 (as únicas com imagem liberada para uso livre).
@@ -74,6 +90,7 @@ export function normalizeCmaArtwork(input: unknown, fetchedAt: Date): ItemSnapsh
     .join('; ');
   const culture = Array.isArray(artwork.culture) ? artwork.culture.join('; ') : artwork.culture;
   const webImage = artwork.images?.web ?? null;
+  const imageUrl = safeHttpsUrl(webImage?.url, new Set([IMAGE_HOST]));
 
   return {
     provider: 'cma',
@@ -86,10 +103,10 @@ export function normalizeCmaArtwork(input: unknown, fetchedAt: Date): ItemSnapsh
     itemType: emptyToNull(artwork.type),
     culture: emptyToNull(culture),
     measurements: emptyToNull(artwork.measurements),
-    imageUrl: webImage?.url ?? null,
-    imageWidth: toPositiveInt(webImage?.width),
-    imageHeight: toPositiveInt(webImage?.height),
-    sourceUrl: emptyToNull(artwork.url),
+    imageUrl,
+    imageWidth: imageUrl ? toPositiveInt(webImage?.width) : null,
+    imageHeight: imageUrl ? toPositiveInt(webImage?.height) : null,
+    sourceUrl: safeHttpsUrl(artwork.url, SOURCE_HOSTS),
     license: 'CC0',
     raw: input,
     fetchedAt,

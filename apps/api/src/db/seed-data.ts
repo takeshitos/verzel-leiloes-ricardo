@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { generatePublicAlias, type UserRole } from '../modules/auth/alias.js';
 import { hashPassword } from '../modules/auth/password.js';
 import { normalizeCmaArtwork, type ItemSnapshotInput } from '../modules/catalog/cma.js';
+import { upsertSnapshot } from '../modules/catalog/snapshots.js';
 import { withTransaction, type TransactionClient } from './transaction.js';
 
 // Contas fictícias de demonstração (documentadas no README). Domínio example.com é reservado.
@@ -39,45 +40,6 @@ export function loadFixtureSnapshots(): Map<string, ItemSnapshotInput> {
     if (!snapshots.has(snapshot.externalId)) snapshots.set(snapshot.externalId, snapshot);
   }
   return snapshots;
-}
-
-/** Insere o snapshot se ainda não existir (mesmo provedor, id e data de coleta). Devolve o id. */
-export async function upsertSnapshot(client: TransactionClient, snapshot: ItemSnapshotInput): Promise<string> {
-  const inserted = await client.query<{ id: string }>(
-    `INSERT INTO item_snapshots (
-       provider, external_id, accession_number, title, creators, creation_date, technique,
-       item_type, culture, measurements, image_url, image_width, image_height, source_url,
-       license, raw, fetched_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-     ON CONFLICT (provider, external_id, fetched_at) DO NOTHING
-     RETURNING id`,
-    [
-      snapshot.provider,
-      snapshot.externalId,
-      snapshot.accessionNumber,
-      snapshot.title,
-      snapshot.creators,
-      snapshot.creationDate,
-      snapshot.technique,
-      snapshot.itemType,
-      snapshot.culture,
-      snapshot.measurements,
-      snapshot.imageUrl,
-      snapshot.imageWidth,
-      snapshot.imageHeight,
-      snapshot.sourceUrl,
-      snapshot.license,
-      JSON.stringify(snapshot.raw),
-      snapshot.fetchedAt,
-    ],
-  );
-  if (inserted.rows[0]) return inserted.rows[0].id;
-
-  const existing = await client.query<{ id: string }>(
-    'SELECT id FROM item_snapshots WHERE provider = $1 AND external_id = $2 AND fetched_at = $3',
-    [snapshot.provider, snapshot.externalId, snapshot.fetchedAt],
-  );
-  return existing.rows[0].id;
 }
 
 type DemoLotInput = {

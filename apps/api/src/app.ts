@@ -5,7 +5,10 @@ import path from 'node:path';
 import type { Pool } from 'pg';
 import { loadSessionUser } from './modules/auth/middleware.js';
 import { createAuthRouter } from './modules/auth/routes.js';
+import type { CatalogClient } from './modules/catalog/client.js';
+import { createCatalogRouter } from './modules/catalog/routes.js';
 import { createHealthRouter } from './modules/health/routes.js';
+import { createPublicLotsRouter } from './modules/lots/public-routes.js';
 import { apiNotFound, errorBody, errorHandler } from './shared/errors.js';
 import { requireJsonBody, requireSameOrigin } from './shared/request-guards.js';
 
@@ -20,9 +23,11 @@ export type AppOptions = {
   trustProxyHops: number;
   /** Cabeçalho com o IP real do cliente, reescrito pelo proxy (Render/Cloudflare: cf-connecting-ip). */
   clientIpHeader?: string;
+  /** Cliente da API do museu (Cleveland). Só usado na busca do leiloeiro e ao criar lote. */
+  catalog: CatalogClient;
 };
 
-export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clientIpHeader }: AppOptions) {
+export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clientIpHeader, catalog }: AppOptions) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -40,6 +45,8 @@ export function createApp({ webDistDir, pool, isProduction, trustProxyHops, clie
   // A partir daqui, req.user existe se houver sessão válida. Cada rota decide se exige login.
   app.use('/api', loadSessionUser(pool, isProduction));
   app.use('/api', createAuthRouter({ pool, isProduction, clientIpHeader }));
+  app.use('/api', createCatalogRouter(catalog));
+  app.use('/api', createPublicLotsRouter(pool));
   app.use('/api', apiNotFound);
 
   // 2. Frontend (produção): arquivos estáticos e qualquer rota da SPA devolvendo index.html.

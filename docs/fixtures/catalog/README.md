@@ -19,3 +19,7 @@ Respostas reais copiadas byte a byte das APIs públicas na etapa 01. Coleta feit
 
 - Cleveland devolve `images.web.width` e `height` como **texto** (ex.: `"1166"`), não número. O código de normalização precisa converter.
 - A imagem IIIF da Art Institute of Chicago respondeu 403 (proteção Cloudflare) para `curl` e foi bloqueada também no navegador embutido do app. Por isso a fixture da AIC fica só como registro da validação. Detalhes em `docs/DECISOES.md`.
+
+## Uso nos testes (etapa 06)
+
+O servidor local `apps/api/test/catalog-stub.ts` devolve exatamente estas respostas para testar o cliente sem internet. Os testes contra a API real ficam em `apps/api/test/catalog.live.test.ts` (`npm run test:live -w apps/api`). Em produção o cliente sempre chama a API real.

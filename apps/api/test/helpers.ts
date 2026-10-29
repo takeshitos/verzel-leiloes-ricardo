@@ -4,6 +4,7 @@ import type { Response } from 'supertest';
 import { createApp } from '../src/app.js';
 import { resolveDatabaseUrl } from '../src/db/database-url.js';
 import { createPool } from '../src/db/pool.js';
+import { createCatalogClient, type CatalogClient } from '../src/modules/catalog/client.js';
 
 /** Carrega apps/api/.env (TEST_DATABASE_URL). Variáveis já definidas no ambiente têm prioridade. */
 export function loadTestEnv(): void {
@@ -40,13 +41,22 @@ export async function resetDatabase(pool: Pool): Promise<void> {
   await pool.query(`TRUNCATE ${ALL_TABLES.join(', ')} RESTART IDENTITY CASCADE`);
 }
 
+/**
+ * Cliente de catálogo apontado para uma porta local onde nada responde.
+ * Padrão dos testes: nenhum teste depende da internet sem pedir explicitamente.
+ */
+export function unreachableCatalog(): CatalogClient {
+  return createCatalogClient({ baseUrl: 'http://127.0.0.1:9/api/', timeoutMs: 500 });
+}
+
 /** App real (mesmas rotas e middlewares da produção), sem frontend. */
-export function createTestApp(pool: Pool, options: { isProduction?: boolean } = {}) {
+export function createTestApp(pool: Pool, options: { isProduction?: boolean; catalog?: CatalogClient } = {}) {
   return createApp({
     webDistDir: 'pasta-inexistente',
     pool,
     isProduction: options.isProduction ?? false,
     trustProxyHops: 0,
+    catalog: options.catalog ?? unreachableCatalog(),
   });
 }
 

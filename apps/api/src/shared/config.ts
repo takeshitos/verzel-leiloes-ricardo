@@ -21,6 +21,12 @@ const envSchema = z.object({
   RUN_MIGRATIONS_ON_START: booleanFlag,
   // Roda o seed idempotente na inicialização (só cria o que falta; nunca apaga).
   RUN_SEED_ON_START: booleanFlag,
+  // API do catálogo (Cleveland Museum of Art). Definida só no servidor; o navegador nunca escolhe.
+  CMA_API_BASE_URL: z
+    .string()
+    .regex(/^https?:\/\//, 'deve começar com http:// ou https://')
+    .default('https://openaccess-api.clevelandart.org/api/'),
+  CATALOG_TIMEOUT_MS: z.coerce.number().int().min(200).max(30_000).default(5_000),
   // Quantidade de proxies confiáveis na frente da API (Render: 1). Localmente: 0.
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
   // Cabeçalho com o IP real do cliente, reescrito pelo proxy (Render/Cloudflare: cf-connecting-ip).
@@ -41,6 +47,8 @@ export type AppConfig = {
   runSeedOnStart: boolean;
   trustProxyHops: number;
   clientIpHeader?: string;
+  catalogBaseUrl: string;
+  catalogTimeoutMs: number;
 };
 
 /**
@@ -79,5 +87,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     runSeedOnStart: data.RUN_SEED_ON_START,
     trustProxyHops: data.TRUST_PROXY,
     clientIpHeader: data.CLIENT_IP_HEADER?.toLowerCase(),
+    catalogBaseUrl: data.CMA_API_BASE_URL,
+    catalogTimeoutMs: data.CATALOG_TIMEOUT_MS,
   };
 }

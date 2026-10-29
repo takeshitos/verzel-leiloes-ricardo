@@ -5,6 +5,7 @@ import { createApp } from './app.js';
 import { runMigrations } from './db/migrations.js';
 import { createPool } from './db/pool.js';
 import { runSeed } from './db/seed-data.js';
+import { createCatalogClient } from './modules/catalog/client.js';
 import { loadConfig, loadLocalEnvFile, type AppConfig } from './shared/config.js';
 
 loadLocalEnvFile();
@@ -44,12 +45,15 @@ if (config.runSeedOnStart) {
 // os dois ficam dois níveis abaixo de apps/, então o build do web está em apps/web/dist.
 const webDistDir = fileURLToPath(new URL('../../web/dist', import.meta.url));
 
+const catalog = createCatalogClient({ baseUrl: config.catalogBaseUrl, timeoutMs: config.catalogTimeoutMs });
+
 const app = createApp({
   webDistDir,
   pool,
   isProduction: config.isProduction,
   trustProxyHops: config.trustProxyHops,
   clientIpHeader: config.clientIpHeader,
+  catalog,
 });
 // Servidor HTTP explícito: o Socket.IO será ligado nele na etapa 12.
 const server = createServer(app);

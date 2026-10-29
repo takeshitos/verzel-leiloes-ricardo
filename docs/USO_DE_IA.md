@@ -81,3 +81,13 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Verificações executadas:** typecheck, lint, 30 testes com PostgreSQL real, prova de que os testes falham quando a checagem de papel e de dono é desligada (depois restaurada), build e fluxo completo no servidor compilado em modo produção.
 - **Erros encontrados e corrigidos:** 3 apontamentos do lint (variável descartada e atribuição inútil), resolvidos com funções próprias para opções do cookie e para extrair o host.
 - **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.
+
+### Etapa 06 — API externa e snapshots (28/10/2026, concluída localmente)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** executar a etapa 06. O prompt cita o Art Institute of Chicago; a IA seguiu a troca para Cleveland já registrada e aceita pelo candidato.
+- **Arquivos gerados pela IA:** cliente, rotas e snapshot do catálogo, detalhe público do lote, placeholder e componente de imagem no frontend, configuração e cinco arquivos de teste.
+- **Verificações executadas:** typecheck, lint, 52 testes com PostgreSQL real e servidor local que imita o museu, 3 testes contra a API real, ponta a ponta local com o servidor compilado e build.
+- **Erros encontrados e corrigidos:** erro de tipo num teste (`response.json()` devolve `unknown`). O teste real da imagem usava `HEAD` e estourou o tempo; a IA investigou com `curl`, confirmou que o CDN não responde a `HEAD` e trocou por `GET` com `Range`, sem afrouxar o objetivo do teste.
+- **Decisão de escopo:** `GET /api/lots/:id` foi antecipado da etapa 07 para provar que o lote funciona com o museu fora do ar.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

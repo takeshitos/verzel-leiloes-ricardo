@@ -10,7 +10,9 @@ Etapa 04 concluída: PostgreSQL 18.3 no Docker Compose localmente, migração e 
 
 Etapa 05 concluída localmente (28/10/2026): cadastro, login, logout e `/me` com sessão opaca; middlewares de autenticação, papel e propriedade; CSRF e limite de tentativas. 30 testes com PostgreSQL real passam. Commit e push feitos a pedido do candidato.
 
-Próxima ação: commit e push da etapa 05 se o candidato pedir (as novas variáveis `TRUST_PROXY` e `CLIENT_IP_HEADER` estão no `render.yaml`); depois, etapa 06 (catálogo e snapshots).
+Etapa 06 concluída localmente (28/10/2026): cliente real da Cleveland com timeout, cache e falhas tratadas; busca e detalhe para o leiloeiro; snapshot gravado pelo servidor; detalhe público do lote lido só do banco. 52 testes + 3 contra a API real passam. Commit e push feitos a pedido do candidato.
+
+Próxima ação: commit e push da etapa 06, se o candidato pedir; depois, etapa 07 (gestão de lotes).
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -386,3 +388,59 @@ Casos cobertos pelos testes: cadastro dos dois papéis; email duplicado (inclusi
 2. Sessão no Socket.IO (etapa 12).
 3. Confirmar no Render que `TRUST_PROXY` e `CLIENT_IP_HEADER` aparecem em Environment depois do próximo deploy.
 4. O limite de tentativas é por instância (memória); suficiente para uma instância só.
+
+### Deploy da etapa 05
+
+Commit `fa28393` enviado a pedido do candidato; nova versão no ar às 02:17:46 UTC. Na URL pública, sem credenciais, conferi:
+- `/me` sem sessão responde 401;
+- a validação responde 400 com mensagens por campo;
+- o CSRF recusa outra origem (403) e formulário (415);
+- o logout da mesma origem responde 204 e limpa `__Host-sid` com `Secure`.
+
+Detalhes em `docs/DEPLOY.md`. O login das contas de demonstração em produção fica para o candidato conferir:
+
+```bash
+curl -s -i -X POST https://verzel-leiloes-ricardo.onrender.com/api/auth/login -H "Content-Type: application/json" -H "Origin: https://verzel-leiloes-ricardo.onrender.com" -d '{"email":"cliente1@example.com","password":"leilao-demo-2026"}'
+```
+
+Esperado: `HTTP/1.1 200`, `Set-Cookie: __Host-sid=...; HttpOnly; Secure; SameSite=Lax` e `{"user":{"email":"cliente1@example.com","role":"bidder","publicAlias":"LIC-..."}}`.
+
+Resultado (candidato, 02:21 UTC, PowerShell): `200`, cookie `__Host-sid` com `HttpOnly; Secure; SameSite=Lax` e usuário `cliente1@example.com` / `bidder` / `LIC-A465A1`. **Login das contas do seed em produção confirmado.** No PowerShell 5.1, `curl` é um apelido de `Invoke-WebRequest`; use `curl.exe` ou o Git Bash para os comandos em bash.
+
+## Etapa 06 — API externa e snapshots (28/10/2026, concluída localmente)
+
+Requisitos relacionados: R03 (busca e snapshot) e R15 (funcionar sem a API externa). A API usada é a da Cleveland, conforme a troca registrada na etapa 01 (imagem da AIC bloqueada).
+
+### Arquivos
+
+- `apps/api/src/modules/catalog/client.ts`: cliente HTTP com timeout, cache de 60 s / 5 min, cache vencido de até 10 min identificado, tratamento de 404, 429, 5xx, JSON inválido e formato inesperado, sem nova tentativa automática.
+- `apps/api/src/modules/catalog/cma.ts`: normalização aceita só imagem `https` do CDN oficial e link de fonte em `clevelandart.org`.
+- `apps/api/src/modules/catalog/routes.ts`: `GET /api/catalog/search?q=&page=` e `GET /api/catalog/items/:externalId`, só para leiloeiro, 30 buscas/min.
+- `apps/api/src/modules/catalog/snapshots.ts`: `fetchItemForLot` (busca pelo id, exige imagem) e `upsertSnapshot` (movido do seed).
+- `apps/api/src/modules/lots/public-routes.ts`: `GET /api/lots/:id`, detalhe público lido só do banco. Antecipado da etapa 07 para provar R15; listagem, criação e cancelamento continuam na 07.
+- `apps/web/public/obra-sem-imagem.svg` e `apps/web/src/components/ArtworkImage.tsx` (placeholder local; as telas chegam nas etapas 13 a 15).
+- Configuração `CMA_API_BASE_URL` (padrão: API da Cleveland) e `CATALOG_TIMEOUT_MS` (padrão 5000); nada a configurar no Render.
+- Testes: `test/catalog-stub.ts` (servidor local que imita o museu com as respostas reais das fixtures), `catalog-client.test.ts`, `catalog-routes.test.ts`, `lot-offline.test.ts` e `catalog.live.test.ts` (API real, `npm run test:live -w apps/api`).
+
+### Comandos e resultados reais
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Sem erros (1 erro de tipo no teste corrigido) |
+| `npm test` | **52 de 52** em 5 arquivos |
+| `npm run test:live -w apps/api` (API real) | **3 de 3**: busca `landscape` (total 1590, 12 recebidas, 0 descartadas, imagens no CDN oficial); obra 152006 aceita para lote; imagem do CDN responde |
+| Primeira execução do teste real | A checagem da imagem com `HEAD` estourou 10 s. Investigado com `curl -I` (sem resposta em 15 s), `GET` (200, 641.874 bytes) e `GET` com `Range` (206 em 0,1 s): **o CDN não responde a HEAD**. O teste passou a usar `GET` com `Range`, mantendo o mesmo objetivo |
+| Ponta a ponta local (servidor compilado, API real, `verzel_dev`) | Login do leiloeiro 200; busca "still life" 200 (12 itens, origem `live`; repetida: `cache`); obra 147016 200; `GET /api/lots/<lote do seed>` 200 `live` com título, lance mínimo e `VEN-...` |
+| `npm run build` | Ok |
+
+Casos cobertos pelos testes:
+- **Busca:** parâmetros enviados ao museu; normalização da resposta real; cache de 60 s; 429 com `Retry-After`; 5xx sem nova tentativa; HTML no lugar de JSON; formato inesperado; timeout de 300 ms; conexão recusada; cache vencido servido com idade e origem até 10 min e recusado depois; obras inválidas ou não CC0 descartadas; imagem de host estranho anulada.
+- **Obra:** obra real; 404; obra diferente da pedida; obra não CC0; para criar lote, obra inexistente (404) ou sem imagem (422).
+- **Rotas:** visitante 401; licitante 403 (sem chegar ao museu); termo e página validados; URL enviada pelo cliente ignorada; erro do museu como 503 sem vazar o corpo; id inválido 400.
+- **Museu fora do ar:** detalhe do lote vindo do snapshot; busca honesta com 503; **o servidor real reiniciado duas vezes em processos novos continua servindo o lote**.
+
+### Pendências
+
+1. Criar lote a partir do snapshot (etapa 07, `POST /api/lots` usa `fetchItemForLot` + `upsertSnapshot`).
+2. Vitrine, auditoria e comprovante também lendo só o banco (etapas 07, 11 e 16) e o teste de falha da etapa 18.
+3. Telas usarem `ArtworkImage` (etapas 13 a 15).

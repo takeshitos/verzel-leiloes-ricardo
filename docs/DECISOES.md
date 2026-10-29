@@ -20,7 +20,7 @@ Conferido na etapa 00 (28/10/2026) contra o PDF original e revisado na etapa 01 
 | Seed | Idempotente: leiloeiro `leiloeiro@example.com`, clientes `cliente1@example.com` e `cliente2@example.com`, senha padrão `leilao-demo-2026` (sobrescrevível por `SEED_DEMO_PASSWORD`), depósito simulado inicial de R$ 10.000,00 por cliente via lançamento com `operation_key` única, lote ao vivo de 10 dias com a obra real 152006. `db:demo-lot` cria lotes novos por chave, sem apagar nada. Em produção, `RUN_SEED_ON_START=true` | Implementada e verificada localmente (duas execuções com estado idêntico); produção pendente |
 | Banco local | Docker Compose (`postgres:18.3-alpine`, porta 5433, credenciais só de dev, volume em `/var/lib/postgresql`). O PostgreSQL 18.3 nativo fica como alternativa documentada (opção A do `.env.example`) | Decidido pelo candidato; funcionando com Docker Desktop 29.9.2 |
 | Configuração | API valida `NODE_ENV`, `PORT` e `HOST` com zod no startup; fora de produção carrega `apps/api/.env` com `process.loadEnvFile` (sem dependência extra). O frontend não usa variáveis `VITE_*` | Implementada na etapa 02 |
-| Catálogo | **Cleveland Museum of Art Open Access API** (sem chave, dados CC0, imagens CC0 em CDN), com snapshot local dos metadados no lote. **Substitui a proposta do Art Institute of Chicago** (motivo abaixo) | Verificada por consulta; troca confirmada pelo candidato em 28/10/2026 |
+| Catálogo | **Cleveland Museum of Art Open Access API** (sem chave, dados CC0, imagens CC0 em CDN), com snapshot local dos metadados no lote. **Substitui a proposta do Art Institute of Chicago** (motivo abaixo) | Implementada na etapa 06 (cliente, rotas do leiloeiro, snapshot e leitura pública offline); 52 testes + 3 testes contra a API real |
 | Dinheiro | Centavos inteiros (`BIGINT`); total persistido na carteira e comprometido = soma das reservas ativas | Proposta |
 | Concorrência | Bloqueio do lote e depois das carteiras envolvidas em ordem crescente de `user_id`, na mesma conexão `pg` (detalhes em PLANO) | Proposta |
 | Tempo | UTC; início inclusivo e fim exclusivo; horário lido com `clock_timestamp()` depois dos bloqueios; relógio injetável nos testes | Proposta |
@@ -39,6 +39,26 @@ Conferido na etapa 00 (28/10/2026) contra o PDF original e revisado na etapa 01 
 - **Verificado em Cleveland:** busca com `cc0=1&has_image=1` (HTTP 200, 0,25 a 0,57 s), item por id (200), id inexistente (404 JSON), imagem do CDN (200 `image/jpeg` no `curl` e abrindo no navegador). Documentação oficial: limite máximo de 1000 por página, paginação por `skip`, dados CC0.
 - **Consequência:** a etapa 06 integra Cleveland. A busca pede `cc0=1&has_image=1` e usa a imagem `images.web` (cerca de 900 px no maior lado). Largura e altura vêm como texto e precisam ser convertidas. A documentação não informa limite de requisições, então a busca terá timeout, cache curto e limite de 12 itens por página. A interface deixa claro que é uma simulação e não uma venda real de obras do museu.
 - **Se o candidato preferir manter a AIC:** a imagem pode falhar para avaliadores. O placeholder local cobre a falha, mas o lote ficaria sem imagem real.
+
+### Integração com a Cleveland (etapa 06): fonte e comportamento de falha
+
+- **Fonte:** Cleveland Museum of Art Open Access API (`https://openaccess-api.clevelandart.org/api/`), dados CC0. Busca com `cc0=1&has_image=1`, 12 por página, até a página 50. O endereço vem só de `CMA_API_BASE_URL` no servidor. Cada obra guarda o link da fonte (`clevelandart.org/art/...`) e a licença CC0, e a interface informa que o museu não tem relação com o projeto.
+- **Snapshot:** ao criar um lote, o leiloeiro informa só o `externalId`. O servidor busca a obra no museu (fora da transação), exige imagem e grava o snapshot com a data da coleta. Vitrine, sala, auditoria e comprovante leem só o banco.
+- **Imagem:** só `https://openaccess-cdn.clevelandart.org/...`. URL de outro host vira "sem imagem". No navegador, o componente `ArtworkImage` troca a imagem que falha pelo placeholder local `/obra-sem-imagem.svg`. O servidor nunca baixa imagens.
+
+| Situação | Comportamento |
+| --- | --- |
+| Museu lento | Timeout de 5 s (`CATALOG_TIMEOUT_MS`), sem nova tentativa: 503 `CATALOG_UNAVAILABLE` |
+| 429 do museu | 503 com `retryAfterSeconds` quando o museu informa |
+| 5xx, conexão recusada, resposta que não é JSON ou formato inesperado | 503 `CATALOG_UNAVAILABLE`; o detalhe técnico fica em `details.reason`, sem repassar o corpo do museu |
+| Obra com formato estranho ou não CC0 dentro da busca | Descartada; a contagem aparece em `skipped` |
+| Obra pedida não existe | 404 `CATALOG_ITEM_NOT_FOUND` |
+| Obra sem imagem ao criar lote | 422 `CATALOG_ITEM_WITHOUT_IMAGE` |
+| Cache | Busca: 60 s; obra: 5 min. Com o museu falhando, serve cache de até 10 min marcado `origin: "cache", stale: true`, com `fetchedAt` e `ageSeconds` |
+| Excesso de buscas | 30 por minuto por leiloeiro: 429 `TOO_MANY_REQUESTS` |
+| Lotes existentes com o museu fora do ar | Funcionam normalmente (testado, inclusive reiniciando o processo) |
+
+Achado em 28/10/2026: o CDN de imagens não responde a `HEAD` (fica sem resposta); `GET` funciona. Não use `HEAD` para checar imagens.
 
 ### Versões verificadas (registro do npm em 28/10/2026)
 
