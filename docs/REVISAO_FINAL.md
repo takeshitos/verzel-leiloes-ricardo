@@ -27,7 +27,7 @@ Legenda: **Atendido** (há implementação e evidência), **Parcial**, **Pendent
 | R17 README com configuração, execução e comportamentos inesperados | Empresa | Atendido | `README.md` reproduzido num clone limpo (etapa 20). Ver F1 (uma frase do README promete mais do que foi feito na âncora) |
 | R18 Deploy público e repositório público | Empresa | Atendido | https://verzel-leiloes-ricardo.onrender.com/ (smoke com login: 1 passed, 29/10); GitHub público (API do GitHub, sem sessão) |
 | R19 Relato de uso de IA | Empresa | Atendido | Seção "Uso de IA" do README e `docs/USO_DE_IA.md` (registro por etapa e resumo, com a revisão informada pelo candidato) |
-| R20 Entrega no prazo pelo formulário | Empresa | **Pendente** | Recebido em 22/10/2026, prazo 29/10/2026 (hora limite não informada). O envio do formulário (nome, email, repositório, deploy, relato de IA) só o candidato pode fazer |
+| R20 Entrega no prazo pelo formulário | Empresa | Atendido (formulário enviado pelo candidato em 29/10/2026, informado por ele) | Recebido em 22/10/2026, prazo 29/10/2026 (hora limite não informada). O envio do formulário (nome, email, repositório, deploy, relato de IA) só o candidato pode fazer |
 
 Extras: E01 filtro da vitrine e E05 tema (etapa 19), E03 Compose (etapa 04) e E04 testes (etapas 09 a 18) atendidos; E02 cancelamento com estorno **não implementado de propósito**.
 
@@ -86,6 +86,10 @@ F2 a F6 não bloqueiam a entrega.
 | F1 | README, `docs/DEPLOY.md` (tabela e "Endurecimento opcional"), `docs/AUDITORIA.md` (§3 e §7) e `docs/PLANO.md` agora dizem que a âncora usa o usuário dono e que a restrição a `INSERT`/`SELECT` **não foi aplicada**; o README não cita mais um SQL inexistente | Busca por "INSERT/SELECT" e "SQL do usuário" sem afirmações restantes |
 | F2 | `apps/api/src/shared/config.ts`: o servidor não sobe se `ANCHOR_DATABASE_URL` apontar para o mesmo servidor, porta e banco do `DATABASE_URL` (mesmo com outro usuário) | `test/config.test.ts` (3 testes); suíte completa API 242 de 242 e web 28 de 28; typecheck, lint e build ok; servidor local sobe; produção conferida depois do deploy |
 
-Com isso, o único bloqueio de entrega restante é **R20: enviar o formulário**.
+Com isso, o único bloqueio de entrega restante era **R20: enviar o formulário**.
 
 Deploy das correções: commit `fea0e75` enviado às 23:44:11 UTC; o serviço reiniciou às 23:45:06 UTC com `/api/health` ok e a auditoria do lote do seed ÍNTEGRO. Como o servidor só sobe com a âncora num banco diferente do principal, isso também confirma, em produção, que a âncora é outro banco.
+
+## Situação final
+
+O candidato informou em 29/10/2026 que **enviou o formulário** dentro do prazo. Com F1 e F2 corrigidos, **não há bloqueios de entrega**. Seguem as limitações documentadas (F3 a F6).
