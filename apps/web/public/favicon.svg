@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Ícone da aba: o losango da marca (◆) sobre o bordô do site. -->
+  <rect width="64" height="64" rx="14" fill="#7b2d1e"/>
+  <path d="M32 11 53 32 32 53 11 32Z" fill="#f7f3ec"/>
+  <path d="M32 21 43 32 32 43 21 32Z" fill="#a07a2c"/>
+</svg>
