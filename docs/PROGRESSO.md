@@ -1366,3 +1366,7 @@ Os cenários E2E do tour cobrem: convite uma vez e "Agora não" após recarregar
 - O tour não demonstra ações (lance, depósito, criação, cancelamento, liquidação) nem gera comprovante fictício: só explica onde ficam e as regras. Sem lote na vitrine, a continuação para a sala não aparece.
 - A etapa "Criar lote" destaca a seção, não os campos: o formulário só existe depois de escolher uma obra, e o tour não escolhe por você.
 - Não há cancelamento com reembolso nem edição de lote publicado no sistema; o tour não menciona essas funções.
+
+### Deploy do tour
+
+Commits `3800b8e` (docs R20) e `49a1073` (tour) enviados às 02:26 UTC de 30/10/2026; o serviço reiniciou às 02:27 UTC (`uptimeSeconds` 14), health ok. Conferido de fora: bundle novo (`index-D7Cm28OG.js`) com o tour e sem segredos (`AUDIT_SIGNING`, `PRIVATE KEY`, `postgres://`, `npg_`, `VITE_`: 0); `/`, `/entrar`, `/carteira`, `/painel` e `/participacoes` 200. No navegador do app, na URL pública (com a sessão de leiloeiro que o candidato abriu numa etapa anterior; nada foi preenchido ou enviado): convite exibido, tour da vitrine com 5 etapas, "Abrir a sala do primeiro lote e continuar" levou à sala do lote do seed, tour da sala de leiloeiro com 7 etapas (sem formulário de lance, com "Leiloeiros acompanham"), Esc fechou, tempo real seguiu conectado, preferência guardada só com perfil e ids de tour.
