@@ -94,7 +94,7 @@ export function SellerPage() {
 
       {summary.error && <ErrorState message={summary.error.message} onRetry={summary.reload} />}
       {data && (
-        <div className="stat-grid">
+        <div className="stat-grid" data-tour="painel-resumo">
           <div className="stat">
             <p className="stat-label">Total recebido</p>
             <p className="stat-value">{formatBrl(data.totalReceivedCents)}</p>
@@ -124,7 +124,7 @@ export function SellerPage() {
         </Notice>
       )}
 
-      <section className="section" aria-labelledby="novo-lote">
+      <section className="section" aria-labelledby="novo-lote" data-tour="painel-novo-lote">
         <h2 id="novo-lote">Novo lote</h2>
         {created && (
           <Notice tone="success" title="Lote criado">
@@ -144,12 +144,12 @@ export function SellerPage() {
           )}
         </div>
         {/* Escondida (não desmontada) enquanto há obra escolhida: "Trocar obra" volta aos mesmos resultados. */}
-        <div hidden={selected !== null}>
+        <div hidden={selected !== null} data-tour="painel-busca">
           <CatalogSearch onSelect={handleSelect} />
         </div>
       </section>
 
-      <section className="section" aria-labelledby="seus-lotes">
+      <section className="section" aria-labelledby="seus-lotes" data-tour="painel-lotes">
         <h2 id="seus-lotes">Seus lotes</h2>
         {lots.loading && !lots.data && <Loading />}
         {lots.error && <ErrorState message={lots.error.message} onRetry={lots.reload} />}

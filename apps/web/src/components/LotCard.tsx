@@ -10,7 +10,7 @@ export function LotCard({ lot, offsetMs }: { lot: PublicLot; offsetMs: number })
   const attributes = [lot.item.creationDate, lot.item.technique].filter(Boolean).join(' · ');
 
   return (
-    <article className="lot-card">
+    <article className="lot-card" data-tour="lot-card">
       <Link to={`/lotes/${lot.id}`} className="lot-card-link" aria-label={`${lot.item.title}: abrir sala do lote`}>
         <div className="lot-card-media">
           <ArtworkImage

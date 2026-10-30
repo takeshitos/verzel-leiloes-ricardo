@@ -44,7 +44,7 @@ export function ParticipationsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Licitante" title="Participações e arremates">
+      <PageHeader eyebrow="Licitante" title="Participações e arremates" tour="participacoes-resumo">
         {data && (
           <p>
             {data.summary.total} {data.summary.total === 1 ? 'lote' : 'lotes'} com lance seu · liderando em {data.summary.leading} ·{' '}
@@ -63,7 +63,7 @@ export function ParticipationsPage() {
       )}
 
       {data && data.participations.length > 0 && (
-        <ul className="participation-list">
+        <ul className="participation-list" data-tour="participacoes-lista">
           {data.participations.map((item) => {
             const outcome = OUTCOME[item.outcome];
             return (
@@ -72,7 +72,7 @@ export function ParticipationsPage() {
                 <div className="participation-body">
                   <div className="participation-top">
                     <LotStatusPill lot={item.lot} />
-                    <span className={`badge badge-${outcome.tone}`}>{outcome.label}</span>
+                    <span className={`badge badge-${outcome.tone}`} data-tour="participacao-resultado">{outcome.label}</span>
                   </div>
                   <h2 className="participation-title">
                     <Link to={`/lotes/${item.lot.id}`}>{item.lot.item.title}</Link>
@@ -82,7 +82,7 @@ export function ParticipationsPage() {
                     {item.participantCount} · último lance seu em {formatDateTime(item.lastBidAt)}
                   </p>
                   {item.receiptToken && (
-                    <p className="small">
+                    <p className="small" data-tour="participacao-comprovante">
                       <Link to={`/comprovantes/${item.receiptToken}`}>Ver comprovante</Link> ·{' '}
                       <CopyLinkButton path={`/comprovantes/${item.receiptToken}`} label="Copiar link para compartilhar" />
                     </p>

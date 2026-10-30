@@ -55,9 +55,10 @@ export function PendingFeature({ step, children }: { step: string; children: Rea
   );
 }
 
-export function PageHeader({ eyebrow, title, children }: { eyebrow?: string; title: string; children?: ReactNode }) {
+/** `tour`: nome do alvo do tour guiado (vira data-tour). */
+export function PageHeader({ eyebrow, title, tour, children }: { eyebrow?: string; title: string; tour?: string; children?: ReactNode }) {
   return (
-    <header className="page-header">
+    <header className="page-header" data-tour={tour}>
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h1>{title}</h1>
       {children && <div className="page-header-body">{children}</div>}

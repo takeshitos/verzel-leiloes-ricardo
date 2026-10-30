@@ -9,7 +9,7 @@ const LABELS: Record<ConnectionStatus, string> = {
 /** Mostra se a tela está recebendo atualizações em tempo real (não é o status do lote). */
 export function ConnectionBadge({ status }: { status: ConnectionStatus }) {
   return (
-    <span className={`connection connection-${status}`} role="status">
+    <span className={`connection connection-${status}`} role="status" data-tour="tempo-real">
       <span className="connection-dot" aria-hidden="true" />
       {LABELS[status]}
     </span>

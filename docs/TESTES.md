@@ -1,3 +1,4 @@
+| `tour/logic.test.ts` | 16 | Tour guiado: perfil e página pela rota, tour certo por perfil (carteira só para licitante, painel só para leiloeiro), etapa de lance só para licitante, etapas opcionais sem elemento saem, navegação nos limites, preferência por perfil sem dados pessoais, posição do cartão |
 # Testes
 
 Como rodar, o que cada suíte prova e onde cada requisito é verificado. Números medidos em 29/10/2026 (etapa 17). **Cobertura de linhas não foi medida** (nenhuma ferramenta de cobertura está instalada).
@@ -48,17 +49,20 @@ As migrações dos bancos de teste rodam sozinhas no início do `npm test` (glob
 | `realtime.test.ts` | 14 | Dois clientes Socket.IO reais, sala privada só do dono, tentativa de entrar na sala alheia, origem de outro site, logout e expiração, evento perdido recuperado por HTTP |
 | `public-privacy.test.ts` | 11 | Todas as respostas públicas (vitrine, lote, lances, auditoria, comprovante, chave pública, 404) lidas como texto, depois de um cenário real com lances e liquidação: sem `@`, email, id de usuário, hash de sessão, saldos ou ids privados; nenhuma cria sessão |
 
-### Web (`apps/web/src`, 28 testes em 3 arquivos)
+### Web (`apps/web/src`, 44 testes em 4 arquivos)
 
 | Arquivo | Testes | O que prova |
 | --- | --- | --- |
 | `realtime/lot-sync.test.ts` | 18 | Evento antigo descartado, lacuna pede snapshot HTTP, prorrogação nunca volta o fim, resposta HTTP atrasada não apaga estado novo, relógio do servidor, posição pelo melhor lance, "ganhando/superado/venceu" a partir do estado |
 | `format.test.ts` | 3 | BRL exato até R$ 1.000.000.000,99, duração |
 | `input-parsing.test.ts` | 7 | "1.234,56" → centavos só com texto e inteiros (inclusive 1,15 e 4,35, que erram com ponto flutuante), recusas, data local ↔ UTC |
+| `tour/logic.test.ts` | 16 | Tour guiado: perfil e página pela rota, tour certo por perfil (carteira só para licitante, painel só para leiloeiro), etapa de lance só para licitante, opcionais sem elemento saem, navegação nos limites, preferência por perfil sem dados pessoais, posição do cartão |
 
-### E2E (Playwright no Chrome, 4 cenários)
+### E2E (Playwright no Chrome, 8 cenários)
 
 `e2e/falhas.spec.ts` (3, etapa 18): resposta cortada depois do commit, evento perdido com volta de suspensão, imagem do museu bloqueada. Detalhes em `docs/TESTES_DE_FALHA.md`.
+
+`e2e/tour.spec.ts` (4, tour guiado): convite uma vez, controles e Esc, vitrine → sala, licitante sem alteração de saldo, lista vazia explicada, sair encerra o tour, leiloeiro no celular e lance de outra pessoa chegando com o tour aberto.
 
 `e2e/leilao.spec.ts` (1):
 

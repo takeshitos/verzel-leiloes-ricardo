@@ -48,7 +48,9 @@ Etapa 22 (29/10/2026): revisão final em `docs/REVISAO_FINAL.md` (R01–R19 aten
 
 F1 e F2 corrigidos a pedido do candidato (textos da âncora; trava contra âncora no mesmo banco, com 3 testes). API 242 de 242, web 28 de 28.
 
-Próxima ação: enviar o formulário (R20); depois, etapa 23 (demonstração e entrevista).
+Formulário de entrega enviado pelo candidato em 29/10/2026 (R20 atendido, informado por ele). Relato de IA completo no README.
+
+Próxima ação: etapa 23 (demonstração e entrevista), opcional.
 
 Use este arquivo para registrar etapa, requisitos relacionados, arquivos alterados, comandos executados, resultados reais, pendências e próximo passo. Não marque um requisito como concluído apenas porque existe código para ele.
 
@@ -1321,3 +1323,46 @@ Hospedagem mantida (Render free + Neon); nada contratado, nenhum recurso criado,
 
 - `e2e/producao.config.ts` e `e2e/smoke.prod.ts` (separados da suíte local; `npm run test:e2e` continua com 4 testes); `package.json` (`smoke:prod`).
 - `README.md`: comando do smoke e a explicação do encerramento com o serviço dormindo.
+
+## Extra — Tour guiado interativo (29/10/2026)
+
+Pedido do candidato depois da etapa 22. Tour feito com código próprio (sem biblioteca, sem licença nova), só sobre funções que existem. O tour **só destaca e explica**: não clica, não preenche, não envia formulário e não chama a API.
+
+### O que foi feito
+
+- **Onde começa:** botão **"? Como usar"** no cabeçalho (todas as páginas) com "Tour geral", "Tour desta página (…)" e "Reiniciar tours". No primeiro acesso de cada perfil aparece um convite discreto abaixo do cabeçalho ("Iniciar tour" / "Agora não"); depois de mostrado, não volta ao recarregar.
+- **Tours:** geral por perfil (visitante 5 etapas, licitante 6, leiloeiro 5, só com o cabeçalho) e por página: vitrine, sala do lote, auditoria, comprovante (todos os perfis), carteira e participações (licitante), painel (leiloeiro) e entrar (visitante). O tour geral oferece continuar com o tour da página aberta; o da vitrine oferece "Abrir a sala do primeiro lote e continuar" (o primeiro card mostrado: ao vivo antes de agendados e encerrados). Páginas com formulário (lance, depósito, criação de lote) não oferecem navegação.
+- **Etapas condicionais:** a sala mostra o formulário de lance só ao licitante num lote ao vivo, "Entre como licitante" só ao visitante e o aviso de leiloeiro só ao leiloeiro; etapas opcionais somem quando o elemento não existe (ex.: "Cancelar lote" sem lotes). Etapa obrigatória sem elemento (lista vazia, carregando, erro) mostra o cartão centralizado com uma explicação, sem escurecer a tela. O tour espera até 4 s o elemento que indica "página carregada".
+- **Controles e acessibilidade:** Próximo, Anterior, "Pular tour", × (fechar), "Etapa x de y", Concluir; Esc fecha; o cartão é um diálogo **não modal** (a página continua utilizável, foco não fica preso); foco vai para o cartão ao abrir e volta para onde estava ao fechar; anúncios por `aria-live`; destaque com contorno de foco e máscara que não captura cliques; `prefers-reduced-motion` desliga animação e rolagem suave; no celular o cartão vira folha no rodapé; tema claro/escuro pelos mesmos tokens.
+- **Sessão:** entrar, sair ou trocar de conta encerra o tour; mudar de página encerra o tour daquela página (o geral continua). O tempo real não pausa: o primeiro passo da sala avisa isso.
+- **Preferência:** `localStorage` na chave `leiloes.tour.v1` (versão do tour), por perfil: convite visto, tours concluídos e dispensados. Nenhum email, pseudônimo ou id.
+
+### Arquivos
+
+- `apps/web/src/tour/`: `logic.ts` (regras puras: perfil, página, etapas, navegação, preferência, posição do cartão) e `logic.test.ts`; `content.ts` (**todos os textos**); `storage.ts`; `dom.ts`; `context.ts`; `TourProvider.tsx`; `TourOverlay.tsx`; `HelpMenu.tsx`; `TourInvite.tsx`.
+- Atributos `data-tour` (45) em `App.tsx`, `main.tsx` (provider), componentes, páginas, `BidForm`, `DepositForm` e `SellerLotList`; `PageHeader` ganhou a prop opcional `tour`. Estilos no fim de `styles.css`.
+- `e2e/tour.spec.ts` (4 cenários).
+
+### Verificações
+
+| Comando / verificação | Resultado |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Ok |
+| `npm test` | API **242 de 242**; web **44 de 44** (16 novos da lógica do tour) |
+| `npm run test:e2e` | **8 de 8** (4 anteriores + 4 do tour) |
+| Navegador (dev, `localhost:5173`) | desktop e celular (375×812), tema claro e escuro; destaque e cartão sem cobrir o alvo; menu "Como usar" dentro da tela no celular; Esc fecha e devolve o foco |
+
+Os cenários E2E do tour cobrem: convite uma vez e "Agora não" após recarregar; progresso, Próximo/Anterior, Esc; vitrine → sala; visitante sem a etapa de lance; preferência sem dados pessoais; licitante percorre carteira e participações e o saldo/lançamentos no servidor ficam iguais; lista vazia explicada; foco volta ao "Como usar"; sair encerra o tour; leiloeiro no celular (folha no rodapé, sem etapa de cancelar); **lance de outra pessoa aparece na sala com o tour aberto** e o tour continua na mesma etapa.
+
+### Defeitos achados na verificação
+
+- Prettier sem configuração no projeto reformatou arquivos não relacionados: desfeito na hora com `git checkout` desses arquivos e marcações reaplicadas por script, sem reformatação.
+- A posição do destaque era medida com `requestAnimationFrame`, que o navegador pausa em abas ocultas (o destaque não aparecia): trocado por medição direta.
+- No celular, o painel "Como usar" saía pela esquerda e abria sobre o próprio botão; o cabeçalho de duas linhas podia cobrir o topo do alvo: corrigidos no CSS.
+
+### Limites
+
+- A preferência é por navegador e por perfil, não por conta (para não guardar dados pessoais): dois licitantes no mesmo navegador compartilham "convite visto" e "concluídos".
+- O tour não demonstra ações (lance, depósito, criação, cancelamento, liquidação) nem gera comprovante fictício: só explica onde ficam e as regras. Sem lote na vitrine, a continuação para a sala não aparece.
+- A etapa "Criar lote" destaca a seção, não os campos: o formulário só existe depois de escolher uma obra, e o tour não escolhe por você.
+- Não há cancelamento com reembolso nem edição de lote publicado no sistema; o tour não menciona essas funções.

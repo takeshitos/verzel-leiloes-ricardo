@@ -56,7 +56,7 @@ export function ReceiptPage() {
           <h1>{receipt.item.title}</h1>
           <p className="muted">{[receipt.item.creators, receipt.item.creationDate].filter(Boolean).join(' · ')}</p>
         </div>
-        <div className="receipt-actions no-print">
+        <div className="receipt-actions no-print" data-tour="comprovante-acoes">
           <CopyLinkButton path={`/comprovantes/${token}`} label="Copiar link do comprovante" />
           <button type="button" className="button button-secondary button-small" onClick={() => window.print()}>
             Imprimir
@@ -67,8 +67,8 @@ export function ReceiptPage() {
       <div className="card receipt">
         <div className="receipt-grid-main">
           <ArtworkImage className="receipt-image" src={receipt.item.imageUrl} alt={receipt.item.title} />
-          <dl className="receipt-grid">
-            <div className="receipt-total">
+          <dl className="receipt-grid" data-tour="comprovante-dados">
+            <div className="receipt-total" data-tour="comprovante-valor">
               <dt>Valor final</dt>
               <dd className="receipt-amount">{formatBrl(receipt.amountCents)}</dd>
             </div>
@@ -119,7 +119,7 @@ export function ReceiptPage() {
           </dl>
         </div>
 
-        <div className="receipt-audit">
+        <div className="receipt-audit" data-tour="comprovante-auditoria">
           <p className="small">
             <strong>Auditoria na liquidação: ÍNTEGRO</strong> ({receipt.audit.bidCount}{' '}
             {receipt.audit.bidCount === 1 ? 'lance' : 'lances'}; último hash <code>{receipt.audit.lastHash.slice(0, 16)}…</code>

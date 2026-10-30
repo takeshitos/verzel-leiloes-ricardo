@@ -68,7 +68,7 @@ export function DepositForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form className="card form deposit-form" onSubmit={handleSubmit} noValidate aria-labelledby="deposito">
+    <form className="card form deposit-form" data-tour="carteira-deposito" onSubmit={handleSubmit} noValidate aria-labelledby="deposito">
       <h2 id="deposito">Depósito simulado</h2>
       <p className="muted small">Sem cartão, banco ou dinheiro real. Até R$ 100.000,00 por depósito.</p>
       <div className="inline-form">

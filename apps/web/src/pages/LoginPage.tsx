@@ -52,7 +52,7 @@ export function LoginPage() {
         <p>Use uma conta de licitante para dar lances ou de leiloeiro para criar lotes. Todo saldo é simulado.</p>
       </PageHeader>
 
-      <div className="tabs" role="tablist" aria-label="Entrar ou criar conta">
+      <div className="tabs" role="tablist" data-tour="entrar-abas" aria-label="Entrar ou criar conta">
         <button
           type="button"
           role="tab"
@@ -79,7 +79,7 @@ export function LoginPage() {
         </button>
       </div>
 
-      <form className="card form" onSubmit={handleSubmit} noValidate>
+      <form className="card form" onSubmit={handleSubmit} noValidate data-tour="entrar-formulario">
         {/* Mensagem da API (ex.: credenciais inválidas, muitas tentativas); erros por campo ficam abaixo de cada campo. */}
         {error && <Notice tone="error">{error.message}</Notice>}
 
@@ -107,7 +107,7 @@ export function LoginPage() {
         />
 
         {mode === 'register' && (
-          <fieldset className="role-choice">
+          <fieldset className="role-choice" data-tour="entrar-papel">
             <legend>Como você vai usar a casa de leilões?</legend>
             <label className={role === 'bidder' ? 'choice is-selected' : 'choice'}>
               <input type="radio" name="role" value="bidder" checked={role === 'bidder'} onChange={() => setRole('bidder')} />

@@ -42,6 +42,13 @@ Também é possível criar contas novas em "Entrar → Criar conta", escolhendo 
 5. Quando o lote termina, o servidor liquida sozinho: B vê "Você arrematou este lote" e o link do comprovante; o total de B cai; o painel do leiloeiro mostra o valor recebido.
 6. **Participações** (licitante) lista todos os lotes com lance, posição e resultado, com link do comprovante para copiar e compartilhar. O comprovante abre sem login.
 
+## Tour guiado
+
+O botão **"? Como usar"**, no topo de todas as páginas, abre o tour geral do seu perfil (visitante, licitante ou leiloeiro) ou o tour da página aberta (vitrine, sala do lote, auditoria, comprovante, carteira, participações, painel, entrar). No primeiro acesso de cada perfil aparece um convite discreto ("Iniciar tour" / "Agora não"), que não volta ao recarregar. O tour só destaca e explica: **não dá lances, não deposita, não cria nem cancela lotes e não altera dados**. Esc fecha; entrar ou sair encerra o tour.
+
+- Textos e percursos: `apps/web/src/tour/content.ts` (cada etapa aponta para um atributo `data-tour="..."` da tela).
+- Regras (testadas): `apps/web/src/tour/logic.ts`. Preferência no navegador: chave `leiloes.tour.v1`, por perfil, sem dados pessoais. Para o convite voltar depois de mudar bastante o tour, aumente `TOUR_VERSION`.
+
 ## Stack
 
 | Parte | Tecnologia |
@@ -275,6 +282,7 @@ A IA **não** criou contas, não acessou os painéis do Render ou do Neon, não 
 | 20 | Este README, reproduzido num clone limpo |
 | 21 | Verificação pública final e smoke test de produção |
 | 22 | Revisão final por requisito (`docs/REVISAO_FINAL.md`) e correções aprovadas pelo candidato |
+| Extra | Tour guiado interativo por perfil e por página (`apps/web/src/tour/`) |
 
 ### Verificação do trabalho da IA
 
@@ -283,7 +291,7 @@ O código gerado não foi aceito só por "parecer certo":
 - **Provas de que os testes pegam erros:** mudanças erradas feitas de propósito e desfeitas em seguida (aceitar lance R$ 0,01 abaixo do mínimo derrubou 3 testes; expor o id do licitante derrubou o teste de privacidade; desligar uma checagem da auditoria derrubou 3 testes de remoção).
 - **Navegador:** cada tela foi conferida em desktop e celular; os fluxos com dois licitantes usaram sessões separadas.
 - **Produção:** cada deploy conferido de fora; smoke test completo com login rodado pelo candidato.
-- **Resultados finais:** API 242 testes, web 28, E2E 4 cenários (`docs/TESTES.md`).
+- **Resultados finais:** API 242 testes, web 44, E2E 8 cenários (`docs/TESTES.md`; 4 deles do tour guiado).
 
 ### Defeitos que a própria verificação encontrou e foram corrigidos
 
@@ -294,6 +302,7 @@ O código gerado não foi aceito só por "parecer certo":
 - Lance já gravado respondendo 500 quando a confirmação na âncora falhava depois do commit.
 - "Sem resposta do servidor" tratada como recusa no cancelamento e na criação de lote.
 - `npm start` na raiz não encontrava `apps/api/.env` (achado ao seguir este README num clone limpo).
+- Tour guiado: destaque medido com `requestAnimationFrame` não aparecia em aba oculta (trocado por medição direta) e menu "Como usar" fora da tela no celular.
 - Revisão final: documentação que afirmava uma restrição de permissão da âncora não aplicada, e falta de trava contra configurar a âncora no mesmo banco principal.
 
 ### Limites e recusas

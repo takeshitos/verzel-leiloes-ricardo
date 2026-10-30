@@ -36,7 +36,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <button type="button" className="theme-toggle" onClick={toggle} aria-label={`Usar tema ${next === 'dark' ? 'escuro' : 'claro'}`}>
+    <button type="button" className="theme-toggle" data-tour="theme" onClick={toggle} aria-label={`Usar tema ${next === 'dark' ? 'escuro' : 'claro'}`}>
       {theme === 'dark' ? '☀ Tema claro' : '☾ Tema escuro'}
     </button>
   );

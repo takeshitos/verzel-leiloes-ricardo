@@ -62,7 +62,7 @@ export function AuditPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Auditoria pública" title={title ? `Histórico de lances: ${title}` : 'Histórico de lances'}>
+      <PageHeader eyebrow="Auditoria pública" tour="auditoria-cabecalho" title={title ? `Histórico de lances: ${title}` : 'Histórico de lances'}>
         <p>
           Qualquer pessoa pode conferir esta página, sem login. <Link to={`/lotes/${id}`}>Abrir a sala do lote</Link> ·{' '}
           <CopyLinkButton path={`/lotes/${id}/auditoria`} label="Copiar link da auditoria" />
@@ -77,7 +77,7 @@ export function AuditPage() {
 
       {report && (
         <>
-          <section className={`audit-status audit-${TONE[report.status]}`} aria-labelledby="estado-auditoria">
+          <section className={`audit-status audit-${TONE[report.status]}`} aria-labelledby="estado-auditoria" data-tour="auditoria-estado">
             <p id="estado-auditoria" className="audit-label">
               {report.statusLabel}
             </p>
@@ -103,7 +103,7 @@ export function AuditPage() {
             {report.bids.length === 0 ? (
               <EmptyState title="Nenhum lance neste lote." />
             ) : (
-              <div className="table-wrap">
+              <div className="table-wrap" data-tour="auditoria-tabela">
                 <table className="audit-table">
                   <caption className="sr-only">Lances em ordem de aceitação</caption>
                   <thead>
@@ -155,7 +155,7 @@ export function AuditPage() {
             )}
           </section>
 
-          <section className="section card technical" aria-labelledby="detalhes-tecnicos">
+          <section className="section card technical" aria-labelledby="detalhes-tecnicos" data-tour="auditoria-tecnico">
             <h2 id="detalhes-tecnicos">Detalhes técnicos</h2>
             <dl className="technical-list">
               <dt>Gênese do lote</dt>

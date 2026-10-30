@@ -86,7 +86,7 @@ function LotRoom({ lotId }: { lotId: string }) {
 
         <div className="lot-room-side">
           <div className="lot-room-title">
-            <div className="lot-room-badges">
+            <div className="lot-room-badges" data-tour="sala-estado">
               <LotStatusPill lot={lot} />
               <ConnectionBadge status={connection} />
             </div>
@@ -97,7 +97,7 @@ function LotRoom({ lotId }: { lotId: string }) {
 
           {error && <Notice tone="warning">Última atualização falhou: {error.message}</Notice>}
 
-          <div className="card lot-panel" aria-live="polite">
+          <div className="card lot-panel" aria-live="polite" data-tour="sala-painel">
             {lot.status === 'live' && (
               <div className="lot-panel-clock">
                 <p className="stat-label">Termina em</p>
@@ -116,7 +116,7 @@ function LotRoom({ lotId }: { lotId: string }) {
             {lot.status === 'cancelled' && <Notice tone="warning">Este lote foi cancelado pelo leiloeiro.</Notice>}
 
             {lot.result ? (
-              <div className="lot-result">
+              <div className="lot-result" data-tour="sala-resultado">
                 <p className="stat-label">Resultado</p>
                 <p className="stat-value">
                   {lot.result.winnerAlias ? formatBrl(lot.result.finalAmountCents ?? 0) : 'Sem lances'}
@@ -124,7 +124,7 @@ function LotRoom({ lotId }: { lotId: string }) {
                 <p>{lot.result.winnerAlias ? `Arrematado por ${lot.result.winnerAlias}` : 'Encerrado sem vencedor.'}</p>
               </div>
             ) : (
-              <dl className="figures">
+              <dl className="figures" data-tour="sala-valores">
                 <div>
                   <dt>{lot.currentBidCents === null ? 'Lance inicial' : 'Lance atual'}</dt>
                   <dd className="figure-main">{formatBrl(lot.currentBidCents ?? lot.startingBidCents)}</dd>
@@ -145,7 +145,7 @@ function LotRoom({ lotId }: { lotId: string }) {
             )}
 
             {user?.role === 'bidder' && alias && (
-              <div className="my-wallet">
+              <div className="my-wallet" data-tour="minha-situacao">
                 <p className="my-standing">
                   <strong>Você ({alias})</strong>
                   {STANDING[standing] && (
@@ -183,22 +183,22 @@ function LotRoom({ lotId }: { lotId: string }) {
               <BidForm lot={lot} bids={bids} alias={alias} availableCents={wallet?.availableCents ?? null} resync={resync} />
             )}
             {lot.status === 'live' && !user && (
-              <p className="small">
+              <p className="small" data-tour="login-to-bid">
                 <Link to={`/entrar?next=/lotes/${lot.id}`}>Entre como licitante</Link> para participar.
               </p>
             )}
             {lot.status === 'live' && user?.role === 'seller' && (
-              <p className="muted small">Leiloeiros acompanham a disputa, mas não dão lances.</p>
+              <p className="muted small" data-tour="seller-note">Leiloeiros acompanham a disputa, mas não dão lances.</p>
             )}
           </div>
 
-          <p className="small">
+          <p className="small" data-tour="sala-auditoria">
             Leiloeiro {lot.sellerAlias} · <Link to={`/lotes/${lot.id}/auditoria`}>Auditoria do histórico</Link>
           </p>
         </div>
       </div>
 
-      <section className="section" aria-labelledby="historico">
+      <section className="section" aria-labelledby="historico" data-tour="sala-historico">
         <h2 id="historico">Histórico de lances ({lot.bidCount})</h2>
         {bids.length === 0 ? (
           <EmptyState title="Nenhum lance ainda." />

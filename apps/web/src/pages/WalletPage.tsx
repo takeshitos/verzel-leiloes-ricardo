@@ -41,7 +41,7 @@ export function WalletPage() {
 
       {data && (
         <>
-          <div className="stat-grid">
+          <div className="stat-grid" data-tour="carteira-saldos">
             <div className="stat">
               <p className="stat-label">Disponível para lances</p>
               <p className="stat-value">{formatBrl(data.wallet.availableCents)}</p>
@@ -56,7 +56,7 @@ export function WalletPage() {
             </div>
           </div>
 
-          <p className="muted small explain">
+          <p className="muted small explain" data-tour="carteira-reserva">
             <strong>Como funciona a reserva:</strong> quando você lidera um lote, o valor do seu lance sai do disponível e
             fica reservado. Se alguém cobrir, a reserva volta na hora. Se você vencer, o valor reservado é debitado do total
             no encerramento. Assim você nunca oferta mais do que tem, mesmo disputando vários lotes.
@@ -64,7 +64,7 @@ export function WalletPage() {
 
           <DepositForm onDone={reload} />
 
-          <section className="section">
+          <section className="section" data-tour="carteira-lancamentos">
             <h2>Últimos lançamentos</h2>
             {data.wallet.recentEntries.length === 0 ? (
               <EmptyState title="Nenhum lançamento ainda." />

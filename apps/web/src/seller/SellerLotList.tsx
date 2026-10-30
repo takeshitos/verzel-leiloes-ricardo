@@ -120,7 +120,7 @@ export function SellerLotList({ lots, onChanged }: Props) {
                   </div>
                 </div>
               ) : (
-                <button type="button" className="button button-secondary button-small" onClick={() => setConfirming(lot.id)}>
+                <button type="button" className="button button-secondary button-small" data-tour="painel-cancelar" onClick={() => setConfirming(lot.id)}>
                   Cancelar lote
                 </button>
               ))}

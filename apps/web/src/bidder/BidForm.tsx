@@ -118,7 +118,7 @@ export function BidForm({ lot, bids, alias, availableCents, resync }: Props) {
     feedback?.tone === 'uncertain' && bids.some((bid) => bid.alias === alias && bid.amountCents === feedback.amountCents);
 
   return (
-    <form className="bid-form" onSubmit={handleSubmit} noValidate aria-labelledby="dar-lance">
+    <form className="bid-form" data-tour="bid-form" onSubmit={handleSubmit} noValidate aria-labelledby="dar-lance">
       <h3 id="dar-lance">Dar lance</h3>
       <div className="inline-form">
         <Field

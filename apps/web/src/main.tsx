@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
+import { TourProvider } from './tour/TourProvider';
 import './styles.css';
 
 const rootElement = document.getElementById('root');
@@ -14,7 +15,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <TourProvider>
+          <App />
+        </TourProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

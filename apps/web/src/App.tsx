@@ -13,6 +13,9 @@ import { ReceiptPage } from './pages/ReceiptPage';
 import { SellerPage } from './pages/SellerPage';
 import { ShowcasePage } from './pages/ShowcasePage';
 import { WalletPage } from './pages/WalletPage';
+import { HelpMenu } from './tour/HelpMenu';
+import { TourInvite } from './tour/TourInvite';
+import { TourOverlay } from './tour/TourOverlay';
 
 function SiteHeader() {
   const { state, user, logout } = useAuth();
@@ -40,39 +43,42 @@ function SiteHeader() {
         </Link>
 
         {/* Links conforme o papel. É só conveniência: a API recusa o que o papel não pode. */}
-        <nav aria-label="Navegação principal" className="main-nav">
+        <nav aria-label="Navegação principal" className="main-nav" data-tour="nav">
           <NavLink to="/" end>
             Vitrine
           </NavLink>
           {user?.role === 'bidder' && (
             <>
-              <NavLink to="/carteira">Carteira</NavLink>
-              <NavLink to="/participacoes">Participações</NavLink>
+              <NavLink to="/carteira" data-tour="nav-carteira">Carteira</NavLink>
+              <NavLink to="/participacoes" data-tour="nav-participacoes">Participações</NavLink>
             </>
           )}
-          {user?.role === 'seller' && <NavLink to="/painel">Painel</NavLink>}
+          {user?.role === 'seller' && <NavLink to="/painel" data-tour="nav-painel">Painel</NavLink>}
           <NavLink to="/sobre">Sobre</NavLink>
         </nav>
 
         <div className="session">
+          <HelpMenu />
           <ThemeToggle />
-          {state.status === 'loading' && <span className="muted small">...</span>}
-          {state.status === 'anonymous' && (
-            <Link to="/entrar" className="button button-primary button-small">
-              Entrar
-            </Link>
-          )}
-          {user && (
-            <>
-              <span className="session-user">
-                <strong>{user.publicAlias}</strong>
-                <span className="muted small">{ROLE_LABEL[user.role]}</span>
-              </span>
-              <button type="button" className="button button-secondary button-small" onClick={handleLogout} disabled={leaving}>
-                {leaving ? 'Saindo...' : 'Sair'}
-              </button>
-            </>
-          )}
+          <div className="session-account" data-tour="session">
+            {state.status === 'loading' && <span className="muted small">...</span>}
+            {state.status === 'anonymous' && (
+              <Link to="/entrar" className="button button-primary button-small">
+                Entrar
+              </Link>
+            )}
+            {user && (
+              <>
+                <span className="session-user">
+                  <strong>{user.publicAlias}</strong>
+                  <span className="muted small">{ROLE_LABEL[user.role]}</span>
+                </span>
+                <button type="button" className="button button-secondary button-small" onClick={handleLogout} disabled={leaving}>
+                  {leaving ? 'Saindo...' : 'Sair'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>
@@ -86,6 +92,7 @@ export function App() {
         Pular para o conteúdo
       </a>
       <SiteHeader />
+      <TourInvite />
 
       <main id="conteudo" className="content" tabIndex={-1}>
         <Routes>
@@ -126,6 +133,7 @@ export function App() {
       <footer className="site-footer">
         Leilão simulado para teste técnico. Nenhum valor é real. Obras: Cleveland Museum of Art Open Access (CC0).
       </footer>
+      <TourOverlay />
     </div>
   );
 }

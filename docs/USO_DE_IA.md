@@ -266,3 +266,12 @@ Preparar somente após a implementação, a partir deste registro. Não afirmar 
 - **Feito pela IA:** `docs/REVISAO_FINAL.md` com estado e evidência de R01 a R20, verificações de risco e achados (F1 documentação da âncora; F2 falta de trava contra âncora no mesmo banco; F3 a F6 limitações). Nenhuma alteração no projeto nesta passagem.
 - **O que o candidato leu, revisou ou ajustou:** ver o resumo consolidado no topo.
 - **Correções pedidas pelo candidato:** F1 (textos sobre o usuário da âncora em README, DEPLOY, AUDITORIA e PLANO) e F2 (trava na configuração contra âncora no mesmo banco, com 3 testes).
+
+### Extra — Tour guiado interativo (29/10/2026)
+
+- **Ferramenta:** Claude Code no app desktop, modelo Claude Opus 5.5.
+- **Tarefa solicitada:** implementar um tour guiado por perfil e por página, só com funções reais, sem alterar dados.
+- **Arquivos gerados pela IA:** `apps/web/src/tour/*` (lógica, textos, estado, cartão, convite, menu), atributos `data-tour` nas telas, estilos e `e2e/tour.spec.ts`.
+- **Verificações executadas:** testes unitários da lógica (16), E2E do tour (4), suíte completa, typecheck, lint e conferência no navegador em desktop, celular e nos dois temas. Detalhes em `docs/PROGRESSO.md`.
+- **Erros encontrados e corrigidos:** reformatação acidental pelo Prettier (desfeita), destaque que não aparecia em aba oculta (medição trocada) e posição do menu no celular.
+- **O que o candidato leu, revisou ou ajustou:** a preencher pelo candidato.

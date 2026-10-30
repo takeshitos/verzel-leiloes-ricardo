@@ -17,7 +17,7 @@ type SectionProps = {
 
 function ShowcaseSection({ id, title, description, lots, empty, offsetMs }: SectionProps) {
   return (
-    <section className="showcase-section" aria-labelledby={`${id}-title`}>
+    <section className="showcase-section" aria-labelledby={`${id}-title`} data-tour="vitrine-secao">
       <div className="section-heading">
         <h2 id={`${id}-title`}>
           {title} <span className="count">{lots.length}</span>
@@ -85,7 +85,7 @@ export function ShowcasePage() {
 
   return (
     <div className="showcase">
-      <header className="hero">
+      <header className="hero" data-tour="vitrine-hero">
         <div>
           <p className="eyebrow">Leilões de arte simulados</p>
           <h1>Obras em disputa</h1>
@@ -97,7 +97,7 @@ export function ShowcasePage() {
         <ConnectionBadge status={connection} />
       </header>
 
-      <form className="showcase-filter" role="search" onSubmit={(event) => event.preventDefault()}>
+      <form className="showcase-filter" role="search" data-tour="vitrine-filtro" onSubmit={(event) => event.preventDefault()}>
         <div className="field">
           <label htmlFor="filtro-texto">Filtrar por título ou autoria</label>
           <input id="filtro-texto" type="search" value={typed} maxLength={100} placeholder="Ex.: landscape" onChange={(event) => onType(event.target.value)} />
